@@ -22,6 +22,10 @@ Game Options also saves **Use generated controls next launch** or **Use stock in
 
 ## Build and checks
 
+The unsigned test IPA was built successfully in [run 41325781697](https://github.com/arjunkl/bcd-touch/actions/runs/41325781697) from app source `c06c500614690f4e65fd935c54a3f9e1b793e39c`, with Xcode 26.3. Download the `BCD-Touch-Lab-build` artifact; it contains `BCD-Touch-Lab-unsigned.ipa` and build/provenance logs. The artifact expires after seven days. Signing, installation and physical testing remain separate steps.
+
+The downloaded IPA passed the static checks in `tools/touch-packs/inspect-ipa.py`. Size: 185,213,699 bytes. SHA-256: `602bb64719babbb08e97dfe278cc2634b55eae5b89f2b02331d60fe8fa29f4ba`. See [package inspection](receipts/touch/ipa.json) and [test receipt](TEST-RECEIPT.md) for the exact evidence and pending device checks.
+
 Use a Mac with an iOS 26 SDK or the fork's manual Actions workflow. Windows cannot link this iOS app. Source changes and desktop-worker checks need only the top-level checkout; CI retrieves the engine dependencies.
 
 The engine submodule pins are unchanged:
