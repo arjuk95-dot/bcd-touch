@@ -5,6 +5,8 @@ import importlib.util
 import json
 import tempfile
 import sys
+import socket
+import subprocess
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'tools/touch-packs'))
 spec=importlib.util.spec_from_file_location('worker',ROOT/'tools/touch-packs/worker.py');w=importlib.util.module_from_spec(spec);spec.loader.exec_module(w)
@@ -59,4 +61,10 @@ for path in packs:
         retry=dict(request,generation='explicit-regeneration')
         assert worker.submit(key,retry)[0]==202
         worker.pool.shutdown();assert len(calls)==1
-print('PASS: pilot validation, identity/mode/hit rejection, cache/restart/overrides, corrupt-cache recovery and bounded failed-generation retries (host fixtures)')
+with tempfile.TemporaryDirectory() as tmp, socket.socket() as occupied:
+    occupied.bind(('127.0.0.1',0));occupied.listen()
+    folder=Path(tmp);token=folder/'token';token.write_text('fixture-token-with-at-least-24-characters')
+    state=folder/'state';state.mkdir();w.atomic(state/(key+'.request.json'),request)
+    result=subprocess.run([sys.executable,str(ROOT/'tools/touch-packs/worker.py'),'serve','--host','127.0.0.1','--port',str(occupied.getsockname()[1]),'--state',str(state),'--token-file',str(token),'--codex',str(folder/'must-not-be-executed')],capture_output=True,timeout=15)
+    assert result.returncode!=0 and not list(state.glob('*.receipt.json')), 'An occupied worker port must fail before replaying generation jobs'
+print('PASS: pilot validation, identity/mode/hit rejection, cache/restart/overrides, corrupt-cache recovery, bounded failed-generation retries and duplicate-server startup (host fixtures)')

@@ -183,9 +183,10 @@ def serve(args):
                 data=json.loads(self.rfile.read(n)); status,result=worker.submit(self.path.rsplit('/',1)[1],data)
                 body=canonical(result); self.send_response(status); self.send_header('Content-Type','application/json'); self.send_header('Content-Length',str(len(body))); self.end_headers(); self.wfile.write(body)
             except Exception: self.send_error(422,'Invalid request or cached pack')
+    server=http.server.ThreadingHTTPServer((args.host,args.port),Handler)
     worker.recover()
     print(f'BCD pack worker http://{args.host}:{args.port}; credentials remain on desktop',flush=True)
-    http.server.ThreadingHTTPServer((args.host,args.port),Handler).serve_forever()
+    server.serve_forever()
 
 if __name__ == '__main__':
     p=argparse.ArgumentParser(); sub=p.add_subparsers(dest='command',required=True)
