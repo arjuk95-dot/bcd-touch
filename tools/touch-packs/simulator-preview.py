@@ -37,5 +37,6 @@ with tempfile.TemporaryDirectory(prefix='touch-preview-') as tmp:
         time.sleep(1)
     images=list(container.glob('*.png'));assert len(images)==8,'Renderer fixture export did not complete'
     for p in images:shutil.copyfile(p,out/p.name)
+    for p in container.glob('*-swift-identity.txt'):shutil.copyfile(p,out/p.name)
     (out/'preview-receipt.json').write_text(json.dumps(dict(device=device['name'],runtime=device['runtime'],kind='offscreen production UIKit renderer fixtures on this simulator; phone 956x440 points with 62/62/0/21 insets; iPad 1194x834 points with 0/0/24/20 insets; no actual iPad boot or game',images=[p.name for p in images]),indent=2))
     subprocess.run(['xcrun','simctl','shutdown',uid],check=True,timeout=30)

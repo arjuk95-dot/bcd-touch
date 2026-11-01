@@ -22,6 +22,10 @@ import UIKit
         let folder = FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
         for title in ["dread-delusion","chronicles-of-the-wolf"] {
             guard let url=Bundle.main.url(forResource:title,withExtension:"json"), let data=try? Data(contentsOf:url), let original=try? BCDControlPack.decode(data) else { continue }
+            let expected = ["steam:1574240":"b2c8962db5b66d02870857cbc88678f5bc0f7e2357445534b137f349aeada2c8", "steam:2371890":"e055f885bade4adf937e0229ee017112a040cebef41b3f6202d0039a49115a65"]
+            let key = BCDPackStore.hash(BCDPackStore.encoded(original.identity))
+            assert(key == expected[original.identity.storeID], "Swift/worker identity hash mismatch")
+            try? Data(key.utf8).write(to:folder.appendingPathComponent(title+"-swift-identity.txt"))
             for isPad in [false,true] {
                 let size=isPad ? CGSize(width:1194,height:834) : CGSize(width:956,height:440)
                 let insets=isPad ? UIEdgeInsets(top:24,left:0,bottom:20,right:0) : UIEdgeInsets(top:0,left:62,bottom:21,right:62)
