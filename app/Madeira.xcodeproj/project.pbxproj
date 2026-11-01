@@ -1,4 +1,5 @@
 // !$*UTF8*$!
+// Modified for WO-BCD-TOUCH-001 (2026-11-01): separate bundle identifiers and touch-pack sources.
 {
 	archiveVersion = 1;
 	classes = {

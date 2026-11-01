@@ -83,6 +83,7 @@ ENGINE_BOUND |= {"BCDGyroLive.swift"}
 # Round 604's input features (turbo and macros, ...): the rules, the profile, the game page's sections and the in-game menu's rows are plain
 # values (BCDTurbo.swift, BCDInputProfile/Page/Menu.swift) built into the preview; reading the game's choices and the hooks into the controller,
 # the touch controls and the session are the engine side.
+# Modified for WO-BCD-TOUCH-001 (2026-11-01): keep pack engine hooks out of the stock UI preview.
 ENGINE_BOUND |= {"BCDControlPackLive.swift", "BCDControlPackSurface.swift", "BCDTurboLive.swift", "BCDInputLive.swift", "BCDPlayersLive.swift", "BCDRadialLive.swift", "BCDTouchExtrasLive.swift"}
 
 # The in-game menu's round-604 items: the values and rules (BCDSessionFeel, BCDDebugChannels, BCDGestureHelp, BCDMagnifier, BCDWindows),

@@ -50,12 +50,12 @@ final class GamepadInput: @unchecked Sendable {
     /// so player 1 then shows as connected for the whole session even while no
     /// controller is in use. That is why it is opt-in: without the switch,
     /// slot 0 connects only when a real source appears, as before.
-    @MainActor func reserveSessionSlot(touchControls: Bool) {
-        guard Self.enabled, Self.optIn("MADEIRA_PAD_EARLY_SLOT") else { return }
+    @MainActor func reserveSessionSlot(touchControls: Bool, force: Bool = false) {
+        guard Self.enabled, force || Self.optIn("MADEIRA_PAD_EARLY_SLOT") else { return }
         let touch = touchControls && Self.touchEnabled
         let paired = !GCController.controllers().isEmpty
         guard touch || paired else { return }
-        queue.async { [self] in touchState.reserved = true; sample() }
+        queue.async { [self] in touchState.reserved = true; updateTimer(); sample() }
         LogStore.shared.log("[xinput] ml1990 slot=0 reserved for the session touch=\(touch ? 1 : 0) paired=\(paired ? 1 : 0)")
     }
 

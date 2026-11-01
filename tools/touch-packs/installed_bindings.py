@@ -8,7 +8,7 @@ def apply_installed_bindings(pack,request):
     source,text=entry
     parser=configparser.ConfigParser(interpolation=None);parser.read_string(text)
     data=parser['varcom']
-    names={'attack':('attaque','Attack','bolt'),'jump':('jump','Jump','arrow.up'),'special':('special','Special','sparkles'),'helper':('helper','Helper','person.2'),'map':('map','Map','map'),'subscreen':('subscreen','Inventory','bag'),'confirm':('confirm','Confirm','checkmark'),'cancel':('cancel','Cancel','xmark'),'up':('up','Up','arrow.up'),'down':('down','Down','arrow.down'),'left':('left','Left','arrow.left'),'right':('right','Right','arrow.right')}
+    names={'attack':('attaque','Attack','bolt'),'jump':('jump','Jump','arrow.up'),'special':('special','Special','sparkles'),'helper':('helper','Helper','person.2'),'map':('map','Map','map'),'subscreen':('subscreen','Subscreen','bag'),'confirm':('confirm','Confirm','checkmark'),'cancel':('cancel','Cancel','xmark'),'up':('up','Up','arrow.up'),'down':('down','Down','arrow.down'),'left':('left','Left','arrow.left'),'right':('right','Right','arrow.right')}
     codes={'return':13,'backspace':8,'up':38,'down':40,'left':37,'right':39,'space':32}
     actions=[]
     for id,(name,label,icon) in names.items():

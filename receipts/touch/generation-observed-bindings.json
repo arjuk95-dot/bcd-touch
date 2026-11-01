@@ -1,0 +1,16 @@
+{
+  "games": [
+    {
+      "cachedHTTP": 200,
+      "duplicateHTTP": 202,
+      "initialHTTP": 202,
+      "key": "e055f885bade4adf937e0229ee017112a040cebef41b3f6202d0039a49115a65",
+      "physicallyTested": false,
+      "returnedHTTP": 200,
+      "seconds": 45.58,
+      "title": "chronicles-of-the-wolf",
+      "validated": true
+    }
+  ],
+  "kind": "desktop HTTP client fixture using genuine Codex generation; no iOS install event/device gameplay"
+}

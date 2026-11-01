@@ -1,0 +1,27 @@
+{
+  "games": [
+    {
+      "cachedHTTP": 200,
+      "duplicateHTTP": 202,
+      "initialHTTP": 202,
+      "key": "b2c8962db5b66d02870857cbc88678f5bc0f7e2357445534b137f349aeada2c8",
+      "physicallyTested": false,
+      "returnedHTTP": 200,
+      "seconds": 60.67,
+      "title": "dread-delusion",
+      "validated": true
+    },
+    {
+      "cachedHTTP": 200,
+      "duplicateHTTP": 202,
+      "initialHTTP": 202,
+      "key": "e055f885bade4adf937e0229ee017112a040cebef41b3f6202d0039a49115a65",
+      "physicallyTested": false,
+      "returnedHTTP": 200,
+      "seconds": 63.58,
+      "title": "chronicles-of-the-wolf",
+      "validated": true
+    }
+  ],
+  "kind": "desktop HTTP client fixture using genuine Codex generation; no iOS install event/device gameplay"
+}

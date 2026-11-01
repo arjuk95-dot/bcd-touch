@@ -1248,6 +1248,16 @@ final class LibraryModel: ObservableObject {
             }
         }
         controls.visible = entry.touchControls
+        // Touch-only offline/invalid-pack fallback, in this fork's own profile/container.
+        if BCDPackStore.shared.pack == nil, entry.desktop != true {
+            controls.visible = true
+            if entry.controls?.isEmpty ?? true {
+                let screen = ControlPresetsModel.currentScreen()
+                controls.controls = entry.controllerMode == "keys" ? ControlPresetLayout.keyboard(for: screen) : ControlPresetLayout.xbox(for: screen)
+                controls.layoutID = entry.controllerMode == "keys" ? ControlPresetLayout.keyboardID : ControlPresetLayout.xboxID
+            }
+            if controls.controls.contains(where: { $0.action.padName != nil }) { GamepadInput.shared.reserveSessionSlot(touchControls: true, force: true) }
+        }
         controls.sizeScale = min(max(entry.controlSize ?? 1, 0.5), 2)
         // madeira-bcd 578 (lead): the built-in default is NOT put on screen at session start: a player may keep touch
         // controls on with an empty overlay and use the touches as the mouse. It comes only when the player turns touch
