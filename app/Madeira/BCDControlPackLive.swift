@@ -99,6 +99,14 @@ import UIKit
     func activate(_ entry: LibraryEntry?) {
         guard let entry else { sessionID = nil; pack = nil; base = nil; return }
         if sessionID == entry.id && !LibraryModel.shared.blocksGameplayTouch { return }
+        // Changing a running HID session into XInput requires a new guest enumeration.
+        if sessionID == entry.id && GamepadInput.sessionHIDKind != nil {
+            let waiting = request(entry)
+            let key = Self.hash(Self.encoded(waiting.identity))
+            if cached(key,identity:waiting.identity) != nil { status = "Pack ready at next launch (controller identity)" }
+            else { prepare(entry) }
+            return
+        }
         sessionID = entry.id
         let req = request(entry), key = Self.hash(Self.encoded(req.identity)); selectedKey = key
         base = cached(key, identity: req.identity); pack = base

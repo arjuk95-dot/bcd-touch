@@ -226,11 +226,15 @@ final class GamepadInput: @unchecked Sendable {
     private let packTrace = ProcessInfo.processInfo.environment["BCD_TOUCH_TRACE"] == "1"
 
     @MainActor func configurePack(enabled: Bool, accepting: Bool, calibration: BCDMouseJoystick.Calibration) {
+        if enabled { keyboardMouseOn = false }
         queue.async { [self] in
             packState.reserved = enabled
             packState.configure(enabled ? [packControl] : [], acceptingInput: accepting)
             packCalibration = calibration; packAim.reset(); packAimOwner = nil
-            if enabled { keyboardMouse = nil }
+            if enabled {
+                if keyboardMouse != nil { PadKeyboardMouse.shared.releaseAll("controller pack activated") }
+                keyboardMouse = nil
+            }
             updateTimer(); sample()
         }
     }
@@ -450,6 +454,16 @@ final class GamepadInput: @unchecked Sendable {
                 state.left_trigger = merged.lt; state.right_trigger = merged.rt
                 state.lx = merged.lx; state.ly = merged.ly; state.rx = merged.rx; state.ry = merged.ry
             }
+            // Pack holds must reach the existing gyro/turbo stages, including gyro's trigger gate.
+            if active && packConnected && !LibraryController.shared.ownsInput {
+                var pack = packState.sample
+                let aim = packAim.sample(time: ProcessInfo.processInfo.systemUptime)
+                pack.rx = GamepadSample.axis(aim.x); pack.ry = GamepadSample.axis(aim.y)
+                let combined = GamepadSample.merge(physical: GamepadSample(buttons: state.buttons,
+                    lt: state.left_trigger, rt: state.right_trigger, lx: state.lx, ly: state.ly, rx: state.rx, ry: state.ry), touch: pack)
+                state.buttons = combined.buttons; state.left_trigger = combined.lt; state.right_trigger = combined.rt
+                state.lx = combined.lx; state.ly = combined.ly; state.rx = combined.rx; state.ry = combined.ry
+            }
             // madeira-bcd (2026-10-25, round 603): gyro aim (BCDGyroLive.swift): notes the button the gyro waits for and puts the gyro on the right
             // stick. One static flag when it is off; not while the library's menu owns the controller or the pad is keys and mouse.
             if i == 0, BCDGyroLive.padNeeded, active, keyboardMouse == nil, !LibraryController.shared.ownsInput {
@@ -460,17 +474,11 @@ final class GamepadInput: @unchecked Sendable {
             if i == 0, BCDTurboLive.padNeeded, active, keyboardMouse == nil, !LibraryController.shared.ownsInput {
                 BCDTurboLive.shared.padSample(&state)
             }
-            if active && packConnected && !LibraryController.shared.ownsInput {
-                var pack = packState.sample
-                let aim = packAim.sample(time: ProcessInfo.processInfo.systemUptime)
-                pack.rx = GamepadSample.axis(aim.x); pack.ry = GamepadSample.axis(aim.y)
-                let combined = GamepadSample.merge(physical: GamepadSample(buttons: state.buttons,
-                    lt: state.left_trigger, rt: state.right_trigger, lx: state.lx, ly: state.ly, rx: state.rx, ry: state.ry), touch: pack)
-                state.buttons = combined.buttons; state.left_trigger = combined.lt; state.right_trigger = combined.rt
-                state.lx = combined.lx; state.ly = combined.ly; state.rx = combined.rx; state.ry = combined.ry
-                if packTrace && combined != lastPackTrace {
-                    lastPackTrace = combined
-                    fputs("[touch-pack-publish] slot=0 t=\(ProcessInfo.processInfo.systemUptime) buttons=\(combined.buttons) lt=\(combined.lt) rt=\(combined.rt) lx=\(combined.lx) ly=\(combined.ly) rx=\(combined.rx) ry=\(combined.ry)\n", stderr)
+            if packTrace && packConnected {
+                let published = GamepadSample(buttons:state.buttons,lt:state.left_trigger,rt:state.right_trigger,lx:state.lx,ly:state.ly,rx:state.rx,ry:state.ry)
+                if published != lastPackTrace {
+                    lastPackTrace = published
+                    fputs("[touch-pack-publish] slot=0 t=\(ProcessInfo.processInfo.systemUptime) buttons=\(published.buttons) lt=\(published.lt) rt=\(published.rt) lx=\(published.lx) ly=\(published.ly) rx=\(published.rx) ry=\(published.ry)\n", stderr)
                 }
             }
             if hid {

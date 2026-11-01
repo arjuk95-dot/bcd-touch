@@ -1,0 +1,17 @@
+name: Production touch input pipeline fixture
+on: [workflow_dispatch]
+jobs:
+  pipeline:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use iOS 18.5 simulator toolchain
+        run: if [ -d /Applications/Xcode_16.4.app ]; then sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer; fi
+      - name: Run production serial publisher with engine spies
+        run: python3 tools/touch-packs/check-pipeline.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: touch-pipeline-fixture
+          path: touch-evidence
