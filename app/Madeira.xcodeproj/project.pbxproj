@@ -7,10 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		BCDT000000000000000000A03 /* BCDControlPackSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCDT000000000000000000B03; };
-		BCDT000000000000000000A02 /* BCDControlPackLive.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCDT000000000000000000B02; };
-		BCDT000000000000000000A01 /* BCDControlPack.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCDT000000000000000000B01; };
-		BCDT000000000000000000A00 /* BCDMouseJoystick.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCDT000000000000000000B00; };
+		BCD000000000000000000A03 /* BCDControlPackSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD000000000000000000B03; };
+		BCD000000000000000000A02 /* BCDControlPackLive.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD000000000000000000B02; };
+		BCD000000000000000000A01 /* BCDControlPack.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD000000000000000000B01; };
+		BCD000000000000000000A00 /* BCDMouseJoystick.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD000000000000000000B00; };
 		1686FBF2209ABE0E71A12807 /* MadeiraMemoryHost.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D80FB04E72418784BED70CF4 /* MadeiraMemoryHost.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		33A1199863C98CF2679931F9 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 76CE67ADF1049F28147EA12C /* Foundation.framework */; };
 		5271C4AE571BDF56B9E51EAA /* MemoryPool.m in Sources */ = {isa = PBXBuildFile; fileRef = 2027C80DC6F4BF37B7522656 /* MemoryPool.m */; };
@@ -416,10 +416,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		BCDT000000000000000000B03 /* BCDControlPackSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDControlPackSurface.swift; sourceTree = "<group>"; };
-		BCDT000000000000000000B02 /* BCDControlPackLive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDControlPackLive.swift; sourceTree = "<group>"; };
-		BCDT000000000000000000B01 /* BCDControlPack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDControlPack.swift; sourceTree = "<group>"; };
-		BCDT000000000000000000B00 /* BCDMouseJoystick.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDMouseJoystick.swift; sourceTree = "<group>"; };
+		BCD000000000000000000B03 /* BCDControlPackSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDControlPackSurface.swift; sourceTree = "<group>"; };
+		BCD000000000000000000B02 /* BCDControlPackLive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDControlPackLive.swift; sourceTree = "<group>"; };
+		BCD000000000000000000B01 /* BCDControlPack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDControlPack.swift; sourceTree = "<group>"; };
+		BCD000000000000000000B00 /* BCDMouseJoystick.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDMouseJoystick.swift; sourceTree = "<group>"; };
 		2027C80DC6F4BF37B7522656 /* MemoryPool.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = MemoryPool.m; sourceTree = "<group>"; };
 		32607841304656C675DB52CF /* MemoryHostTest.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = MemoryHostTest.h; sourceTree = "<group>"; };
 		36023A5C635793C3C00F4FA5 /* MemoryHostProtocol.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = MemoryHostProtocol.h; sourceTree = "<group>"; };
@@ -1057,10 +1057,10 @@
 				A2000203 /* HardwareInput.swift */,
 				A2000281 /* WiniosCursor.c */,
 				A2000243 /* GamepadInput.swift */,
-				BCDT000000000000000000B03 /* BCDControlPackSurface.swift */,
-				BCDT000000000000000000B02 /* BCDControlPackLive.swift */,
-				BCDT000000000000000000B01 /* BCDControlPack.swift */,
-				BCDT000000000000000000B00 /* BCDMouseJoystick.swift */,
+				BCD000000000000000000B03 /* BCDControlPackSurface.swift */,
+				BCD000000000000000000B02 /* BCDControlPackLive.swift */,
+				BCD000000000000000000B01 /* BCDControlPack.swift */,
+				BCD000000000000000000B00 /* BCDMouseJoystick.swift */,
 				A2000E01 /* DeviceCapability.swift */,
 				A2000E02 /* SystemGestures.swift */,
 				A2000260 /* PadKeyboardMouse.swift */,
@@ -1648,10 +1648,10 @@
 				A1000203 /* HardwareInput.swift in Sources */,
 				A1000281 /* WiniosCursor.c in Sources */,
 				A1000243 /* GamepadInput.swift in Sources */,
-				BCDT000000000000000000A03 /* BCDControlPackSurface.swift in Sources */,
-				BCDT000000000000000000A02 /* BCDControlPackLive.swift in Sources */,
-				BCDT000000000000000000A01 /* BCDControlPack.swift in Sources */,
-				BCDT000000000000000000A00 /* BCDMouseJoystick.swift in Sources */,
+				BCD000000000000000000A03 /* BCDControlPackSurface.swift in Sources */,
+				BCD000000000000000000A02 /* BCDControlPackLive.swift in Sources */,
+				BCD000000000000000000A01 /* BCDControlPack.swift in Sources */,
+				BCD000000000000000000A00 /* BCDMouseJoystick.swift in Sources */,
 				A1000E01 /* DeviceCapability.swift in Sources */,
 				A1000E02 /* SystemGestures.swift in Sources */,
 				A1000260 /* PadKeyboardMouse.swift in Sources */,

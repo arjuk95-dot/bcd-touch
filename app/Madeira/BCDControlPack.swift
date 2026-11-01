@@ -63,7 +63,7 @@ struct BCDControlPack: Codable, Equatable {
             try require(text(a.id) && text(a.label) && text(a.icon), "Missing action metadata")
             try require(a.icon.allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "." || $0 == "-") }, "Icons must be SF Symbol names")
             let outputOK = inputMode == "controller" ? Self.padOutputs.contains(a.output) :
-                (Self.padOutputs.contains(a.output) || a.output.range(of: "^key:[0-9]{1,3}$", options: .regularExpression) != nil || ["mouse:left", "mouse:right"].contains(a.output))
+                (a.output.range(of: "^key:[0-9]{1,3}$", options: .regularExpression) != nil || ["mouse:left", "mouse:right"].contains(a.output))
             try require(outputOK, "Output unavailable in selected input mode")
             try require(["hold", "tap", "release"].contains(a.behavior), "Unknown action behavior")
             try require(!a.contexts.isEmpty && Set(a.contexts).isSubset(of: Set(contexts)), "Unknown action context")

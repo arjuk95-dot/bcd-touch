@@ -157,7 +157,7 @@ struct BCDPackLayer: View {
                 .onChange(of: p) { _, _ in configure() }
                 .onChange(of: store.editing) { _, _ in configure() }
                 .onChange(of: library.blocksGameplayTouch) { _, _ in configure() }
-                .onDisappear { GamepadInput.shared.configurePack(enabled: false, accepting: false, calibration: p.aim) }
+                .onDisappear { GamepadInput.shared.configurePack(enabled: store.pack != nil && store.enabled && p.inputMode == "controller", accepting: false, calibration: p.aim) }
         }
     }
     private func configure() {

@@ -8,7 +8,8 @@ def num(lo,hi): return dict(type='number',minimum=lo,maximum=hi)
 def enum(*values): return dict(type='string',enum=list(values))
 text=dict(type='string',minLength=1,maxLength=256,pattern=r'^[^\x00-\x1f]+$')
 identity=obj({k:text for k in ['executable','storeID','edition','build','bindingDigest']})
-action=obj(dict(id=text,label=text,icon=dict(type='string',pattern=r'^[A-Za-z0-9.-]+$',maxLength=256),output=text,behavior=enum('hold','tap','release'),evidence=text,contexts=arr(text,1,8)))
+output={'anyOf':[enum('A','B','X','Y','LB','RB','LT','RT','L3','R3','Menu','View','D↑','D↓','D←','D→','LS','RS','mouse:left','mouse:right'),dict(type='string',pattern=r'^key:[0-9]{1,3}$')]}
+action=obj(dict(id=text,label=text,icon=dict(type='string',pattern=r'^[A-Za-z0-9.-]+$',maxLength=256),output=output,behavior=enum('hold','tap','release'),evidence=text,contexts=arr(text,1,8)))
 control=obj(dict(id=text,action=text,role=enum('button','move','fireAim','radial','gesture'),x=num(0,1),y=num(0,1),radius=num(.035,.2),hitRadius=num(.035,.23),opacity=num(.1,1)))
 layout=obj(dict(aimRect=obj(dict(x=num(0,1),y=num(0,1),width=num(.25,1),height=num(.25,1))),controls=arr(control,1,48)))
 schema=obj(dict(version=dict(type='integer',const=1),id=text,title=text,identity=identity,inputMode=enum('controller','keyboardMouse'),

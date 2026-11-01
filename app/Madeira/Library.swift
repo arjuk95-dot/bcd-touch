@@ -1208,6 +1208,10 @@ final class LibraryModel: ObservableObject {
     /// Dock start): it is neither added to the library nor stamped as played.
     /// `dock`: the game a Madeira Dock start launches (DockStartScreen).
     func begin(_ entry: LibraryEntry, remember: Bool = true, dock: DockGame? = nil) {
+        BCDPackStore.shared.enabled = true
+        BCDPackStore.shared.activate(entry)
+        GamepadInput.packControllerSession = BCDPackStore.shared.pack?.inputMode == "controller"
+        GamepadInput.shared.configurePack(enabled: GamepadInput.packControllerSession, accepting: false, calibration: BCDPackStore.shared.pack?.aim ?? BCDMouseJoystick.Calibration())
         wine_exit_status_reset()
         quitRequested = false
         endedByWatch = nil; endWatchNote = ""

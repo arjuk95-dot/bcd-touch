@@ -2,7 +2,7 @@
 from pathlib import Path
 import yaml
 ROOT=Path(__file__).resolve().parents[2]
-src=yaml.safe_load((ROOT/'.github/workflows/build-ipa.yml').read_text())
+src=yaml.safe_load((ROOT/'.github/workflows/build-ipa.yml').read_text(encoding='utf-8'))
 src.pop(True,None); src['on']={'workflow_dispatch':None}
 src['name']='BCD Touch Lab unsigned IPA'
 src['concurrency']={'group':'bcd-touch-ipa','cancel-in-progress':False}

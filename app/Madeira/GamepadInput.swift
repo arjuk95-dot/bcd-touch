@@ -11,6 +11,7 @@ import SwiftUI
 /// C snapshot lock; no Swift objects cross into Wine.
 final class GamepadInput: @unchecked Sendable {
     static let shared = GamepadInput()
+    nonisolated(unsafe) static var packControllerSession = false
     @MainActor static let enabled: Bool = {
         let value = MadeiraConfig.get("env.MADEIRA_XINPUT")
             ?? ProcessInfo.processInfo.environment["MADEIRA_XINPUT"]
@@ -28,6 +29,7 @@ final class GamepadInput: @unchecked Sendable {
         queue.async { [self] in
             let wasConnected = touchState.connected, wasAccepting = touchState.acceptingInput
             touchState.configure(allowed, acceptingInput: acceptingInput)
+            updateTimer()
             if wasConnected != touchState.connected || wasAccepting != touchState.acceptingInput {
                 LogStore.shared.log("[touch-xinput] connected=\(touchState.connected ? 1 : 0) accepting=\(acceptingInput ? 1 : 0) controls=\(allowed.count)")
             }
@@ -68,6 +70,7 @@ final class GamepadInput: @unchecked Sendable {
     /// enumerates, so a change applies at the game's next start.
     static let padModeKey = "env.MADEIRA_PAD_MODE"
     static func configuredPadMode() -> (value: String, source: String) {
+        if packControllerSession { return ("xinput", "touch-pack") }
         if let v = MadeiraConfig.gameValue(padModeKey) { return (v.lowercased(), "game") }
         if let v = MadeiraConfig.get(padModeKey), !v.isEmpty { return (v.lowercased(), "cfg") }
         if let v = ProcessInfo.processInfo.environment["MADEIRA_PAD_MODE"], !v.isEmpty { return (v.lowercased(), "env") }
@@ -189,6 +192,7 @@ final class GamepadInput: @unchecked Sendable {
     /// feeding XInput either way. Main thread.
     func setKeyboardMouse(_ bindings: PadBindings?) {
         guard Self.keyboardMouseAvailable else { return }
+        let bindings = Self.packControllerSession ? nil : bindings
         keyboardMouseOn = bindings != nil
         queue.async { [self] in
             let was = keyboardMouse != nil
@@ -218,12 +222,15 @@ final class GamepadInput: @unchecked Sendable {
     private var packCalibration = BCDMouseJoystick.Calibration()
     private let packControl = UUID()
     private var packAimOwner: UUID?
+    private var lastPackTrace = GamepadSample()
+    private let packTrace = ProcessInfo.processInfo.environment["BCD_TOUCH_TRACE"] == "1"
 
     @MainActor func configurePack(enabled: Bool, accepting: Bool, calibration: BCDMouseJoystick.Calibration) {
         queue.async { [self] in
             packState.reserved = enabled
             packState.configure(enabled ? [packControl] : [], acceptingInput: accepting)
             packCalibration = calibration; packAim.reset(); packAimOwner = nil
+            if enabled { keyboardMouse = nil }
             updateTimer(); sample()
         }
     }
@@ -458,6 +465,10 @@ final class GamepadInput: @unchecked Sendable {
                     lt: state.left_trigger, rt: state.right_trigger, lx: state.lx, ly: state.ly, rx: state.rx, ry: state.ry), touch: pack)
                 state.buttons = combined.buttons; state.left_trigger = combined.lt; state.right_trigger = combined.rt
                 state.lx = combined.lx; state.ly = combined.ly; state.rx = combined.rx; state.ry = combined.ry
+                if packTrace && combined != lastPackTrace {
+                    lastPackTrace = combined
+                    fputs("[touch-pack-publish] slot=0 t=\(ProcessInfo.processInfo.systemUptime) buttons=\(combined.buttons) lt=\(combined.lt) rt=\(combined.rt) lx=\(combined.lx) ly=\(combined.ly) rx=\(combined.rx) ry=\(combined.ry)\n", stderr)
+                }
             }
             if hid {
                 publishHID(state, live: hidLive, pad: pad)

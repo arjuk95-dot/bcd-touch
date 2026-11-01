@@ -184,7 +184,7 @@ final class BCDPackView: UIView {
         for f in fingers.values where f.role == "radial" {
             for (i, id) in (pack?.radial ?? []).enumerated() {
                 let angle = Double(i) / Double(max(1, pack?.radial.count ?? 1)) * .pi * 2 + .pi / Double(max(1, pack?.radial.count ?? 1))
-                let p = CGPoint(x:f.start.x + cos(angle)*unit*0.2, y:f.start.y + sin(angle)*unit*0.2)
+                let p = CGPoint(x:f.start.x + CGFloat(Foundation.cos(angle))*unit*0.2, y:f.start.y + CGFloat(Foundation.sin(angle))*unit*0.2)
                 ((action(id)?.label ?? id) as NSString).draw(at:p, withAttributes:[.font:UIFont.boldSystemFont(ofSize:12), .foregroundColor:f.selection == i ? UIColor.yellow : UIColor.white])
             }
         }

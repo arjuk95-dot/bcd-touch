@@ -5,7 +5,7 @@ import tempfile
 ROOT=Path(__file__).resolve().parents[2]
 with tempfile.TemporaryDirectory(prefix='bcd-touch-check-') as tmp:
     tmp=Path(tmp)
-    source=(ROOT/'app/Madeira/TouchGamepad.swift').read_text()
+    source=(ROOT/'app/Madeira/TouchGamepad.swift').read_text(encoding='utf-8')
     pure=source.split('struct GamepadSample',1)[1].split('// MARK: - UIKit touch lifetime',1)[0]
     pure='import Foundation\nstruct GamepadSample'+pure
     state=tmp/'State.swift';state.write_text(pure)

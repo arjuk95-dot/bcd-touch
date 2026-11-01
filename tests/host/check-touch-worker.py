@@ -9,7 +9,7 @@ spec=importlib.util.spec_from_file_location('worker',ROOT/'tools/touch-packs/wor
 packs=list((ROOT/'packs/pilots').glob('*.json'))
 assert packs, 'Pilot packs missing'
 for path in packs:
-    p=json.loads(path.read_text());w.validate(p)
+    p=json.loads(path.read_text(encoding='utf-8'));w.validate(p)
     for mutate in [lambda v:v.update(version=2),lambda v:v['actions'][0].update(output='mouse:left'),lambda v:v['phone']['controls'][0].update(hitRadius=.9),lambda v:v['identity'].update(build='wrong')]:
         bad=copy.deepcopy(p);mutate(bad)
         try:w.validate(bad,p['identity'])
@@ -25,6 +25,6 @@ for path in packs:
         # Personal controls remain a separate file when the worker replaces generated data.
         personal={'x':.12,'y':.88};w.atomic(Path(tmp)/'overrides.json',personal)
         w.atomic(Path(tmp)/(key+'.pack.json'),p)
-        assert json.loads((Path(tmp)/'overrides.json').read_text())==personal
+        assert json.loads((Path(tmp)/'overrides.json').read_text(encoding='utf-8'))==personal
         worker.pool.shutdown();restarted.pool.shutdown()
 print('PASS: pilot validation, wrong identity, mixed input rejection, hit-region limits, cached/duplicate/restart and separate override persistence (host fixtures)')
