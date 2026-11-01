@@ -79,10 +79,14 @@ import UIKit
         let index=original.phone.controls.firstIndex { $0.role=="move" }!
         let movedX=0.13
         if ProcessInfo.processInfo.environment["PACK_CLIENT_RESUME"]=="1" {
+            store.applyLaunchPreference(entry)
+            assert(!store.enabled, "Per-game stock input preference lost after restart")
             store.activate(entry)
             assert(store.pack?.phone.controls[index].x==movedX, "Personal edit lost after process restart")
             assert(store.pack?.title==original.title+" fixture regeneration", "Wrong cached pack after restart")
-            try Data("PASS: fresh simulator app process restored generated cache and personal override; engine boundaries stubbed, no installed game".utf8).write(to:folder.appendingPathComponent("client-phase-2.txt"),options:.atomic)
+            store.setLaunchPreference(entry,generated:true);store.applyLaunchPreference(entry)
+            assert(store.enabled)
+            try Data("PASS: fresh simulator app process restored generated cache, personal override and per-game stock input preference; reselecting generated controls succeeds. Engine boundaries stubbed, no installed game".utf8).write(to:folder.appendingPathComponent("client-phase-2.txt"),options:.atomic)
             return
         }
         try BCDPackStore.encoded(original).write(to:cached,options:.atomic)
@@ -92,6 +96,7 @@ import UIKit
         var moved=store.pack!;moved.phone.controls[index].x=movedX;store.saveEdits(moved)
         var regenerated=original;regenerated.title += " fixture regeneration"
         try BCDPackStore.encoded(regenerated).write(to:cached,options:.atomic)
+        store.setLaunchPreference(entry,generated:false)
         LibraryModel.shared.blocksGameplayTouch=true;store.activate(entry)
         assert(store.pack?.title==regenerated.title && store.pack?.phone.controls[index].x==movedX)
         LibraryModel.shared.blocksGameplayTouch=false

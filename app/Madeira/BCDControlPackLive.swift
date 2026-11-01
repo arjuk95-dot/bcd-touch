@@ -48,6 +48,23 @@ import UIKit
         let e = JSONEncoder(); e.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         return (try? e.encode(value)) ?? Data()
     }
+    private func preferenceKey(_ entry: LibraryEntry) -> String {
+        let i=request(entry).identity
+        return "TouchPackGenerated."+Self.hash(Self.encoded([i.executable,i.storeID,i.edition]))
+    }
+    func applyLaunchPreference(_ entry: LibraryEntry) {
+        let key=preferenceKey(entry)
+        enabled=UserDefaults.standard.object(forKey:key) as? Bool ?? true
+    }
+    func setLaunchPreference(_ entry: LibraryEntry, generated: Bool) {
+        UserDefaults.standard.set(generated,forKey:preferenceKey(entry))
+        status="Input mode saved · next launch"
+    }
+    func preferStockNextLaunch() {
+        guard let personalKey else { return }
+        UserDefaults.standard.set(false,forKey:"TouchPackGenerated."+personalKey)
+        status="Stock input profile saved · next launch"
+    }
     private static func bindingText(_ url: URL) -> String? {
         guard let handle = try? FileHandle(forReadingFrom:url) else { return nil }
         defer { try? handle.close() }
@@ -262,6 +279,7 @@ struct BCDPackTools: View {
                 ForEach(p.contexts, id: \.self) { c in Button("Context: " + c) { store.context = c } }
             }
             Button("Reset layout and aim") { store.reset() }
+            Button("Use stock input profile next launch") { store.preferStockNextLaunch() }
             Button("Use stock controls for this session") { store.enabled = false; BCDInputLive.shared.refresh() }
         } label: { Image(systemName: "hand.draw").padding(12).background(.black.opacity(0.2)).clipShape(Circle()) }
     }

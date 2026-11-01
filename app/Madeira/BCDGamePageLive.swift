@@ -132,7 +132,9 @@ import UniformTypeIdentifiers
             // Modified for WO-BCD-TOUCH-001: existing installs can prepare/regenerate too.
             if !desktop { d.groups.append(BCDGameSettingGroup(id: "touch-pack", title: "Game touch pack", symbol: "hand.draw", settings: [
                 BCDGameSetting(id: "pack.prepare", title: "Prepare controls", kind: .action, note: BCDPackStore.shared.status),
-                BCDGameSetting(id: "pack.regenerate", title: "Regenerate (keep personal layout)", kind: .action)
+                BCDGameSetting(id: "pack.regenerate", title: "Regenerate (keep personal layout)", kind: .action),
+                BCDGameSetting(id: "pack.generated", title: "Use generated controls next launch", kind: .action),
+                BCDGameSetting(id: "pack.stock", title: "Use stock input profile next launch", kind: .action, note: "Keeps the stock profile's relative-mouse aim choice")
             ])) }
             d.groups.insert(contentsOf: setupGroups(game, entry, profile), at: 3)   // round 604: BCDGameSetup/BCDGamePageLiveSetup.swift (Windows, Components, CPU translation, Game fixes, Wine desktop)
             if let binds = binds(entry) { d.groups.append(binds) }
@@ -908,6 +910,9 @@ import UniformTypeIdentifiers
     }
 
     func set(_ setting: String, to value: String, for game: BCDGame) {
+        if setting == "pack.generated" || setting == "pack.stock", let entry = entry(for:game) {
+            BCDPackStore.shared.setLaunchPreference(entry,generated:setting == "pack.generated");onChange?();return
+        }
         if setting == "pack.prepare" || setting == "pack.regenerate", let entry = entry(for: game) {
             BCDPackStore.shared.prepare(entry, regenerate: setting == "pack.regenerate"); onChange?(); return
         }
