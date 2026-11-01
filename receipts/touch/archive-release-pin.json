@@ -1,0 +1,32 @@
+{
+  "conclusion": "failure",
+  "headSha": "8b40ea1b749dc731466396542183055cf6bef890",
+  "jobs": [
+    {
+      "name": "build",
+      "status": "completed",
+      "conclusion": "failure",
+      "steps": [
+        {
+          "completedAt": "2026-11-01T14:40:23Z",
+          "conclusion": "failure",
+          "name": "Restore pinned converter omitted from upstream Git tree",
+          "number": 3,
+          "startedAt": "2026-11-01T14:40:20Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-01T14:40:23Z",
+          "conclusion": "failure",
+          "name": "Verify LLVM iOS build",
+          "number": 73,
+          "startedAt": "2026-11-01T14:40:23Z",
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41316978984",
+  "capturedAt": "2026-11-01T15:14:00.047204+00:00"
+}

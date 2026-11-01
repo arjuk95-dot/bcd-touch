@@ -1,0 +1,15 @@
+{
+  "device": "iPhone 16 Pro Max",
+  "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-18-5",
+  "kind": "offscreen production UIKit renderer fixtures on this simulator; phone 956x440 points with 62/62/0/21 insets; iPad 1194x834 points with 0/0/24/20 insets; no actual iPad boot or game",
+  "images": [
+    "dread-delusion-pad-hud.png",
+    "dread-delusion-phone-hits.png",
+    "chronicles-of-the-wolf-phone-hits.png",
+    "dread-delusion-phone-hud.png",
+    "dread-delusion-pad-hits.png",
+    "chronicles-of-the-wolf-phone-hud.png",
+    "chronicles-of-the-wolf-pad-hud.png",
+    "chronicles-of-the-wolf-pad-hits.png"
+  ]
+}

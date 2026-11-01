@@ -1,14 +1,15 @@
 {
-  "conclusion": "",
-  "headSha": "8b40ea1b749dc731466396542183055cf6bef890",
+  "conclusion": "success",
+  "headSha": "c8634675d86e0b7c09f84665a5d73deeddd5b27d",
   "jobs": [
     {
       "name": "preview",
-      "status": "queued",
-      "conclusion": "",
+      "status": "completed",
+      "conclusion": "success",
       "steps": []
     }
   ],
-  "status": "queued",
-  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41316981511"
+  "status": "completed",
+  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41319513406",
+  "capturedAt": "2026-11-01T15:14:03.038352+00:00"
 }

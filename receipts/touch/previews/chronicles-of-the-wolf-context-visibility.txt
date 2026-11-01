@@ -1,0 +1,1 @@
+PASS: inactive context hides all acquisition regions, radial and gesture controls

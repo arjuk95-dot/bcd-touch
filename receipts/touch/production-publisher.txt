@@ -1,0 +1,1 @@
+PASS: production GamepadInput serial publisher observed simultaneous slot0 LS/RT/RS; stale aim neutralized; gyro stage saw held trigger; independent fire release; pause rejected delayed input. Engine-spy simulator fixture, no Wine guest or physical controller.

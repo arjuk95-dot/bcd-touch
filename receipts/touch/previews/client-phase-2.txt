@@ -1,0 +1,1 @@
+PASS: fresh simulator app process restored generated cache, personal override and per-game stock input preference; reselecting generated controls succeeds. Engine boundaries stubbed, no installed game

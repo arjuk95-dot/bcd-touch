@@ -1,14 +1,24 @@
 {
   "conclusion": "",
-  "headSha": "8b40ea1b749dc731466396542183055cf6bef890",
+  "headSha": "c8634675d86e0b7c09f84665a5d73deeddd5b27d",
   "jobs": [
     {
       "name": "build",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": "",
-      "steps": []
+      "steps": [
+        {
+          "completedAt": "0001-01-01T00:00:00Z",
+          "conclusion": "",
+          "name": "Build d3d11-src.dll (DXMT d3d11 from source, SwapDeviceContextState)",
+          "number": 57,
+          "startedAt": "2026-11-01T15:13:36Z",
+          "status": "in_progress"
+        }
+      ]
     }
   ],
-  "status": "queued",
-  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41316978984"
+  "status": "in_progress",
+  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41319510340",
+  "capturedAt": "2026-11-01T15:13:56.892274+00:00"
 }

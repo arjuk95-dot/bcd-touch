@@ -16,9 +16,20 @@ Timestamped look displacement becomes velocity in `BCDMouseJoystick`, not a vect
 
 Game Options → Game touch pack prepares existing installs. The pack toolbar exposes explicit contexts, editor, actual hit regions, stock controls for the session and reset. In the editor, controls can move, resize and change opacity; hold buttons can gain drag aim and an optional left duplicate. The inspector exposes binding labels, sensitivity, vertical scale, inversion and dead-zone compensation. Invalid edits that cover the reserved rectangle are rejected. Overrides are stored by stable game identity separately from generated bindings and survive regeneration when the action/control can still be matched.
 
+Game Options also saves **Use generated controls next launch** or **Use stock input profile next launch** per game. The stock choice retains that profile's relative-mouse aim option. Switching input identities waits for a new launch; the existing toolbar's stock-for-this-session action remains available.
+
 ## Build and checks
 
-Use a Mac with an iOS 26 SDK or the fork's manual Actions workflow. Windows cannot link this iOS app. Avoid recursive local submodule checkout on a nearly full disk; source changes and desktop-worker checks need only the top-level checkout.
+Use a Mac with an iOS 26 SDK or the fork's manual Actions workflow. Windows cannot link this iOS app. Source changes and desktop-worker checks need only the top-level checkout; CI retrieves the engine dependencies.
+
+The engine submodule pins are unchanged:
+
+| Submodule | Commit |
+|---|---|
+| FEX | `959ac0616918ae1afe98f57d5daaabb07bb196f0` |
+| Wine | `469e08af66c2638b74422e3d068620d400272d55` |
+| DXMT | `8ae252b401bdee3ba725e391fba24dc2792f21af` |
+| Madeira Dock | `72558e416a390f3669457930f09a389e54f49556` |
 
 ```powershell
 gh workflow run touch-checks.yml --repo arjunkl/bcd-touch --ref wo-bcd-touch-001
