@@ -16,5 +16,9 @@ with tempfile.TemporaryDirectory(prefix='bcd-touch-check-') as tmp:
     if os.uname().sysname=='Darwin':
         sdk=subprocess.check_output(['xcrun','--sdk','iphonesimulator','--show-sdk-path'],text=True).strip()
         arch=os.uname().machine
-        subprocess.run(['xcrun','swiftc','-typecheck','-parse-as-library','-target',f'{arch}-apple-ios18.0-simulator','-sdk',sdk,*map(str,core),str(ROOT/'app/Madeira/BCDControlPackLive.swift'),str(ROOT/'app/Madeira/BCDControlPackSurface.swift'),str(ROOT/'tests/host/touch_pack_ui_stubs.swift')],check=True)
+        library=(ROOT/'app/Madeira/Library.swift').read_text()
+        def bridge(name):return library.split('// WO-BCD-TOUCH-001 '+name+' actor bridge begin',1)[1].split('// WO-BCD-TOUCH-001 '+name+' actor bridge end',1)[0]
+        hooks=tmp/'LegacyHooks.swift'
+        hooks.write_text('import Foundation\nstruct DockGame {}\nfinal class LegacyHookProbe {\nfunc begin(_ entry:LibraryEntry,remember:Bool=true,dock:DockGame?=nil) {\n'+bridge('launch')+'\n}\nfunc save(_ entry:LibraryEntry,isNew:Bool) {\n'+bridge('install')+'\n}\n}')
+        subprocess.run(['xcrun','swiftc','-typecheck','-parse-as-library','-target',f'{arch}-apple-ios18.0-simulator','-sdk',sdk,*map(str,core),str(ROOT/'app/Madeira/BCDControlPackLive.swift'),str(ROOT/'app/Madeira/BCDControlPackSurface.swift'),str(ROOT/'tests/host/touch_pack_ui_stubs.swift'),str(hooks)],check=True)
         print('PASS: production pack views typechecked against iOS SDK (engine stubs)')

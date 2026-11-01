@@ -908,7 +908,9 @@ final class LibraryModel: ObservableObject {
         } else { next.append(entry) }
         persist(next)
         // Modified for WO-BCD-TOUCH-001: local imports and store-neutral saves get the same preparation path.
-        if isNew { BCDPackStore.shared.prepare(entry) }
+        // WO-BCD-TOUCH-001 install actor bridge begin
+        if isNew { let installed = entry; Task { @MainActor in BCDPackStore.shared.prepare(installed) } }
+        // WO-BCD-TOUCH-001 install actor bridge end
     }
     func remove(_ id: UUID) {
         persist(entries.filter { $0.id != id })
@@ -936,7 +938,8 @@ final class LibraryModel: ObservableObject {
         entry.folderBytes = SteamInstallFiles.sizeOnDisk(appID: game.id, steamApps: Self.drive.appendingPathComponent(game.library, isDirectory: true)) ?? entry.folderBytes
         save(entry)
         // The real Steam install completion; identity-keyed requests coalesce duplicate events.
-        BCDPackStore.shared.prepare(entry)
+        let installed = entry
+        Task { @MainActor in BCDPackStore.shared.prepare(installed) }
     }
     /// A Steam game was uninstalled: its entry goes with its files.
     func removeSteam(appID: Int) {
@@ -1208,10 +1211,19 @@ final class LibraryModel: ObservableObject {
     /// Dock start): it is neither added to the library nor stamped as played.
     /// `dock`: the game a Madeira Dock start launches (DockStartScreen).
     func begin(_ entry: LibraryEntry, remember: Bool = true, dock: DockGame? = nil) {
-        BCDPackStore.shared.applyLaunchPreference(entry)
-        BCDPackStore.shared.activate(entry)
-        GamepadInput.packControllerSession = BCDPackStore.shared.enabled && BCDPackStore.shared.pack?.inputMode == "controller"
-        GamepadInput.shared.configurePack(enabled: GamepadInput.packControllerSession, accepting: false, calibration: BCDPackStore.shared.pack?.aim ?? BCDMouseJoystick.Calibration())
+        // WO-BCD-TOUCH-001 launch actor bridge begin
+        if !Thread.isMainThread {
+            DispatchQueue.main.async { [weak self] in self?.begin(entry, remember: remember, dock: dock) }
+            return
+        }
+        let packAvailable = MainActor.assumeIsolated {
+            BCDPackStore.shared.applyLaunchPreference(entry)
+            BCDPackStore.shared.activate(entry)
+            GamepadInput.packControllerSession = BCDPackStore.shared.enabled && BCDPackStore.shared.pack?.inputMode == "controller"
+            GamepadInput.shared.configurePack(enabled: GamepadInput.packControllerSession, accepting: false, calibration: BCDPackStore.shared.pack?.aim ?? BCDMouseJoystick.Calibration())
+            return BCDPackStore.shared.pack != nil
+        }
+        // WO-BCD-TOUCH-001 launch actor bridge end
         wine_exit_status_reset()
         quitRequested = false
         endedByWatch = nil; endWatchNote = ""
@@ -1249,14 +1261,16 @@ final class LibraryModel: ObservableObject {
         }
         controls.visible = entry.touchControls
         // Touch-only offline/invalid-pack fallback, in this fork's own profile/container.
-        if BCDPackStore.shared.pack == nil, entry.desktop != true {
-            controls.visible = true
-            if entry.controls?.isEmpty ?? true {
-                let screen = ControlPresetsModel.currentScreen()
-                controls.controls = entry.controllerMode == "keys" ? ControlPresetLayout.keyboard(for: screen) : ControlPresetLayout.xbox(for: screen)
-                controls.layoutID = entry.controllerMode == "keys" ? ControlPresetLayout.keyboardID : ControlPresetLayout.xboxID
+        if !packAvailable, entry.desktop != true {
+            MainActor.assumeIsolated {
+                controls.visible = true
+                if entry.controls?.isEmpty ?? true {
+                    let screen = ControlPresetsModel.currentScreen()
+                    controls.controls = entry.controllerMode == "keys" ? ControlPresetLayout.keyboard(for: screen) : ControlPresetLayout.xbox(for: screen)
+                    controls.layoutID = entry.controllerMode == "keys" ? ControlPresetLayout.keyboardID : ControlPresetLayout.xboxID
+                }
+                if controls.controls.contains(where: { $0.action.padName != nil }) { GamepadInput.shared.reserveSessionSlot(touchControls: true, force: true) }
             }
-            if controls.controls.contains(where: { $0.action.padName != nil }) { GamepadInput.shared.reserveSessionSlot(touchControls: true, force: true) }
         }
         controls.sizeScale = min(max(entry.controlSize ?? 1, 0.5), 2)
         // madeira-bcd 578 (lead): the built-in default is NOT put on screen at session start: a player may keep touch

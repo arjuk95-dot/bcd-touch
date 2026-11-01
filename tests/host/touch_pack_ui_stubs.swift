@@ -18,6 +18,7 @@ struct LibraryEntry {
 @MainActor final class GamepadInput {
     static let shared = GamepadInput()
     static var sessionHIDKind:String?
+    static var packControllerSession=false
     func configurePack(enabled:Bool, accepting:Bool, calibration:BCDMouseJoystick.Calibration) {}
     func packTouch(owner:UUID,value:GamepadSample?) {}
     func packLook(owner:UUID,phase:Int,dx:Double=0,dy:Double=0,time:Double) {}
