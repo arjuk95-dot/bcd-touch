@@ -1,0 +1,21 @@
+{
+  "attempts": 1,
+  "finished": 1793543519.1994848,
+  "generated": true,
+  "generation": "initial",
+  "key": "b2c8962db5b66d02870857cbc88678f5bc0f7e2357445534b137f349aeada2c8",
+  "physicallyTested": false,
+  "researchEnabled": true,
+  "started": 1793543439.8435795,
+  "validated": true,
+  "webSearchCalls": 1,
+  "searches": [
+    {
+      "query": "site.steamcommunity.com/sharedfiles/filedetails 2821074709 Dread Delusion controls ...",
+      "type": "web_search"
+    }
+  ],
+  "generatedPackSHA256": "f742744e58586fa586a9a559d012a26c954c04fe7bba420955cffb7c32aff205",
+  "deliveredPackSHA256": "693200872d9e1e799716c25f6e9e641111aad348a1e67daa5d731d97b90b439e",
+  "review": "Removed an incorrect model caveat about renderer styling; production renderer already supplies thin translucent outlines. No binding changes."
+}

@@ -458,7 +458,7 @@ jobs:
         \ \\\n  -DLLVM_ENABLE_TERMINFO=Off -DLLVM_ENABLE_LIBXML2=Off \\\n  -DLLVM_ENABLE_ZSTD=Off -DLLVM_ENABLE_ZLIB=Off \\\n  > \"$GITHUB_WORKSPACE/llvm-ios-cfg.log\"\
         \ 2>&1\ncmake --build toolchains/llvm-ios-build -j\"$(sysctl -n hw.ncpu)\" \\\n  > \"$GITHUB_WORKSPACE/llvm-ios-build.log\" 2>&1\n"
     - name: Verify LLVM iOS build
-      if: always()
+      if: always() && steps.llvmcache.outcome == 'success'
       shell: bash
       run: "set +e\nshopt -s nullglob\nLIBS=(toolchains/llvm-ios-build/lib/*.a)\nN=${#LIBS[@]}\necho \"llvm-ios-build static libs: $N\"\necho \"::notice::llvm-ios-build\
         \ has $N static libs\"\necho \"-- toolchains tree --\"\nls -la toolchains 2>&1 | head -20\nls -la toolchains/llvm-ios-build 2>&1 | head -20\nif [ \"$N\" -lt\
@@ -931,6 +931,8 @@ jobs:
       with:
         name: BCD-Touch-Lab-build
         path: 'build-out/BCD-Touch-Lab-unsigned.ipa
+
+          build-out/converter-provenance.json
 
           *.log'
         if-no-files-found: warn

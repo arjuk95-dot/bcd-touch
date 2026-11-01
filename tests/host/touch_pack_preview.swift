@@ -51,8 +51,8 @@ import UIKit
                 hidden.configure(p,context:"unsupported-context-fixture",debug:false,editing:false)
                 let transparent=UIGraphicsImageRendererFormat();transparent.scale=1;transparent.opaque=false
                 let empty=UIGraphicsImageRenderer(size:hidden.bounds.size,format:transparent).image { _ in hidden.draw(hidden.bounds) }
-                let bytes=CFDataGetBytePtr(empty.cgImage!.dataProvider!.data!)!
-                assert((0..<(empty.cgImage!.bytesPerRow * empty.cgImage!.height)).allSatisfy { bytes[$0] == 0 }, "Inactive context has visible controls")
+                let pixels=empty.cgImage!.dataProvider!.data! as Data
+                assert(pixels.allSatisfy { $0 == 0 }, "Inactive context has visible controls")
             }
             try? Data("PASS: inactive context hides all acquisition regions, radial and gesture controls".utf8).write(to:folder.appendingPathComponent(title+"-context-visibility.txt"))
         }

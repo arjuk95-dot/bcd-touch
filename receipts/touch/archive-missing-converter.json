@@ -1,0 +1,23 @@
+{
+  "conclusion": "failure",
+  "headSha": "8f37949bfb1b6100f71ed4908994393dc37841ea",
+  "jobs": [
+    {
+      "name": "build",
+      "status": "completed",
+      "conclusion": "failure",
+      "steps": [
+        {
+          "completedAt": "2026-11-01T14:23:37Z",
+          "conclusion": "failure",
+          "name": "Locate Metal Shader Converter headers",
+          "number": 76,
+          "startedAt": "2026-11-01T14:23:37Z",
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41313095321"
+}

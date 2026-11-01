@@ -29,6 +29,8 @@ gh workflow run touch-ipa.yml --repo arjunkl/bcd-touch --ref wo-bcd-touch-001
 
 `touch-ipa.yml` derives the dependency/build phases from upstream's v0.1.626 workflow. It does not use upstream OTA credentials or publish signed releases. It archives Debug, preserving upstream's game-running configuration, and uploads `BCD-Touch-Lab-unsigned.ipa` only after successful archive. Native Wine targets are corrected to the targets actually emitted by the pinned `tools/makedep.c`: `__tooldeps__` and `include/all`. Full upstream tests are not run by this reduced archive job; targeted checks run in a separate workflow.
 
+The upstream Git tree also omits the converter dylib expected by `build/madeira-d3d12/deps.sh`. CI runs `python3 tools/touch-packs/stage-converter.py` to recover only that dependency from the hash-pinned v0.1.626 release. The release-file digest differs from the recorded source-file digest; staging writes an explicit per-file pin into the CI working copy of deps.sh and records both digests and the verified archive digest in `converter-provenance.json`, also bundled beside the converter. It does not claim the files are byte-identical. It does not install the stock IPA or reuse its app executable. The archive remains a fresh build of the fork.
+
 After dependencies and staged notices are built by that workflow, the archive command is:
 
 ```sh
@@ -39,7 +41,7 @@ The schema/worker command and preparation instructions are in [tools/touch-packs
 
 ## Pilot and physical receipt
 
-Dread Delusion and Chronicles of the Wolf were confirmed by the user to run on the iPhone. That confirmation predates this fork. Dread's gameplay binding meanings are unresolved and its controller pack uses raw labels. Chronicles' keyboard pack derives named actions from the observed player config; its controller mapping remains unresolved. Neither pack is physically tested.
+Dread Delusion and Chronicles of the Wolf were confirmed by the user to run on the iPhone. That confirmation predates this fork. Dread's controller pack includes five dated developer-documented defaults (equipment, map and next weapon/item/spell); attack/interact/jump/block remain raw or unresolved. Installed-build freshness and player remaps still need confirmation. Chronicles' keyboard pack derives named actions from the observed player config; its controller mapping remains unresolved. Neither pack is physically tested.
 
 Pending on iPhone: installation/JIT launch; current game bindings and camera options; strafe+hold fire+fine correction; lift/reland/long sweep; button-crossing; left fire; hold-and-drag; cancellation; menu/focus transitions; gyro and physical controller regression; launch persistence; latency and feel. Record the game's horizontal/vertical controller sensitivity, acceleration, dead zone and inversion alongside pack calibration. Do not infer a comfort verdict from the host timing tests.
 

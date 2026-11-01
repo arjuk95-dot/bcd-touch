@@ -204,7 +204,7 @@ struct BCDPackLayer: View {
 private struct BCDPackInspector: View {
     @ObservedObject var store = BCDPackStore.shared
     @State var selected = ""
-    @State var pad = false
+    @State var pad = UIDevice.current.userInterfaceIdiom == .pad
     func edit(_ f: (inout BCDControlPack) -> Void) { if var p = store.pack { f(&p); store.saveEdits(p) } }
     var body: some View {
         VStack {

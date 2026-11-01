@@ -25,6 +25,8 @@ The client hashes canonical identity JSON (executable, store ID, edition, build 
 
 The first-person placement policy reserves swipe space before allocating low left movement, a large right primary, nearby secondary controls and peripheral menu controls. The Chronicles adapter reads the observed named `[varcom]` key assignments, overriding model guesses; it does not decode undocumented numeric gamepad codes. The app also collects bounded known input files from the selected installation, such as bindings.json, controls.json and DefaultInput.ini. It does not crawl the disk or export registry/account files. Other games lacking reliable supplied or official binding evidence retain raw controller labels. More installed-file adapters remain useful for broader verified coverage.
 
+Reviewed reference data lives under `references/`, separately from player remaps. The Dread reference records five historical developer-documented defaults with dates and primary URLs: X equipment, View map, D-pad Down next weapon, Right next item and Left next spell. These are defaults rather than proof of the installed build's current bindings. Attack/interact/jump/block remain unresolved. The latest real generation fixture used live web search and this reviewed evidence; receipts record one completed search call. The worker sets `web_search="live"` explicitly in `codex exec`; the root CLI search flag alone did not expose the tool in the tested CLI version.
+
 ```powershell
 python tools/touch-packs/worker.py validate packs/pilots/dread-delusion.json
 python tools/touch-packs/worker.py generate packs/requests/dread-delusion.json --state C:/Users/arjun/.codex/bcd-touch-worker-state
