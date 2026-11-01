@@ -3,8 +3,14 @@ on: [workflow_dispatch]
 jobs:
   preview:
     runs-on: macos-15
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - name: Select newest Xcode for simulator services
+        run: |
+          NEWEST=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          sudo xcode-select -s "$NEWEST/Contents/Developer"
+          xcodebuild -version
       - name: Capture production renderer (no guest game)
         run: python3 tools/touch-packs/simulator-preview.py
       - uses: actions/upload-artifact@v4

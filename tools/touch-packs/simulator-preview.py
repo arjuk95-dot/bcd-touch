@@ -19,6 +19,8 @@ for family,name in [('phone','iPhone 16 Pro Max'),('pad','iPad Pro 11-inch (M4)'
     assert candidates,'No simulator available'
     choices.append((family,candidates[-1]))
 receipt=[]
+(out/'selected-devices.json').write_text(json.dumps(choices,indent=2))
+print('Selected simulator devices:',choices,flush=True)
 with tempfile.TemporaryDirectory(prefix='touch-preview-') as tmp:
     tmp=Path(tmp);app=tmp/'TouchPreview.app';app.mkdir()
     text=(ROOT/'app/Madeira/TouchGamepad.swift').read_text()
@@ -30,7 +32,7 @@ with tempfile.TemporaryDirectory(prefix='touch-preview-') as tmp:
     for family,device in choices:
         uid=device['udid']
         if device['state']!='Booted':subprocess.run(['xcrun','simctl','boot',uid],check=True)
-        subprocess.run(['xcrun','simctl','bootstatus',uid,'-b'],check=True)
+        subprocess.run(['xcrun','simctl','bootstatus',uid,'-b'],check=True,timeout=180)
         for pilot in (ROOT/'packs/pilots').glob('*.json'):
             shutil.copyfile(pilot,app/'pack.json')
             subprocess.run(['xcrun','simctl','install',uid,str(app)],check=True)
