@@ -12,7 +12,7 @@ import urllib.request
 import urllib.error
 HERE=Path(__file__).resolve().parent
 sys.path.insert(0,str(HERE));from worker import canonical,key_for,validate
-p=argparse.ArgumentParser();p.add_argument('--state',required=True);p.add_argument('--codex',default='codex');a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('--state',required=True);p.add_argument('--codex',default='codex');p.add_argument('--games',nargs='+',default=['dread-delusion','chronicles-of-the-wolf']);a=p.parse_args()
 state=Path(a.state).resolve();state.mkdir(parents=True,exist_ok=True)
 token=secrets.token_urlsafe(32);tokenpath=state/'pairing-token.txt';tokenpath.write_text(token)
 cmd=[sys.executable,str(HERE/'worker.py'),'serve','--state',str(state/'server'),'--token-file',str(tokenpath),'--port','18937','--codex',a.codex]
@@ -20,7 +20,7 @@ server=subprocess.Popen(cmd,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
 receipt={'kind':'desktop HTTP client fixture using genuine Codex generation; no iOS install event/device gameplay','games':[]}
 try:
     time.sleep(1)
-    for title in ['dread-delusion','chronicles-of-the-wolf']:
+    for title in a.games:
         req=json.loads((HERE.parents[1]/'packs/requests'/(title+'.json')).read_text(encoding='utf-8'));key=key_for(req['identity'])
         url='http://127.0.0.1:18937/v1/packs/'+key
         def post():
