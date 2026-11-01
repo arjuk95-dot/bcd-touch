@@ -45,7 +45,16 @@ import UIKit
                     let name=title+"-"+(isPad ? "pad" : "phone")+"-"+(debug ? "hits" : "hud")+".png"
                     try? image.pngData()?.write(to:folder.appendingPathComponent(name))
                 }
+                // Unsupported context must leave no button, radial or gesture drawing.
+                // Acquisition uses the same visibility predicate, avoiding invisible blockers.
+                let hidden=BCDPackView();hidden.frame=CGRect(x:0,y:0,width:320,height:180)
+                hidden.configure(p,context:"unsupported-context-fixture",debug:false,editing:false)
+                let transparent=UIGraphicsImageRendererFormat();transparent.scale=1;transparent.opaque=false
+                let empty=UIGraphicsImageRenderer(size:hidden.bounds.size,format:transparent).image { _ in hidden.draw(hidden.bounds) }
+                let bytes=CFDataGetBytePtr(empty.cgImage!.dataProvider!.data!)!
+                assert((0..<(empty.cgImage!.bytesPerRow * empty.cgImage!.height)).allSatisfy { bytes[$0] == 0 }, "Inactive context has visible controls")
             }
+            try? Data("PASS: inactive context hides all acquisition regions, radial and gesture controls".utf8).write(to:folder.appendingPathComponent(title+"-context-visibility.txt"))
         }
     }
 }

@@ -19,7 +19,9 @@ else:
     with tempfile.TemporaryDirectory(prefix='bcd-converter-') as tmp:
         archive = Path(tmp) / 'BCD.ipa'
         urllib.request.urlretrieve(URL, archive)
-        if hashlib.file_digest(archive.open('rb'), 'sha256').hexdigest() != IPA_SHA:
+        with archive.open('rb') as stream:
+            digest = hashlib.file_digest(stream, 'sha256').hexdigest()
+        if digest != IPA_SHA:
             raise RuntimeError('Upstream v0.1.626 IPA digest mismatch')
         with zipfile.ZipFile(archive) as z:
             candidates = [n for n in z.namelist() if n.endswith('/d3d12/libmetalirconverter.dylib')]

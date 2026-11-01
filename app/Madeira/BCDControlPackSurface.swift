@@ -48,6 +48,12 @@ final class BCDPackView: UIView {
     private var unit: CGFloat { min(safe.width, safe.height) }
     private func center(_ c: BCDControlPack.Control) -> CGPoint { CGPoint(x: safe.minX + c.x * safe.width, y: safe.minY + c.y * safe.height) }
     private func action(_ id: String) -> BCDControlPack.Action? { pack?.actions.first { $0.id == id && $0.contexts.contains(context) } }
+    private var radialActions: [BCDControlPack.Action] { (pack?.radial ?? []).compactMap { action($0) } }
+    private func visible(_ c: BCDControlPack.Control) -> Bool {
+        if c.role == "radial" { return !radialActions.isEmpty }
+        if c.role == "gesture" { return pack?.gestures.contains { action($0.action) != nil } == true }
+        return action(c.action) != nil
+    }
     func clear() {
         epoch = UUID()
         for f in fingers.values { release(f.owner) }
@@ -84,7 +90,7 @@ final class BCDPackView: UIView {
         for t in touches {
             let point = t.location(in: self)
             let c = layout?.controls.reversed().first { c in
-                (c.role == "radial" || c.role == "gesture" || action(c.action) != nil) && hypot(point.x - center(c).x, point.y - center(c).y) <= c.hitRadius * unit
+                visible(c) && hypot(point.x - center(c).x, point.y - center(c).y) <= c.hitRadius * unit
             }
             let role = editing ? "edit" : (c?.role ?? "look")
             var f = Finger(role: role, control: c, start: point, last: point, time: t.timestamp)
@@ -117,16 +123,16 @@ final class BCDPackView: UIView {
                 } else if f.role == "move" {
                     let r = max(1, unit * 0.14)
                     GamepadInput.shared.packTouch(owner: f.owner, value: TouchPadAction.sample("LS", x: Double((p.x - f.start.x) / r), y: Double((f.start.y - p.y) / r)))
-                } else if f.role == "radial", let pack, !pack.radial.isEmpty {
+                } else if f.role == "radial", !radialActions.isEmpty {
                     let previous = f.selection
                     let dx = p.x - f.start.x, dy = p.y - f.start.y
                     if hypot(dx, dy) > unit * 0.06 {
                         let angle = atan2(dy, dx) + .pi * 2
-                        f.selection = Int((angle.truncatingRemainder(dividingBy: .pi * 2)) / (.pi * 2) * Double(pack.radial.count))
+                        f.selection = Int((angle.truncatingRemainder(dividingBy: .pi * 2)) / (.pi * 2) * Double(radialActions.count))
                     } else { f.selection = nil }
                     if previous != f.selection {
                         release(f.owner)
-                        if let index = f.selection, let a = action(pack.radial[index]), a.behavior == "hold" { send(a, owner: f.owner) }
+                        if let index = f.selection, radialActions[index].behavior == "hold" { send(radialActions[index], owner: f.owner) }
                     }
                 }
                 f.last = p
@@ -143,7 +149,7 @@ final class BCDPackView: UIView {
             guard let f = fingers.removeValue(forKey: ObjectIdentifier(t)) else { continue }
             release(f.owner)
             guard !cancelled, let pack else { continue }
-            if f.role == "radial", let index = f.selection, let a = action(pack.radial[index]), a.behavior != "hold" { pulse(a) }
+            if f.role == "radial", let index = f.selection, radialActions.indices.contains(index), radialActions[index].behavior != "hold" { pulse(radialActions[index]) }
             if f.role == "button" || f.role == "fireAim", let c = f.control, let a = action(c.action), a.behavior == "release" { pulse(a) }
             if f.role == "gesture" {
                 let p = t.location(in: self), dx = p.x - f.start.x, dy = p.y - f.start.y
@@ -172,7 +178,7 @@ final class BCDPackView: UIView {
             ctx.setFillColor(UIColor.green.withAlphaComponent(0.1).cgColor)
             ctx.fill(CGRect(x: safe.minX + a.x * safe.width, y: safe.minY + a.y * safe.height, width: a.width * safe.width, height: a.height * safe.height))
         }
-        for c in layout.controls where c.role == "radial" || c.role == "gesture" || action(c.action) != nil {
+        for c in layout.controls where visible(c) {
             let p = center(c), r = c.radius * unit
             let circle = CGRect(x: p.x-r, y: p.y-r, width: r*2, height: r*2)
             ctx.setStrokeColor(UIColor.white.withAlphaComponent(c.opacity * 0.65).cgColor); ctx.setLineWidth(1); ctx.strokeEllipse(in: circle)
@@ -191,10 +197,10 @@ final class BCDPackView: UIView {
             }
         }
         for f in fingers.values where f.role == "radial" {
-            for (i, id) in (pack?.radial ?? []).enumerated() {
-                let angle = Double(i) / Double(max(1, pack?.radial.count ?? 1)) * .pi * 2 + .pi / Double(max(1, pack?.radial.count ?? 1))
+            for (i, a) in radialActions.enumerated() {
+                let angle = Double(i) / Double(max(1, radialActions.count)) * .pi * 2 + .pi / Double(max(1, radialActions.count))
                 let p = CGPoint(x:f.start.x + CGFloat(Foundation.cos(angle))*unit*0.2, y:f.start.y + CGFloat(Foundation.sin(angle))*unit*0.2)
-                ((action(id)?.label ?? id) as NSString).draw(at:p, withAttributes:[.font:UIFont.boldSystemFont(ofSize:12), .foregroundColor:f.selection == i ? UIColor.yellow : UIColor.white])
+                (a.label as NSString).draw(at:p, withAttributes:[.font:UIFont.boldSystemFont(ofSize:12), .foregroundColor:f.selection == i ? UIColor.yellow : UIColor.white])
             }
         }
     }

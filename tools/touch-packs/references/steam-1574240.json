@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "storeID": "steam:1574240",
+  "retrieved": "2026-11-01",
+  "status": "Documented historical defaults; installed build and personal remaps unverified",
+  "sources": [
+    {
+      "id": "developer-guide-2022",
+      "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2821074709",
+      "author": "Lovely Hellplace and Lazarus",
+      "edition": "Early access, guide updated 2022-06-18",
+      "bindings": [
+        {"id": "equipment", "label": "Equipment", "output": "X", "behavior": "tap", "icon": "bag"},
+        {"id": "next-weapon", "label": "Next weapon", "output": "D↓", "behavior": "tap", "icon": "arrow.triangle.2.circlepath"},
+        {"id": "next-item", "label": "Next item", "output": "D→", "behavior": "tap", "icon": "cross.case"},
+        {"id": "next-spell", "label": "Next spell", "output": "D←", "behavior": "tap", "icon": "sparkles"}
+      ]
+    },
+    {
+      "id": "map-patch-2022",
+      "url": "https://steamcommunity.com/games/1574240/announcements/detail/3347883562123143180",
+      "author": "Dread Delusion developer announcement",
+      "edition": "Version 0.5.036, 2022-08-19",
+      "bindings": [
+        {"id": "map", "label": "Map", "output": "View", "behavior": "tap", "icon": "map"}
+      ],
+      "note": "The announcement calls the Xbox View button BACK. Body verified through Valve's public ISteamNews endpoint."
+    }
+  ],
+  "unresolved": [
+    "Attack, interact, jump and block controller defaults lack verified developer documentation in this lookup.",
+    "These historical defaults require comparison with the installed edition/build and any personal remaps.",
+    "A cycle action does not expose named weapon, spell or item slots."
+  ]
+}
