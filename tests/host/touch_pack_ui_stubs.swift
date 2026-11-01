@@ -4,8 +4,9 @@ import Combine
 import UIKit
 struct LibraryEntry {
     var id = UUID(); var title = "Fixture"; var desktop: Bool?; var steamAppID: Int?
-    var launchRelativePath = "fixture.exe"; var steamMetadataInstall: String?; var controllerBinds: [String:String]?
+    var launchRelativePath = "fixture.exe"; var relativePath = "fixture.exe"; var steamMetadataInstall: String?; var controllerBinds: [String:String]?
     static let hostDrive = URL(fileURLWithPath:"/tmp/fixture-drive")
+    static func hostURL(ofWindowsPath:String) -> URL? { hostDrive.appendingPathComponent("fixture.exe") }
 }
 @MainActor final class LibraryModel: ObservableObject {
     static let shared = LibraryModel()

@@ -48,13 +48,30 @@ import UIKit
         let e = JSONEncoder(); e.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         return (try? e.encode(value)) ?? Data()
     }
+    private static func bindingText(_ url: URL) -> String? {
+        guard let handle = try? FileHandle(forReadingFrom:url) else { return nil }
+        defer { try? handle.close() }
+        guard let data = try? handle.read(upToCount:32769), data.count <= 32768 else { return nil }
+        return String(data:data,encoding:.utf8)
+    }
     func request(_ entry: LibraryEntry) -> Request {
         var bindings: [String: String] = [:]
         // Known input file only. Never forward full registry hives, saves, Steam accounts or credentials.
         if entry.title.localizedCaseInsensitiveContains("Chronicles of the Wolf") {
             let path = "users/mobile/AppData/Roaming/Chronicles of the Wolf/config"
-            if let d = try? Data(contentsOf: LibraryEntry.hostDrive.appendingPathComponent(path)), d.count <= 32768,
-               let s = String(data: d, encoding: .utf8) { bindings[path] = s }
+            if let text = Self.bindingText(LibraryEntry.hostDrive.appendingPathComponent(path)) { bindings[path] = text }
+        }
+        // Bounded known input-file names in the selected install only. No directory crawl or account/registry export.
+        if let selected = LibraryEntry.hostURL(ofWindowsPath:"C:\\" + entry.relativePath.replacingOccurrences(of:"/",with:"\\")) {
+            let folder = (selected.pathExtension.lowercased() == "exe" ? selected.deletingLastPathComponent() : selected).resolvingSymlinksInPath()
+            var bytes = bindings.values.reduce(0) { $0 + $1.utf8.count }
+            var seen = Set<String>()
+            for name in ["bindings.json", "controls.json", "input.cfg", "keybindings.ini", "config/input.json", "settings/input.json", "Config/DefaultInput.ini", "config/DefaultInput.ini"] {
+                let url = folder.appendingPathComponent(name).resolvingSymlinksInPath()
+                guard url.path.hasPrefix(folder.path + "/"), seen.insert(url.path).inserted,
+                      let text = Self.bindingText(url), bytes + text.utf8.count <= 49152 else { continue }
+                bindings["install/"+name] = text; bytes += text.utf8.count
+            }
         }
         if let remaps = entry.controllerBinds { bindings["bcd-player-remaps"] = String(data: Self.encoded(remaps), encoding: .utf8) }
         let identity = BCDControlPack.Identity(executable: entry.launchRelativePath.lowercased(), storeID: entry.steamAppID.map { "steam:\($0)" } ?? "local",

@@ -61,6 +61,8 @@
 	     chunks are always checked against the manifest's SHA-1. Every other request keeps App Transport Security. -->
 	<key>NSAppTransportSecurity</key>
 	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
 		<key>NSExceptionDomains</key>
 		<dict>
 			<key>dl.steam.clngaa.com</key>
