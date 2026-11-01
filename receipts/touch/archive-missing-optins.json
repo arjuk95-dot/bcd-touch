@@ -1,0 +1,24 @@
+{
+  "conclusion": "failure",
+  "headSha": "c8634675d86e0b7c09f84665a5d73deeddd5b27d",
+  "jobs": [
+    {
+      "name": "build",
+      "status": "completed",
+      "conclusion": "failure",
+      "steps": [
+        {
+          "completedAt": "2026-11-01T15:30:51Z",
+          "conclusion": "failure",
+          "name": "Verify the opt-in DLLs the lists and rules name",
+          "number": 161,
+          "startedAt": "2026-11-01T15:30:51Z",
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41319510340",
+  "capturedAt": "2026-11-01T16:29:12.102011+00:00"
+}

@@ -20,7 +20,7 @@ if state.exists():
     data['deliveredPackSHA256']=hashlib.sha256((ROOT/'packs/pilots/dread-delusion.json').read_bytes()).hexdigest()
     data['review']='Removed an incorrect model caveat about renderer styling; production renderer already supplies thin translucent outlines. No binding changes.'
     (out/'generation-research.json').write_text(json.dumps(data,indent=2)+'\n')
-for run,name in [('41319507077','host-checks'),('41312177828','guest-diagnostic-build'),('41319510340','archive-attempt'),('41313095321','archive-missing-converter'),('41316978984','archive-release-pin'),('41318954382','production-publisher'),('41319513406','simulator-previews')]:
+for run,name in [('41325781149','host-checks'),('41312177828','guest-diagnostic-build'),('41325781697','archive-attempt'),('41322897101','archive-actor-hooks'),('41319510340','archive-missing-optins'),('41322894288','base-runtime-preflight'),('41313095321','archive-missing-converter'),('41316978984','archive-release-pin'),('41318954382','production-publisher'),('41324076244','simulator-previews')]:
     r=subprocess.run(['gh','run','view',run,'--repo','arjunkl/bcd-touch','--json','headSha,url,status,conclusion,jobs'],capture_output=True,text=True,check=True)
     data=json.loads(r.stdout)
     data['capturedAt']=datetime.now(timezone.utc).isoformat()

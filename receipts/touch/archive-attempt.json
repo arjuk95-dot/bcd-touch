@@ -1,6 +1,6 @@
 {
   "conclusion": "",
-  "headSha": "c8634675d86e0b7c09f84665a5d73deeddd5b27d",
+  "headSha": "c06c500614690f4e65fd935c54a3f9e1b793e39c",
   "jobs": [
     {
       "name": "build",
@@ -10,15 +10,15 @@
         {
           "completedAt": "0001-01-01T00:00:00Z",
           "conclusion": "",
-          "name": "Build d3d11-src.dll (DXMT d3d11 from source, SwapDeviceContextState)",
-          "number": 57,
-          "startedAt": "2026-11-01T15:13:36Z",
+          "name": "Build xtajit64.dll (FEX fixes, AVX opt-in)",
+          "number": 66,
+          "startedAt": "2026-11-01T16:28:45Z",
           "status": "in_progress"
         }
       ]
     }
   ],
   "status": "in_progress",
-  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41319510340",
-  "capturedAt": "2026-11-01T15:13:56.892274+00:00"
+  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41325781697",
+  "capturedAt": "2026-11-01T16:29:09.159410+00:00"
 }
