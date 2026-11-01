@@ -484,6 +484,8 @@ jobs:
         \ in air_msad air_samplepos air_tessellation; do\n  xcrun -sdk macosx metal -o \"$s.air\" -c \"$SHADERS/$s.metal\" \\\n    -std=metal3.1 --target=air64-apple-macos14.0\n\
         \  # meson passes `xxd -n <basename>`; that flag is not in every xxd,\n  # so rename the symbols instead (air_msad_air -> air_msad).\n  xxd -i \"$s.air\"\
         \ | sed \"s/${s}_air/${s}/g\" > \"$s.h\"\ndone\nls -la\n"
+    - name: Restore pinned converter omitted from upstream Git tree
+      run: python3 tools/touch-packs/stage-converter.py
     - name: Locate Metal Shader Converter headers
       shell: bash
       run: "INC=\"$GITHUB_WORKSPACE/madeira-d3d12/third_party/metal-shader-converter/include\"\nif ! bash -c 'source build/madeira-d3d12/deps.sh'; then\n  echo \"\

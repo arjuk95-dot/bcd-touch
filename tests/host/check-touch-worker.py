@@ -37,5 +37,11 @@ for path in packs:
         personal={'x':.12,'y':.88};w.atomic(Path(tmp)/'overrides.json',personal)
         w.atomic(Path(tmp)/(key+'.pack.json'),p)
         assert json.loads((Path(tmp)/'overrides.json').read_text(encoding='utf-8'))==personal
+        # Fixture generator proves a corrupt worker cache is queued for repair, rather than served or stuck at 422.
+        calls=[]
+        worker.generate=lambda key,req:(calls.append(key),w.atomic(Path(tmp)/(key+'.pack.json'),p))
+        broken=copy.deepcopy(p);broken['version']=999;w.atomic(Path(tmp)/(key+'.pack.json'),broken)
+        assert worker.submit(key,request)[0]==202
         worker.pool.shutdown();restarted.pool.shutdown()
+        assert calls==[key];w.validate(json.loads((Path(tmp)/(key+'.pack.json')).read_text(encoding='utf-8')),p['identity'])
 print('PASS: pilot validation, wrong identity, mixed input rejection, hit-region limits, cached/duplicate/restart and separate override persistence (host fixtures)')
