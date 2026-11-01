@@ -49,6 +49,8 @@ import Foundation
             assert((try? invalid.validate()) == nil)
             invalid = p; invalid.actions[0].output = "mouse:left"; invalid.inputMode = "controller"
             assert((try? invalid.validate()) == nil)
+            invalid = p; invalid.identity.build = "wrong-build"
+            assert((try? invalid.validate(for:p.identity)) == nil)
         }
         let d = try JSONSerialization.data(withJSONObject: ["kind":"host fixture, production Swift arithmetic/state", "timing":records],options:[.prettyPrinted,.sortedKeys])
         print(String(data:d,encoding:.utf8)!)
