@@ -83,11 +83,17 @@ struct BCDControlPack: Codable, Equatable {
                 try require((0...1).contains(c.x) && (0...1).contains(c.y) && (0.035...0.2).contains(c.radius) && c.hitRadius >= c.radius && c.hitRadius <= c.radius * 1.15 && (0.1...1).contains(c.opacity), "Invalid or oversized hidden hit region")
                 if c.role == "move" { try require(actions.first { $0.id == c.action }?.output == "LS", "Movement must use LS") }
                 if c.role == "fireAim" { try require(actions.first { $0.id == c.action }?.behavior == "hold", "Drag fire must hold") }
+                if ["button", "fireAim", "gesture"].contains(c.role) { try require(!["LS", "RS"].contains(actions.first { $0.id == c.action }?.output ?? ""), "Axes require continuous surfaces") }
                 // Conservative normalized square protects the whole reserved rectangle on either aspect ratio.
                 let h = c.hitRadius
                 try require(c.x + h <= r.x || c.x - h >= r.x + r.width || c.y + h <= r.y || c.y - h >= r.y + r.height, "Hit region intrudes into reserved swipe area")
             }
         }
+        for layout in [phone, pad] {
+            let reachable = Set(layout.controls.filter { $0.role != "radial" }.map(\.action) + radial + gestures.map(\.action))
+            try require(actions.allSatisfy { reachable.contains($0.id) || (inputMode == "controller" && $0.output == "RS") }, "Declared action has no reachable control")
+        }
+        try require(radial.allSatisfy { id in !["LS", "RS"].contains(actions.first { $0.id == id }?.output ?? "") } && gestures.allSatisfy { g in !["LS", "RS"].contains(actions.first { $0.id == g.action }?.output ?? "") }, "Axes cannot be pulsed")
         try require(aim.sensitivity.isFinite && (0.1...8).contains(aim.sensitivity) && aim.vertical.isFinite && (0.25...2).contains(aim.vertical) && aim.deadZone.isFinite && (0...0.4).contains(aim.deadZone) && aim.fullSpeed.isFinite && (200...3000).contains(aim.fullSpeed), "Invalid aim calibration")
     }
     static func decode(_ data: Data, for expected: Identity? = nil) throws -> Self {

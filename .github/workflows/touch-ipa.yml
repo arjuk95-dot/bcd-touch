@@ -76,11 +76,27 @@ jobs:
         key: wine-native-v1-${{ steps.winerev.outputs.sha }}
     - name: 'Build native wine (for host-side tools: widl/wrc/wmc)'
       if: steps.winenative.outputs.cache-hit != 'true'
-      run: "cd wine\nmkdir -p build-native\ncd build-native\n# LOCAL (x86_64 Mac): an x86_64 host's configure defaults to a 32-bit Wine,\n# which macOS cannot build\
-        \ (\"gcc -m32 works... no\"); arm64 hosts are 64-bit.\nW64=\"\"; [ \"$(uname -m)\" = x86_64 ] && W64=--enable-win64\n../configure $W64 > \"$GITHUB_WORKSPACE/wine-native-configure.log\"\
-        \ 2>&1 || true\n# Only the host tools and the generated headers are used from this\n# tree. A full host build also compiles the iOS-only unix sources\n# for\
-        \ macOS, and one failure there used to stop make before widl.\nN=$(sysctl -n hw.ncpu)\n{ make -j\"$N\" __tools__ && make -j\"$N\" include; } > \"$GITHUB_WORKSPACE/wine-native-make.log\"\
-        \ 2>&1 \\\n  || make -k -j\"$N\" >> \"$GITHUB_WORKSPACE/wine-native-make.log\" 2>&1 || true\n"
+      run: 'set -euo pipefail
+
+        trap ''tail -n 80 "$GITHUB_WORKSPACE/wine-native-configure.log" "$GITHUB_WORKSPACE/wine-native-make.log" 2>/dev/null || true'' ERR
+
+        cd wine
+
+        mkdir -p build-native
+
+        cd build-native
+
+        W64=""; [ "$(uname -m)" != x86_64 ] || W64=--enable-win64
+
+        ../configure $W64 > "$GITHUB_WORKSPACE/wine-native-configure.log" 2>&1
+
+        N=$(sysctl -n hw.ncpu)
+
+        make -j"$N" __tools__ > "$GITHUB_WORKSPACE/wine-native-make.log" 2>&1
+
+        make -j"$N" include >> "$GITHUB_WORKSPACE/wine-native-make.log" 2>&1
+
+        '
     - name: Save native wine tools
       if: steps.winenative.outputs.cache-hit != 'true' && hashFiles('wine/build-native/tools/widl/widl') != ''
       uses: actions/cache/save@v4

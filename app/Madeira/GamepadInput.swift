@@ -365,6 +365,9 @@ final class GamepadInput: @unchecked Sendable {
     }
 
     private func sample() {
+        if !active || LibraryController.shared.ownsInput || !HardwareInput.shared.baseFocused {
+            packState.clear(); packAim.reset(); packAimOwner = nil
+        }
         // madeira-bcd (round 604): "Player N: press a button on the controller" (BCDPlayersLive.swift); one static flag, -1, while nobody is choosing.
         if BCDPlayersLive.listening >= 0, let hit = BCDPlayersLive.pressed(in: profiles) { assignListened(hit) }
         for i in profiles.indices {

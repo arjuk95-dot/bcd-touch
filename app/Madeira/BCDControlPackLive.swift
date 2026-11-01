@@ -10,6 +10,7 @@ import UIKit
     static let shared = BCDPackStore()
     struct Request: Codable {
         var version = 1
+        var generation = "initial"
         var identity: BCDControlPack.Identity
         var title: String
         var bindings: [String: String]
@@ -31,6 +32,7 @@ import UIKit
     private var jobs: [String: Job] = [:]
     private var running = Set<String>()
     private var selectedKey: String?
+    private var personalKey: String?
     private var sessionID: UUID?
     private var overrides: [String: BCDControlPack] = [:]
     private var base: BCDControlPack?
@@ -61,10 +63,12 @@ import UIKit
     }
     func prepare(_ entry: LibraryEntry, regenerate: Bool = false) {
         guard entry.desktop != true else { return }
-        let req = request(entry), key = Self.hash(Self.encoded(request(entry).identity))
+        var req = request(entry)
+        let key = Self.hash(Self.encoded(req.identity))
         if !regenerate, cached(key, identity: req.identity) != nil { status = "Validated cached pack"; return }
+        if jobs[key]?.state == "validated" { jobs[key]?.state = "queued" }
         guard !running.contains(key) else { return }
-        if regenerate { jobs[key] = nil }
+        if regenerate { jobs[key] = nil; req.generation = UUID().uuidString }
         if jobs[key] == nil { jobs[key] = Job(request: req) }
         persist(); resume(key)
     }
@@ -79,7 +83,9 @@ import UIKit
         sessionID = entry.id
         let req = request(entry), key = Self.hash(Self.encoded(req.identity)); selectedKey = key
         base = cached(key, identity: req.identity); pack = base
-        if let b = base, let personal = overrides[key], personal.identity == b.identity {
+        let editKey = Self.hash(Self.encoded([req.identity.executable, req.identity.storeID, req.identity.edition]))
+        personalKey = editKey
+        if let b = base, let personal = overrides[editKey] {
             var merged = b
             for device in [false, true] {
                 var layout = device ? merged.pad : merged.phone
@@ -88,8 +94,10 @@ import UIKit
                     if let c = old.controls.first(where: { $0.id == layout.controls[i].id }) {
                         layout.controls[i].x = c.x; layout.controls[i].y = c.y
                         layout.controls[i].radius = c.radius; layout.controls[i].hitRadius = c.hitRadius; layout.controls[i].opacity = c.opacity
+                        if ["button", "fireAim"].contains(c.role) && ["button", "fireAim"].contains(layout.controls[i].role) { layout.controls[i].role = c.role }
                     }
                 }
+                if let duplicate = old.controls.first(where: { $0.id == "left-duplicate" }), b.actions.contains(where: { $0.id == duplicate.action }) { layout.controls.append(duplicate) }
                 if device { merged.pad = layout } else { merged.phone = layout }
             }
             merged.aim = personal.aim
@@ -131,12 +139,12 @@ import UIKit
         }
     }
     func saveEdits(_ value: BCDControlPack) {
-        guard let key = selectedKey, (try? value.validate()) != nil else { status = "Edit would cover reserved aim area"; return }
+        guard let key = personalKey, (try? value.validate()) != nil else { status = "Edit would cover reserved aim area"; return }
         pack = value; overrides[key] = value
         try? Self.encoded(overrides).write(to: folder.appendingPathComponent("overrides.json"), options: .atomic)
     }
     func reset() {
-        guard let key = selectedKey else { return }
+        guard let key = personalKey else { return }
         overrides[key] = nil; pack = base
         try? Self.encoded(overrides).write(to: folder.appendingPathComponent("overrides.json"), options: .atomic)
     }
@@ -185,6 +193,17 @@ private struct BCDPackInspector: View {
                     Text(p.actions.first { $0.id == c.action }?.output ?? "Radial")
                     Slider(value: Binding(get: { c.radius }, set: { v in changeControl { $0.radius = v; $0.hitRadius = v } }), in: 0.035...0.2)
                     Slider(value: Binding(get: { c.opacity }, set: { v in changeControl { $0.opacity = v } }), in: 0.1...1)
+                    if p.actions.first(where: { $0.id == c.action })?.behavior == "hold", c.role != "move" {
+                        Button(c.role == "fireAim" ? "Use press only" : "Allow hold-and-drag aim") { changeControl { $0.role = c.role == "fireAim" ? "button" : "fireAim" } }
+                        Button("Add/remove left duplicate") {
+                            edit { value in
+                                var layout = pad ? value.pad : value.phone
+                                if layout.controls.contains(where: { $0.id == "left-duplicate" }) { layout.controls.removeAll { $0.id == "left-duplicate" } }
+                                else { var duplicate = c; duplicate.id = "left-duplicate"; duplicate.role = "button"; duplicate.x = 0.12; duplicate.y = 0.4; duplicate.radius = 0.06; duplicate.hitRadius = 0.06; layout.controls.append(duplicate) }
+                                if pad { value.pad = layout } else { value.phone = layout }
+                            }
+                        }
+                    }
                 }
                 Text("Aim sensitivity \(p.aim.sensitivity, specifier: "%.2f")")
                 Slider(value: Binding(get: { p.aim.sensitivity }, set: { v in edit { $0.aim.sensitivity = v } }), in: 0.1...8)

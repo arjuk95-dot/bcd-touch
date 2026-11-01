@@ -1,3 +1,4 @@
+// Modified for WO-BCD-TOUCH-001 (2026-11-01): isolated URL callbacks.
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Madeira Converter Exception: see LICENSE-EXCEPTION.md
 //
@@ -32,7 +33,7 @@ final class ShortcutRouter: ObservableObject {
         c.scheme = "bcd"
         c.host = "play"
         c.queryItems = [URLQueryItem(name: "exe", value: windowsPath)]
-        return c.string ?? "bcd://play"
+        return c.string ?? "bcdtouchlab://play"
     }
 
     func handle(_ url: URL) {

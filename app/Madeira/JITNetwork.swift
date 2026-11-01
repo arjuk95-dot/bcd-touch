@@ -1,3 +1,4 @@
+// Modified for WO-BCD-TOUCH-001 (2026-11-01): isolated URL callbacks.
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Madeira Converter Exception: see LICENSE-EXCEPTION.md
 //
@@ -294,9 +295,9 @@ enum JITShortcutFile {
             URLQueryItem(name: "name", value: Self.name),
             URLQueryItem(name: "input", value: "text"),
             URLQueryItem(name: "text", value: input),
-            URLQueryItem(name: "x-success", value: "bcd://jit-network/success"),
-            URLQueryItem(name: "x-error", value: "bcd://jit-network/error"),
-            URLQueryItem(name: "x-cancel", value: "bcd://jit-network/cancel")
+            URLQueryItem(name: "x-success", value: "bcdtouchlab://jit-network/success"),
+            URLQueryItem(name: "x-error", value: "bcdtouchlab://jit-network/error"),
+            URLQueryItem(name: "x-cancel", value: "bcdtouchlab://jit-network/cancel")
         ]
         guard let url = c.url else { completion(.failed("the Shortcuts link could not be built")); return }
         LogStore.shared.log("[jit-shortcut] run input=\(input)")
