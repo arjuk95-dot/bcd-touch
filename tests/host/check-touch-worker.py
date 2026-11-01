@@ -44,4 +44,19 @@ for path in packs:
         assert worker.submit(key,request)[0]==202
         worker.pool.shutdown();restarted.pool.shutdown()
         assert calls==[key];w.validate(json.loads((Path(tmp)/(key+'.pack.json')).read_text(encoding='utf-8')),p['identity'])
-print('PASS: pilot validation, wrong identity, mixed input rejection, hit-region limits, cached/duplicate/restart and separate override persistence (host fixtures)')
+    with tempfile.TemporaryDirectory() as tmp:
+        worker=w.Worker(tmp);calls=[]
+        worker.generate=lambda *args:calls.append(args)
+        failed=dict(generation='initial',error='fixture rejection',failureKind='invalidPack',failureCount=1)
+        w.atomic(Path(tmp)/(key+'.receipt.json'),failed)
+        for _ in range(4):assert worker.submit(key,request)[0]==422
+        assert not calls # Polling and duplicate notifications cannot create paid regeneration loops.
+        failed.update(failureKind='generation',retryAfter=w.time.time()+60)
+        w.atomic(Path(tmp)/(key+'.receipt.json'),failed)
+        assert worker.submit(key,request)[0]==503
+        failed.update(retryAfter=0,failureCount=3);w.atomic(Path(tmp)/(key+'.receipt.json'),failed)
+        assert worker.submit(key,request)[0]==503
+        retry=dict(request,generation='explicit-regeneration')
+        assert worker.submit(key,retry)[0]==202
+        worker.pool.shutdown();assert len(calls)==1
+print('PASS: pilot validation, identity/mode/hit rejection, cache/restart/overrides, corrupt-cache recovery and bounded failed-generation retries (host fixtures)')

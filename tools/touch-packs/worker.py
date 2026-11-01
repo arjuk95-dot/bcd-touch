@@ -89,6 +89,11 @@ class Worker:
         except (ValueError,OSError):receipt={}
         if not isinstance(receipt,dict):receipt={}
         generation=request.get('generation','initial')
+        if receipt.get('error') and receipt.get('generation','initial') == generation:
+            if receipt.get('failureKind') == 'invalidPack':
+                return 422, {'status':'rejected','key':key,'regenerateRequired':True}
+            if receipt.get('failureCount',0) >= 3 or time.time() < receipt.get('retryAfter',0):
+                return 503, {'status':'retry-later','key':key,'retryAfter':receipt.get('retryAfter',0),'regenerateRequired':receipt.get('failureCount',0) >= 3}
         if path.exists() and receipt.get('validated',True) and receipt.get('generation','initial') == generation:
             try:return 200, validate(json.loads(path.read_text(encoding='utf-8')), request['identity'])
             except Exception:pass # Corrupt cache is not active data; queue a fresh validated generation.
@@ -99,6 +104,12 @@ class Worker:
         return 202, {'status':'queued','key':key}
     def generate(self,key,request):
         receipt={'key':key,'generation':request.get('generation','initial'),'researchEnabled':self.research,'generated':False,'validated':False,'physicallyTested':False,'started':time.time()}
+        previous_path=self.root/(key+'.receipt.json')
+        try:
+            prior=json.loads(previous_path.read_text(encoding='utf-8'))
+            if prior.get('generation','initial') == receipt['generation']:receipt['failureCount']=prior.get('failureCount',0)
+        except (ValueError,OSError,AttributeError):pass
+        failure_kind='generation'
         try:
             # Fresh isolated working directory, read-only tool sandbox; no game-supplied strings in command arguments.
             with tempfile.TemporaryDirectory(prefix='bcd-pack-') as tmp:
@@ -135,6 +146,7 @@ class Worker:
                     atomic(self.root/(key+'.research.json'),searches)
                     (self.root/(key+'.codex.log')).write_text(result.stderr[-24000:],encoding='utf-8')
                     if result.returncode: raise RuntimeError('codex exec exit '+str(result.returncode))
+                    failure_kind='invalidPack'
                     pack=stabilize(apply_layout_policy(apply_installed_bindings(json.loads(output.read_text(encoding='utf-8')),request),request),previous); receipt['generated']=True
                     atomic(self.root/(key+f'.candidate-{attempt}.json'),pack)
                     try: validate(pack,request['identity'])
@@ -144,7 +156,10 @@ class Worker:
                         continue
                     receipt['validated']=True;receipt['attempts']=attempt+1
                     atomic(self.root/(key+'.pack.json'),pack);break
-        except Exception as e: receipt['error']=str(e)[:1000]
+        except Exception as e:
+            receipt['error']=str(e)[:1000];receipt['failureKind']=failure_kind
+            receipt['failureCount']=receipt.get('failureCount',0)+1
+            receipt['retryAfter']=time.time()+min(300,60*2**min(3,receipt['failureCount']-1))
         finally:
             receipt['finished']=time.time(); atomic(self.root/(key+'.receipt.json'),receipt)
             with self.lock: self.running.discard(key)
