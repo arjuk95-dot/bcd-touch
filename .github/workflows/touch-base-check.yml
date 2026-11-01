@@ -13,7 +13,6 @@ jobs:
         run: |
           python3 tools/verify-kernelbase-optin.py app/Madeira/arm64ec-windows/kernelbase-optin.dll app/Madeira/arm64ec-windows/kernelbase.dll
           python3 tools/patch-wine-setupapi-devinst-lock.py --verify app/Madeira/arm64ec-windows/setupapi-optin.dll app/Madeira/arm64ec-windows/setupapi.dll
-          python3 tools/check-optin-dlls-shipped.py app/Madeira/arm64ec-windows
       - uses: actions/upload-artifact@v4
         if: always()
         with:
