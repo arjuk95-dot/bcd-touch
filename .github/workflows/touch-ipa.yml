@@ -924,13 +924,18 @@ jobs:
         \ is a black screen that says nothing -- three\n  # days were spent reaching that conclusion once.\n  exit 1\nelse\n  echo \"::notice::all six macdrv symbols\
         \ are exported\"\nfi\n"
     - name: Package separate unsigned test IPA
-      run: 'mkdir -p build-out/Payload
-
+      run: |
+        mkdir -p build-out/Payload
         ditto build-out/Madeira.xcarchive/Products/Applications/Madeira.app build-out/Payload/Madeira.app
-
+        python3 - <<'PY'
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('bcd_ota_signer', 'tools/ota-variants.py')
+        signer = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(signer)
+        signer.fakesign('build-out/Payload/Madeira.app')
+        PY
         cd build-out
-
-        zip -qry BCD-Touch-Lab-unsigned.ipa Payload'
+        zip -qry BCD-Touch-Lab-unsigned.ipa Payload
     - uses: actions/upload-artifact@v4
       if: always()
       with:

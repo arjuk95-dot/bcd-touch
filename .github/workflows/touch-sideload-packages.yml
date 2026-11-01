@@ -1,0 +1,47 @@
+name: Touch sideload packages
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: bcd-touch-sideload-packages
+  cancel-in-progress: false
+jobs:
+  package:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: BCD-Touch-Lab-build
+          path: source-artifact
+          run-id: 41325781697
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Prepare update for the existing BCD slot
+        run: >-
+          python3 tools/touch-packs/package-sideload.py source-artifact/build-out/BCD-Touch-Lab-unsigned.ipa
+          --mode existing --output update-package
+          --expected-source c06c500614690f4e65fd935c54a3f9e1b793e39c
+          --expected-ipa-sha 602bb64719babbb08e97dfe278cc2634b55eae5b89f2b02331d60fe8fa29f4ba
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BCD-Touch-existing-update
+          path: |
+            update-package/BCD-Touch-update-existing-unsigned.ipa
+            update-package/package-receipt.json
+          retention-days: 7
+      - name: Prepare the separate install with sideload entitlements
+        run: >-
+          python3 tools/touch-packs/package-sideload.py source-artifact/build-out/BCD-Touch-Lab-unsigned.ipa
+          --mode separate --output separate-package
+          --expected-source c06c500614690f4e65fd935c54a3f9e1b793e39c
+          --expected-ipa-sha 602bb64719babbb08e97dfe278cc2634b55eae5b89f2b02331d60fe8fa29f4ba
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BCD-Touch-Lab-sideload
+          path: |
+            separate-package/BCD-Touch-Lab-sideload-unsigned.ipa
+            separate-package/package-receipt.json
+          retention-days: 7
