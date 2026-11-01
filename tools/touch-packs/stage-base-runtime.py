@@ -19,6 +19,9 @@ optional=['avifil32.dll','msvfw32.dll','msxml3.dll']
 dest=ROOT/'app/Madeira/arm64ec-windows'
 missing=[n for n in required+optional if not (dest/n).exists()]
 receipt=dict(source=URL,archiveSHA256=SHA,scope='Only missing base runtime dependencies; existing source outputs retained',recovered=[])
+baseline=(dest/'kernelbase.dll').read_bytes()
+baseline_pe=struct.unpack_from('<I',baseline,0x3c)[0]
+baseline_machine=struct.unpack_from('<H',baseline,baseline_pe+4)[0]
 if missing:
     with tempfile.TemporaryDirectory(prefix='bcd-runtime-') as tmp:
         archive=Path(tmp)/'BCD.ipa';urllib.request.urlretrieve(URL,archive)
@@ -33,10 +36,11 @@ if missing:
                 data=z.read(candidates[0])
                 if data[:2]!=b'MZ':raise RuntimeError('Not PE: '+name)
                 pe=struct.unpack_from('<I',data,0x3c)[0]
-                if data[pe:pe+4]!=b'PE\0\0' or struct.unpack_from('<H',data,pe+4)[0]!=0xa641:
-                    raise RuntimeError('Not ARM64EC: '+name)
+                machine=struct.unpack_from('<H',data,pe+4)[0]
+                if data[pe:pe+4]!=b'PE\0\0' or machine!=baseline_machine:
+                    raise RuntimeError('PE machine differs from shipped kernelbase: '+name)
                 (dest/name).write_bytes(data)
-                receipt['recovered'].append(dict(name=name,bytes=len(data),sha256=hashlib.sha256(data).hexdigest()))
+                receipt['recovered'].append(dict(name=name,bytes=len(data),peMachine=hex(machine),sha256=hashlib.sha256(data).hexdigest()))
 for name in required:
     if not (dest/name).exists():raise RuntimeError('Missing required opt-in runtime: '+name)
 (dest/'TOUCH-BASE-RUNTIME-PROVENANCE.json').write_text(json.dumps(receipt,indent=2)+'\n',encoding='utf-8')
