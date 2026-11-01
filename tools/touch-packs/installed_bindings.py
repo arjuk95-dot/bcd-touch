@@ -2,7 +2,8 @@
 import configparser
 
 def apply_installed_bindings(pack,request):
-    if request['identity']['storeID']!='steam:2371890':return pack
+    executable=request['identity']['executable'].replace('\\','/').rsplit('/',1)[-1].casefold()
+    if request['identity']['storeID']!='steam:2371890' and executable!='cotw.exe':return pack
     entry=next(((k,v) for k,v in request.get('bindings',{}).items() if k.endswith('Chronicles of the Wolf/config')),None)
     if not entry:return pack
     source,text=entry

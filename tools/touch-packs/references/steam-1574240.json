@@ -1,6 +1,7 @@
 {
   "version": 1,
   "storeID": "steam:1574240",
+  "executables": ["dread delusion.exe"],
   "retrieved": "2026-11-01",
   "status": "Documented historical defaults; installed build and personal remaps unverified",
   "sources": [

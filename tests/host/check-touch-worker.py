@@ -12,6 +12,12 @@ sys.path.insert(0,str(ROOT/'tools/touch-packs'))
 spec=importlib.util.spec_from_file_location('worker',ROOT/'tools/touch-packs/worker.py');w=importlib.util.module_from_spec(spec);spec.loader.exec_module(w)
 packs=list((ROOT/'packs/pilots').glob('*.json'))
 assert packs, 'Pilot packs missing'
+assert w.reference_for(dict(storeID='local',executable='Games/Dread Delusion.exe'))['identifiedBy'].startswith('unique executable')
+assert w.reference_for(dict(storeID='local',executable='unknown.exe')) is None
+local_request=json.loads((ROOT/'packs/requests/chronicles-of-the-wolf.json').read_text(encoding='utf-8'));local_request['identity']['storeID']='local'
+local_pack=json.loads((ROOT/'packs/pilots/chronicles-of-the-wolf.json').read_text(encoding='utf-8'));local_pack['identity']=local_request['identity']
+local_pack=w.apply_installed_bindings(local_pack,local_request);w.validate(local_pack,local_request['identity'])
+assert next(a for a in local_pack['actions'] if a['id']=='attack')['output']=='key:90'
 for path in packs:
     p=json.loads(path.read_text(encoding='utf-8'));w.validate(p)
     from stable_ids import stabilize
