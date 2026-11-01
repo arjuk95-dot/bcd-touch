@@ -59,7 +59,9 @@ import UIKit
         if let remaps = entry.controllerBinds { bindings["bcd-player-remaps"] = String(data: Self.encoded(remaps), encoding: .utf8) }
         let identity = BCDControlPack.Identity(executable: entry.launchRelativePath.lowercased(), storeID: entry.steamAppID.map { "steam:\($0)" } ?? "local",
             edition: "installed", build: entry.steamMetadataInstall ?? "unreported", bindingDigest: Self.hash(Self.encoded(bindings)))
-        return Request(identity: identity, title: entry.title, bindings: bindings, requirements: ["phone":"iPhone 16 Pro Max landscape safe area", "pad":"iPad landscape independent reach", "hud":"BLACK thin outlines; reserve continuous swipe rectangle first", "ownership":"touch-down until release", "mode":"prefer controller; unresolved meanings labelled by actual output"])
+        let wolf = entry.title.localizedCaseInsensitiveContains("Chronicles of the Wolf")
+        let dread = entry.title.localizedCaseInsensitiveContains("Dread Delusion")
+        return Request(identity: identity, title: entry.title, bindings: bindings, requirements: ["phone":"iPhone 16 Pro Max landscape safe area", "pad":"iPad landscape independent reach", "hud":"BLACK thin outlines; reserve continuous swipe rectangle first", "ownership":"touch-down until release", "genre":wolf ? "side-scroller" : (dread ? "first-person" : "identify from game/bindings"), "mode":wolf && !bindings.isEmpty ? "keyboardMouse using actual named key bindings in config; numeric controller mapping unresolved. Direction hold buttons low left, frequent attack/jump right, occasional actions peripheral/radial. No LS, RS or fireAim outputs." : "prefer controller; unresolved meanings labelled by actual output"])
     }
     func prepare(_ entry: LibraryEntry, regenerate: Bool = false) {
         guard entry.desktop != true else { return }

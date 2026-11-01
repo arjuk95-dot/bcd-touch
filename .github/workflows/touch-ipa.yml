@@ -92,9 +92,9 @@ jobs:
 
         N=$(sysctl -n hw.ncpu)
 
-        make -j"$N" __tools__ > "$GITHUB_WORKSPACE/wine-native-make.log" 2>&1
+        make -j"$N" __tooldeps__ > "$GITHUB_WORKSPACE/wine-native-make.log" 2>&1
 
-        make -j"$N" include >> "$GITHUB_WORKSPACE/wine-native-make.log" 2>&1
+        make -j"$N" include/all >> "$GITHUB_WORKSPACE/wine-native-make.log" 2>&1
 
         '
     - name: Save native wine tools

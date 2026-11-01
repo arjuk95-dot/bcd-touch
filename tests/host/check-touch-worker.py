@@ -10,7 +10,7 @@ packs=list((ROOT/'packs/pilots').glob('*.json'))
 assert packs, 'Pilot packs missing'
 for path in packs:
     p=json.loads(path.read_text(encoding='utf-8'));w.validate(p)
-    for mutate in [lambda v:v.update(version=2),lambda v:v['actions'][0].update(output='mouse:left'),lambda v:v['phone']['controls'][0].update(hitRadius=.9),lambda v:v['identity'].update(build='wrong')]:
+    for mutate in [lambda v:v.update(version=2),lambda v:(v.update(inputMode='controller'),v['actions'][0].update(output='mouse:left')),lambda v:v['phone']['controls'][0].update(hitRadius=.9),lambda v:v['identity'].update(build='wrong')]:
         bad=copy.deepcopy(p);mutate(bad)
         try:w.validate(bad,p['identity'])
         except Exception:pass

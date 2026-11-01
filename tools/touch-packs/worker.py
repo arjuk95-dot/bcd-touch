@@ -16,6 +16,7 @@ import time
 import uuid
 
 HERE = Path(__file__).resolve().parent
+from layout_policy import apply_layout_policy
 if not __debug__:
     raise RuntimeError('Run the validator without Python optimization (-O/PYTHONOPTIMIZE)')
 OUTPUTS = {'A','B','X','Y','LB','RB','LT','RT','L3','R3','Menu','View','D↑','D↓','D←','D→','LS','RS'}
@@ -105,7 +106,7 @@ class Worker:
                     result=subprocess.run(cmd,input=prompt,capture_output=True,text=True,encoding='utf-8',cwd=tmp,timeout=240)
                     (self.root/(key+'.codex.log')).write_text(result.stderr[-24000:],encoding='utf-8')
                     if result.returncode: raise RuntimeError('codex exec exit '+str(result.returncode))
-                    pack=json.loads(output.read_text(encoding='utf-8')); receipt['generated']=True
+                    pack=apply_layout_policy(json.loads(output.read_text(encoding='utf-8')),request); receipt['generated']=True
                     atomic(self.root/(key+f'.candidate-{attempt}.json'),pack)
                     try: validate(pack,request['identity'])
                     except Exception as error:
