@@ -30,6 +30,13 @@ import Foundation
                 }
                 assert(neutral > 0 && neutral <= 28)
                 records.append(["inputHz":hz,"gameFPS":fps,"samplingNeutralMs":neutral,"gameObservationUpperBoundMs":neutral+1000/fps])
+                let resumed=t*3+1
+                aim.move(dx:0.2,dy:0,time:resumed,calibration:calibration)
+                assert(abs(aim.sample(time:resumed).x-fine.x)<0.00001, "First fine correction after resting was lost or diluted")
+                assert(aim.sample(time:resumed+0.05).x==0, "An old queued event replayed motion")
+                aim.begin(time:100)
+                aim.move(dx:0.2,dy:0,time:100.5,calibration:calibration)
+                assert(aim.sample(time:100.5).x>0, "First correction after landing and resting was lost")
                 aim.reset(); assert(aim.sample(time:t*3).x == 0)
                 state.configure([control], acceptingInput:false)
                 assert(state.sample == GamepadSample())

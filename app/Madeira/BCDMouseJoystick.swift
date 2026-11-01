@@ -12,16 +12,21 @@ struct BCDMouseJoystick {
         var fullSpeed: Double = 900 // UIKit points/second at sensitivity 1
     }
     private var lastTime: Double?
+    private var activeInterval = 1.0 / 60
     private var expires = 0.0
     private var x = 0.0, y = 0.0
-    mutating func reset() { lastTime = nil; expires = 0; x = 0; y = 0 }
+    mutating func reset() { lastTime = nil; activeInterval = 1.0 / 60; expires = 0; x = 0; y = 0 }
     mutating func begin(time: Double) { reset(); if time.isFinite { lastTime = time } }
     mutating func move(dx: Double, dy: Double, time: Double, calibration c: Calibration) {
         guard time.isFinite, dx.isFinite, dy.isFinite, let previous = lastTime, time > previous else { return }
-        let dt = time - previous
+        let gap = time - previous
         lastTime = time
-        // A delayed event must not replay old motion after a pause.
-        guard dt <= 0.1 else { x = 0; y = 0; expires = 0; return }
+        // UIKit emits no stationary samples. A fresh delta after resting must
+        // still produce a fine correction, using the last active cadence.
+        // Expiry remains tied to the event timestamp: queued old events are
+        // already neutral when sampled on the publishing clock.
+        let dt = gap > 0.1 ? activeInterval : max(gap, 1.0 / 240)
+        if gap <= 0.1 { activeInterval = min(1.0 / 30, max(1.0 / 240, gap)) }
         var vx = dx / max(dt, 1.0 / 240) * c.sensitivity / c.fullSpeed
         var vy = -dy / max(dt, 1.0 / 240) * c.sensitivity * c.vertical / c.fullSpeed * (c.invertY ? -1 : 1)
         let length = hypot(vx, vy)
