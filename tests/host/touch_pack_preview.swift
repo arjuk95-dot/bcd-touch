@@ -14,7 +14,17 @@ import UIKit
                 }.foregroundStyle(.white).allowsHitTesting(false).padding(.top,8)
             }.ignoresSafeArea().statusBarHidden().onAppear {
                 UIDevice.current.setValue(UIInterfaceOrientation.landscapeLeft.rawValue,forKey:"orientation")
-                if ProcessInfo.processInfo.environment["PACK_FIXTURES"] == "1" { captureFixtures() }
+                if ProcessInfo.processInfo.environment["PACK_FIXTURES"] == "1" {
+                    captureFixtures()
+                    Task { @MainActor in
+                        do { try await checkStoreClient() }
+                        catch {
+                            let folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
+                            try? Data(String(describing:error).utf8).write(to:folder.appendingPathComponent("client-error.txt"))
+                            assertionFailure("Production store client fixture failed: \(error)")
+                        }
+                    }
+                }
             }
         }
     }
@@ -56,5 +66,49 @@ import UIKit
             }
             try? Data("PASS: inactive context hides all acquisition regions, radial and gesture controls".utf8).write(to:folder.appendingPathComponent(title+"-context-visibility.txt"))
         }
+    }
+    @MainActor private func checkStoreClient() async throws {
+        let original=try BCDControlPack.decode(Data(contentsOf:Bundle.main.url(forResource:"dread-delusion",withExtension:"json")!))
+        var entry=LibraryEntry();entry.title="Dread Delusion";entry.steamAppID=1574240
+        entry.launchRelativePath=original.identity.executable;entry.relativePath=original.identity.executable
+        let store=BCDPackStore.shared, folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
+        let req=store.request(entry)
+        assert(req.identity==original.identity)
+        let key=BCDPackStore.hash(BCDPackStore.encoded(req.identity))
+        let cached=store.folder.appendingPathComponent(key+".json")
+        let index=original.phone.controls.firstIndex { $0.role=="move" }!
+        let movedX=0.13
+        if ProcessInfo.processInfo.environment["PACK_CLIENT_RESUME"]=="1" {
+            store.activate(entry)
+            assert(store.pack?.phone.controls[index].x==movedX, "Personal edit lost after process restart")
+            assert(store.pack?.title==original.title+" fixture regeneration", "Wrong cached pack after restart")
+            try Data("PASS: fresh simulator app process restored generated cache and personal override; engine boundaries stubbed, no installed game".utf8).write(to:folder.appendingPathComponent("client-phase-2.txt"),options:.atomic)
+            return
+        }
+        try BCDPackStore.encoded(original).write(to:cached,options:.atomic)
+        store.prepare(entry);store.prepare(entry)
+        assert(store.status=="Validated cached pack")
+        store.activate(entry)
+        var moved=store.pack!;moved.phone.controls[index].x=movedX;store.saveEdits(moved)
+        var regenerated=original;regenerated.title += " fixture regeneration"
+        try BCDPackStore.encoded(regenerated).write(to:cached,options:.atomic)
+        LibraryModel.shared.blocksGameplayTouch=true;store.activate(entry)
+        assert(store.pack?.title==regenerated.title && store.pack?.phone.controls[index].x==movedX)
+        LibraryModel.shared.blocksGameplayTouch=false
+        var invalid=original;invalid.version=999
+        try BCDPackStore.encoded(invalid).write(to:cached,options:.atomic)
+        let offline=BCDPackStore.Worker(url:"https://127.0.0.1:9",token:"simulator-loopback-fixture-only")
+        try BCDPackStore.encoded(offline).write(to:store.folder.appendingPathComponent("worker.json"),options:.atomic)
+        entry.id=UUID();store.activate(entry);store.prepare(entry);store.prepare(entry)
+        assert(store.pack==nil, "Invalid cache became active")
+        for _ in 0..<100 {
+            if store.status.hasPrefix("Stock/cached fallback") { break }
+            try await Task.sleep(nanoseconds:100_000_000)
+        }
+        assert(store.status.hasPrefix("Stock/cached fallback"), "Offline worker did not preserve fallback")
+        let jobs=try JSONDecoder().decode([String:BCDPackStore.Job].self,from:Data(contentsOf:store.folder.appendingPathComponent("jobs.json")))
+        assert(jobs.count==1 && jobs[key]?.attempts==1, "Duplicate preparation created duplicate jobs")
+        try BCDPackStore.encoded(regenerated).write(to:cached,options:.atomic)
+        try Data("PASS: production Swift store cached/duplicate preparation, invalid cache rejection, real loopback connection failure fallback, and moved override after simulated cache regeneration. Simulator fixture; no real install-completion event or guest.".utf8).write(to:folder.appendingPathComponent("client-phase-1.txt"),options:.atomic)
     }
 }

@@ -32,11 +32,20 @@ with tempfile.TemporaryDirectory(prefix='touch-preview-') as tmp:
     subprocess.run(['xcrun','simctl','install',uid,str(app)],check=True,timeout=180)
     subprocess.run(['xcrun','simctl','launch','--terminate-running-process',uid,'com.arjunkl.bcdtouch.preview'],env=dict(os.environ,SIMCTL_CHILD_PACK_FIXTURES='1'),check=True,timeout=120)
     container=Path(run(['xcrun','simctl','get_app_container',uid,'com.arjunkl.bcdtouch.preview','data']))/'Documents'
-    for _ in range(20):
-        if len(list(container.glob('*.png')))==8:break
+    for _ in range(45):
+        if len(list(container.glob('*.png')))==8 and (container/'client-phase-1.txt').exists():break
         time.sleep(1)
+    for p in container.glob('client-*.txt'):shutil.copyfile(p,out/p.name)
+    assert (container/'client-phase-1.txt').exists(),'Production Swift store client fixture did not finish'
+    subprocess.run(['xcrun','simctl','launch','--terminate-running-process',uid,'com.arjunkl.bcdtouch.preview'],env=dict(os.environ,SIMCTL_CHILD_PACK_FIXTURES='1',SIMCTL_CHILD_PACK_CLIENT_RESUME='1'),check=True,timeout=120)
+    for _ in range(30):
+        if (container/'client-phase-2.txt').exists():break
+        time.sleep(1)
+    assert (container/'client-phase-2.txt').exists(),'Production Swift store restart fixture did not finish'
     images=list(container.glob('*.png'));assert len(images)==8,'Renderer fixture export did not complete'
     for p in images:shutil.copyfile(p,out/p.name)
     for p in container.glob('*-swift-identity.txt'):shutil.copyfile(p,out/p.name)
+    for p in container.glob('*-context-visibility.txt'):shutil.copyfile(p,out/p.name)
+    for p in container.glob('client-*.txt'):shutil.copyfile(p,out/p.name)
     (out/'preview-receipt.json').write_text(json.dumps(dict(device=device['name'],runtime=device['runtime'],kind='offscreen production UIKit renderer fixtures on this simulator; phone 956x440 points with 62/62/0/21 insets; iPad 1194x834 points with 0/0/24/20 insets; no actual iPad boot or game',images=[p.name for p in images]),indent=2))
     subprocess.run(['xcrun','simctl','shutdown',uid],check=True,timeout=30)

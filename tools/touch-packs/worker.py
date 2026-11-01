@@ -134,6 +134,7 @@ class Worker:
                     if all(old['identity'][k]==request['identity'][k] for k in ['executable','storeID','edition']):previous=old;break
                 initial_prompt=prompt
                 for attempt in range(3):
+                    failure_kind='generation'
                     result=subprocess.run(cmd,input=prompt,capture_output=True,text=True,encoding='utf-8',cwd=tmp,timeout=240)
                     (self.root/(key+'.codex.events.jsonl')).write_text(result.stdout,encoding='utf-8')
                     searches=[]
