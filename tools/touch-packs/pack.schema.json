@@ -1,0 +1,509 @@
+{
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[^\\x00-\\x1f]+$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[^\\x00-\\x1f]+$"
+    },
+    "identity": {
+      "type": "object",
+      "properties": {
+        "executable": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x1f]+$"
+        },
+        "storeID": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x1f]+$"
+        },
+        "edition": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x1f]+$"
+        },
+        "build": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x1f]+$"
+        },
+        "bindingDigest": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x1f]+$"
+        }
+      },
+      "required": [
+        "executable",
+        "storeID",
+        "edition",
+        "build",
+        "bindingDigest"
+      ],
+      "additionalProperties": false
+    },
+    "inputMode": {
+      "type": "string",
+      "enum": [
+        "controller",
+        "keyboardMouse"
+      ]
+    },
+    "aim": {
+      "type": "object",
+      "properties": {
+        "sensitivity": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 8
+        },
+        "vertical": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 2
+        },
+        "invertY": {
+          "type": "boolean"
+        },
+        "deadZone": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.4
+        },
+        "fullSpeed": {
+          "type": "number",
+          "minimum": 200,
+          "maximum": 3000
+        }
+      },
+      "required": [
+        "sensitivity",
+        "vertical",
+        "invertY",
+        "deadZone",
+        "fullSpeed"
+      ],
+      "additionalProperties": false
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[^\\x00-\\x1f]+$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[^\\x00-\\x1f]+$"
+          },
+          "icon": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9.-]+$",
+            "maxLength": 256
+          },
+          "output": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[^\\x00-\\x1f]+$"
+          },
+          "behavior": {
+            "type": "string",
+            "enum": [
+              "hold",
+              "tap",
+              "release"
+            ]
+          },
+          "evidence": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[^\\x00-\\x1f]+$"
+          },
+          "contexts": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "pattern": "^[^\\x00-\\x1f]+$"
+            },
+            "minItems": 1,
+            "maxItems": 8
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "icon",
+          "output",
+          "behavior",
+          "evidence",
+          "contexts"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "maxItems": 64
+    },
+    "phone": {
+      "type": "object",
+      "properties": {
+        "aimRect": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "y": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "width": {
+              "type": "number",
+              "minimum": 0.25,
+              "maximum": 1
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0.25,
+              "maximum": 1
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "width",
+            "height"
+          ],
+          "additionalProperties": false
+        },
+        "controls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[^\\x00-\\x1f]+$"
+              },
+              "action": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[^\\x00-\\x1f]+$"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "button",
+                  "move",
+                  "fireAim",
+                  "radial",
+                  "gesture"
+                ]
+              },
+              "x": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "y": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "radius": {
+                "type": "number",
+                "minimum": 0.035,
+                "maximum": 0.2
+              },
+              "hitRadius": {
+                "type": "number",
+                "minimum": 0.035,
+                "maximum": 0.23
+              },
+              "opacity": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 1
+              }
+            },
+            "required": [
+              "id",
+              "action",
+              "role",
+              "x",
+              "y",
+              "radius",
+              "hitRadius",
+              "opacity"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "maxItems": 48
+        }
+      },
+      "required": [
+        "aimRect",
+        "controls"
+      ],
+      "additionalProperties": false
+    },
+    "pad": {
+      "type": "object",
+      "properties": {
+        "aimRect": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "y": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "width": {
+              "type": "number",
+              "minimum": 0.25,
+              "maximum": 1
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0.25,
+              "maximum": 1
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "width",
+            "height"
+          ],
+          "additionalProperties": false
+        },
+        "controls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[^\\x00-\\x1f]+$"
+              },
+              "action": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[^\\x00-\\x1f]+$"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "button",
+                  "move",
+                  "fireAim",
+                  "radial",
+                  "gesture"
+                ]
+              },
+              "x": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "y": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "radius": {
+                "type": "number",
+                "minimum": 0.035,
+                "maximum": 0.2
+              },
+              "hitRadius": {
+                "type": "number",
+                "minimum": 0.035,
+                "maximum": 0.23
+              },
+              "opacity": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 1
+              }
+            },
+            "required": [
+              "id",
+              "action",
+              "role",
+              "x",
+              "y",
+              "radius",
+              "hitRadius",
+              "opacity"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "maxItems": 48
+        }
+      },
+      "required": [
+        "aimRect",
+        "controls"
+      ],
+      "additionalProperties": false
+    },
+    "gestures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "swipeUp",
+              "swipeDown",
+              "swipeLeft",
+              "swipeRight"
+            ]
+          },
+          "action": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[^\\x00-\\x1f]+$"
+          }
+        },
+        "required": [
+          "kind",
+          "action"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0,
+      "maxItems": 4
+    },
+    "radial": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256,
+        "pattern": "^[^\\x00-\\x1f]+$"
+      },
+      "minItems": 0,
+      "maxItems": 8
+    },
+    "contexts": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256,
+        "pattern": "^[^\\x00-\\x1f]+$"
+      },
+      "minItems": 1,
+      "maxItems": 8
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[^\\x00-\\x1f]+$"
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[^\\x00-\\x1f]+$"
+          },
+          "detail": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "detail"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "maxItems": 128
+    },
+    "unresolved": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256,
+        "pattern": "^[^\\x00-\\x1f]+$"
+      },
+      "minItems": 0,
+      "maxItems": 64
+    }
+  },
+  "required": [
+    "version",
+    "id",
+    "title",
+    "identity",
+    "inputMode",
+    "aim",
+    "actions",
+    "phone",
+    "pad",
+    "gestures",
+    "radial",
+    "contexts",
+    "evidence",
+    "unresolved"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

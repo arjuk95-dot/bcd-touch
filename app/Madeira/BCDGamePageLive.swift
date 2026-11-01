@@ -129,6 +129,11 @@ import UniformTypeIdentifiers
         // The sections only while Options is open: nothing is built for what is not on screen.
         if settings {
             d.groups = [display(entry, profile), direct3D(entry, profile), compatibility(entry), controls(entry, profile), gyro(entry)]
+            // Modified for WO-BCD-TOUCH-001: existing installs can prepare/regenerate too.
+            if !desktop { d.groups.append(BCDGameSettingGroup(id: "touch-pack", title: "Game touch pack", symbol: "hand.draw", settings: [
+                BCDGameSetting(id: "pack.prepare", title: "Prepare controls", kind: .action, note: BCDPackStore.shared.status),
+                BCDGameSetting(id: "pack.regenerate", title: "Regenerate (keep personal layout)", kind: .action)
+            ])) }
             d.groups.insert(contentsOf: setupGroups(game, entry, profile), at: 3)   // round 604: BCDGameSetup/BCDGamePageLiveSetup.swift (Windows, Components, CPU translation, Game fixes, Wine desktop)
             if let binds = binds(entry) { d.groups.append(binds) }
             if !desktop { d.groups += inputGroups(entry) }   // round 604: BCDInputPage.swift (turbo and macros, ...)
@@ -903,6 +908,9 @@ import UniformTypeIdentifiers
     }
 
     func set(_ setting: String, to value: String, for game: BCDGame) {
+        if setting == "pack.prepare" || setting == "pack.regenerate", let entry = entry(for: game) {
+            BCDPackStore.shared.prepare(entry, regenerate: setting == "pack.regenerate"); onChange?(); return
+        }
         if helpSet(setting, to: value, for: game) { return }   // round 604: the "Help with this game" section's rows (BCDGamePageLiveHelp.swift)
         if soundSet(setting, to: value, for: game) { return }   // round 604: the Sound section's audio delay, volume and resume rows (BCDGamePageLiveSound.swift)
         if dlcSet(setting, to: value, for: game) { return }

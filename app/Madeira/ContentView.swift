@@ -2843,6 +2843,8 @@ enum TouchControlsHost {
 }
 
 struct TouchControlsOverlay: View {
+    // Modified for WO-BCD-TOUCH-001 (2026-11-01): optional validated game pack surface.
+    @ObservedObject private var packStore = BCDPackStore.shared
     @ObservedObject private var m = TouchControlsModel.shared
     @ObservedObject private var library = LibraryModel.shared
     @ObservedObject private var feel = BCDTouchFeelModel.shared   // madeira-bcd (round 604): the controls hide when no finger has been on them for the time the player chose
@@ -2858,7 +2860,10 @@ struct TouchControlsOverlay: View {
             let landscape = geo.size.width > geo.size.height || session
             ZStack(alignment: .top) {
                 if landscape {
-                    if (m.visible || m.editing) && !library.blocksGameplayTouch {
+                    if packStore.pack != nil && packStore.enabled && session {
+                        if !library.blocksGameplayTouch { BCDPackLayer() }
+                        BCDPackTools().padding(.top, 8).padding(.leading, geo.safeAreaInsets.leading + 12).frame(maxWidth: .infinity, alignment: .leading)
+                    } else if (m.visible || m.editing) && !library.blocksGameplayTouch {
                         if !feel.hidden {   // madeira-bcd (round 604): hidden for want of a touch, the controls have no view at all
                             controls(geo.size, session: session)
                                 .opacity(m.editing ? 1.0 : m.opacity)
@@ -2879,6 +2884,8 @@ struct TouchControlsOverlay: View {
             .onChange(of: m.controls) { _, _ in configureGamepad(landscape: landscape) }
             .onChange(of: m.visible) { _, _ in configureGamepad(landscape: landscape) }
             .onChange(of: m.editing) { _, _ in configureGamepad(landscape: landscape) }
+            .onChange(of: packStore.pack) { _, _ in configureGamepad(landscape: landscape) }
+            .onChange(of: packStore.enabled) { _, _ in configureGamepad(landscape: landscape) }
             .onChange(of: library.blocksGameplayTouch) { _, _ in configureGamepad(landscape: landscape) }
             .onDisappear { GamepadInput.shared.configureTouch(controls: []); TouchMouseGate.padOverlay = false }
         }
@@ -2891,7 +2898,7 @@ struct TouchControlsOverlay: View {
     private func controls(_ screen: CGSize, session: Bool) -> some View { BCDTouchControlsLive(screen: screen, session: session) }
 
     private func configureGamepad(landscape: Bool) {
-        let ids = landscape && m.visible
+        let ids = landscape && m.visible && !(packStore.pack != nil && packStore.enabled)
             ? m.controls.filter { $0.action.padName.map(TouchPadAction.supported) ?? false }.map(\.id) : []
         // Menus and the control editor keep the pad connected but take no input (#204);
         // a touch that misses the controls is no mouse only while they do (#150).

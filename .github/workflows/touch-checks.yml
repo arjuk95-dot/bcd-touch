@@ -1,0 +1,16 @@
+name: Touch fork checks
+on: [workflow_dispatch, push]
+jobs:
+  touch:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Production Swift timing, state, schema and UIKit checks
+        run: python3 tools/touch-packs/check-swift.py
+      - name: Stock touch and physical controller regression
+        run: python3 tests/host/check-touch-gamepad.py
+      - name: Worker and invalid-pack checks
+        run: |
+          python3 -m venv /tmp/touch-venv
+          /tmp/touch-venv/bin/pip install jsonschema
+          /tmp/touch-venv/bin/python tests/host/check-touch-worker.py

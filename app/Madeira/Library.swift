@@ -907,6 +907,8 @@ final class LibraryModel: ObservableObject {
             next[i] = entry
         } else { next.append(entry) }
         persist(next)
+        // Modified for WO-BCD-TOUCH-001: local imports and store-neutral saves get the same preparation path.
+        if isNew { BCDPackStore.shared.prepare(entry) }
     }
     func remove(_ id: UUID) {
         persist(entries.filter { $0.id != id })
@@ -933,6 +935,8 @@ final class LibraryModel: ObservableObject {
         var entry = steamEntry(game, title: title)
         entry.folderBytes = SteamInstallFiles.sizeOnDisk(appID: game.id, steamApps: Self.drive.appendingPathComponent(game.library, isDirectory: true)) ?? entry.folderBytes
         save(entry)
+        // The real Steam install completion; identity-keyed requests coalesce duplicate events.
+        BCDPackStore.shared.prepare(entry)
     }
     /// A Steam game was uninstalled: its entry goes with its files.
     func removeSteam(appID: Int) {

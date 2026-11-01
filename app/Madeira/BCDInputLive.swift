@@ -40,13 +40,16 @@ import UIKit
     /// and after a choice.
     func refresh() {
         let entry = runningEntry
+        // Modified for WO-BCD-TOUCH-001: apply only at launch/menu boundaries.
+        BCDPackStore.shared.activate(entry)
         let profile = entry.map { self.profile($0.windowsPath) } ?? BCDInputProfile()
         BCDTurboLive.shared.configure(turbo: profile.turbo, macros: profile.macros, title: entry?.title ?? "")
         if entry != nil { BCDPlayersLive.shared.reload() }   // the players' rumble reaches PadOutput.m once a session starts
         let library = LibraryModel.shared
         let title = entry?.title ?? ""
-        BCDTouchExtras.configure(aim: profile.aim, gestures: profile.gestures, pencil: profile.pencil, title: title)
-        BCDRadialHost.shared.configure(profile.radial, running: entry != nil && !library.launching, title: title)
+        let usingPack = BCDPackStore.shared.pack != nil && BCDPackStore.shared.enabled
+        BCDTouchExtras.configure(aim: usingPack ? BCDAimSettings() : profile.aim, gestures: usingPack ? BCDGestureSettings() : profile.gestures, pencil: usingPack ? BCDPencilSettings() : profile.pencil, title: title)
+        BCDRadialHost.shared.configure(profile.radial, running: !usingPack && entry != nil && !library.launching, title: title)
     }
 
     /// A setting of the game's page or a row of the in-game menu: written to the line that keeps it. Returns whether it was one of this round's.

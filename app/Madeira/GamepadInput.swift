@@ -1,4 +1,5 @@
 import Foundation
+// Modified for WO-BCD-TOUCH-001 (2026-11-01): pack ownership and timestamped mouse joystick.
 // GameController supports background handler queues but lacks Sendable annotations.
 @preconcurrency import GameController
 import UIKit
@@ -212,6 +213,37 @@ final class GamepadInput: @unchecked Sendable {
     private var hidBattery: (level: UInt8, charging: UInt8) = (UInt8(WINIOS_HIDPAD_BATTERY_UNKNOWN), 0)
     private var hidBatteryCountdown = 0
     private var touchState = TouchGamepadState()
+    private var packState = TouchGamepadState()
+    private var packAim = BCDMouseJoystick()
+    private var packCalibration = BCDMouseJoystick.Calibration()
+    private let packControl = UUID()
+    private var packAimOwner: UUID?
+
+    @MainActor func configurePack(enabled: Bool, accepting: Bool, calibration: BCDMouseJoystick.Calibration) {
+        queue.async { [self] in
+            packState.reserved = enabled
+            packState.configure(enabled ? [packControl] : [], acceptingInput: accepting)
+            packCalibration = calibration; packAim.reset(); packAimOwner = nil
+            updateTimer(); sample()
+        }
+    }
+    @MainActor func packTouch(owner: UUID, value: GamepadSample?) {
+        queue.async { [self] in
+            guard active || value == nil else { return }
+            packState.update(owner: owner, control: packControl, value: value); sample()
+        }
+    }
+    @MainActor func packLook(owner: UUID, phase: Int, dx: Double = 0, dy: Double = 0, time: Double) {
+        queue.async { [self] in
+            if phase == 2 {
+                if packAimOwner == owner { packAim.reset(); packAimOwner = nil }
+            } else if active && packState.acceptingInput && packState.reserved {
+                if phase == 0 && packAimOwner == nil { packAimOwner = owner; packAim.begin(time: time) }
+                if phase == 1 && packAimOwner == owner { packAim.move(dx: dx, dy: dy, time: time, calibration: packCalibration) }
+            }
+            sample()
+        }
+    }
     @MainActor private var observers: [NSObjectProtocol] = []
     @MainActor private var started = false
 
@@ -295,6 +327,7 @@ final class GamepadInput: @unchecked Sendable {
             active = value
             if !value {
                 touchState.clear()
+                packState.clear(); packAim.reset(); packAimOwner = nil
                 if keyboardMouse != nil { PadKeyboardMouse.shared.releaseAll("inactive") }
             }
             updateTimer()
@@ -303,7 +336,7 @@ final class GamepadInput: @unchecked Sendable {
     }
 
     func updateTimer() {
-        let needed = active && profiles.contains(where: { $0 != nil })
+        let needed = active && (profiles.contains(where: { $0 != nil }) || touchState.connected || packState.connected)
         if !needed { timer?.cancel(); timer = nil; return }
         guard timer == nil else { return }
         let source = DispatchSource.makeTimerSource(queue: queue)
@@ -337,7 +370,8 @@ final class GamepadInput: @unchecked Sendable {
                 PadKeyboardMouse.shared.releaseAll("controller disconnected")
             }
             let hid = i == 0 && hidActive
-            guard pad != nil || touchConnected || gyroConnected else {
+            let packConnected = i == 0 && packState.connected
+            guard pad != nil || touchConnected || gyroConnected || packConnected else {
                 winios_gamepad_set_state(Int32(i), nil)
                 if hid { winios_hidpad_set_state(nil) }
                 continue
@@ -415,6 +449,15 @@ final class GamepadInput: @unchecked Sendable {
             // static flag when they are off; not while the library's menu owns the controller or the pad is keys and mouse.
             if i == 0, BCDTurboLive.padNeeded, active, keyboardMouse == nil, !LibraryController.shared.ownsInput {
                 BCDTurboLive.shared.padSample(&state)
+            }
+            if active && packConnected && !LibraryController.shared.ownsInput {
+                var pack = packState.sample
+                let aim = packAim.sample(time: ProcessInfo.processInfo.systemUptime)
+                pack.rx = GamepadSample.axis(aim.x); pack.ry = GamepadSample.axis(aim.y)
+                let combined = GamepadSample.merge(physical: GamepadSample(buttons: state.buttons,
+                    lt: state.left_trigger, rt: state.right_trigger, lx: state.lx, ly: state.ly, rx: state.rx, ry: state.ry), touch: pack)
+                state.buttons = combined.buttons; state.left_trigger = combined.lt; state.right_trigger = combined.rt
+                state.lx = combined.lx; state.ly = combined.ly; state.rx = combined.rx; state.ry = combined.ry
             }
             if hid {
                 publishHID(state, live: hidLive, pad: pad)
