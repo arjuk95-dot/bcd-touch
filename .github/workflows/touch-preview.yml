@@ -6,10 +6,9 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Select newest Xcode for simulator services
+      - name: Select the iOS 18.5 simulator toolchain
         run: |
-          NEWEST=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
-          sudo xcode-select -s "$NEWEST/Contents/Developer"
+          if [ -d /Applications/Xcode_16.4.app ]; then sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer; fi
           xcodebuild -version
       - name: Capture production renderer (no guest game)
         run: python3 tools/touch-packs/simulator-preview.py

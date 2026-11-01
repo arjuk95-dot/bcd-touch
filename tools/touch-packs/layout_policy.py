@@ -9,6 +9,7 @@ def apply_layout_policy(pack, request):
         actions={a['id']:a for a in pack['actions']}
         for c in layout['controls']:
             output=actions.get(c['action'],{}).get('output','')
+            if output=='RT' and c['role']=='button' and actions[c['action']]['behavior']=='hold':c['role']='fireAim'
             if c['role']=='move':x,y,r=.14,.79,.13 if device=='phone' else .10
             elif c['role']=='fireAim' and not primary:
                 primary=True;x,y,r=(.88,.68,.12) if device=='phone' else (.89,.77,.085)
