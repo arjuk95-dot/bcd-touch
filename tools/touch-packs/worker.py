@@ -18,6 +18,7 @@ import uuid
 HERE = Path(__file__).resolve().parent
 from layout_policy import apply_layout_policy
 from installed_bindings import apply_installed_bindings
+from stable_ids import stabilize
 if not __debug__:
     raise RuntimeError('Run the validator without Python optimization (-O/PYTHONOPTIMIZE)')
 OUTPUTS = {'A','B','X','Y','LB','RB','LT','RT','L3','R3','Menu','View','D↑','D↓','D←','D→','LS','RS'}
@@ -103,11 +104,15 @@ class Worker:
                 cmd=[self.codex,'exec','--ignore-user-config','--config','model_reasoning_effort="medium"','--skip-git-repo-check','--ephemeral','--sandbox','read-only','--output-schema',str(HERE/'pack.schema.json'),'-o',str(output),'-']
                 if self.model: cmd[2:2]=['--model',self.model]
                 prompt=PROMPT+canonical(request).decode()+'\nKeep this minimal: unknown bindings do not require declaring all Xbox outputs. Prefer LS, RS, RT, A, B, X, Y, Menu and View; optional LT/LB/RB. Declare additional raw outputs only if EACH is reachable. Radial has 8 entries maximum; add direct controls or omit unused declarations. Never combine two IDs into one radial string.'
+                previous=None
+                for old_path in sorted(self.root.glob('*.pack.json'),key=lambda p:p.stat().st_mtime,reverse=True)[:512]:
+                    old=json.loads(old_path.read_text(encoding='utf-8'))
+                    if all(old['identity'][k]==request['identity'][k] for k in ['executable','storeID','edition']):previous=old;break
                 for attempt in range(3):
                     result=subprocess.run(cmd,input=prompt,capture_output=True,text=True,encoding='utf-8',cwd=tmp,timeout=240)
                     (self.root/(key+'.codex.log')).write_text(result.stderr[-24000:],encoding='utf-8')
                     if result.returncode: raise RuntimeError('codex exec exit '+str(result.returncode))
-                    pack=apply_layout_policy(apply_installed_bindings(json.loads(output.read_text(encoding='utf-8')),request),request); receipt['generated']=True
+                    pack=stabilize(apply_layout_policy(apply_installed_bindings(json.loads(output.read_text(encoding='utf-8')),request),request),previous); receipt['generated']=True
                     atomic(self.root/(key+f'.candidate-{attempt}.json'),pack)
                     try: validate(pack,request['identity'])
                     except Exception as error:

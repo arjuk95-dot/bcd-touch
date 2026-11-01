@@ -12,6 +12,15 @@ packs=list((ROOT/'packs/pilots').glob('*.json'))
 assert packs, 'Pilot packs missing'
 for path in packs:
     p=json.loads(path.read_text(encoding='utf-8'));w.validate(p)
+    from stable_ids import stabilize
+    regenerated=copy.deepcopy(p);remap={a['id']:'new-'+a['id'] for a in regenerated['actions']}
+    for a in regenerated['actions']:a['id']=remap[a['id']]
+    for device in ['phone','pad']:
+        for c in regenerated[device]['controls']:c['action']=remap.get(c['action'],c['action']);c['id']='new-'+c['id']
+    regenerated['radial']=[remap[x] for x in regenerated['radial']]
+    for g in regenerated['gestures']:g['action']=remap[g['action']]
+    stabilized=stabilize(regenerated,p);w.validate(stabilized)
+    assert [a['id'] for a in stabilized['actions']]==[a['id'] for a in p['actions']]
     for mutate in [lambda v:v.update(version=2),lambda v:(v.update(inputMode='controller'),v['actions'][0].update(output='mouse:left')),lambda v:v['phone']['controls'][0].update(hitRadius=.9),lambda v:v['identity'].update(build='wrong')]:
         bad=copy.deepcopy(p);mutate(bad)
         try:w.validate(bad,p['identity'])

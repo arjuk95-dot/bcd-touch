@@ -1,0 +1,18 @@
+name: Touch guest diagnostic
+on: [workflow_dispatch]
+jobs:
+  guest:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build guest-side input recorder (upstream pinned toolchain)
+        run: |
+          curl --fail --location --retry 3 https://github.com/mstorsjo/llvm-mingw/releases/download/20260421/llvm-mingw-20260421-ucrt-macos-universal.tar.xz -o /tmp/mingw.tar.xz
+          tar -xf /tmp/mingw.tar.xz -C /tmp
+          mkdir -p touch-evidence
+          /tmp/llvm-mingw-20260421-ucrt-macos-universal/bin/x86_64-w64-mingw32-clang tests/touch/xinput-trace.c -O2 -mwindows -luser32 -lxinput -o touch-evidence/bcd-touch-input-trace-x64.exe
+          shasum -a 256 touch-evidence/bcd-touch-input-trace-x64.exe > touch-evidence/guest-sha256.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: touch-guest-diagnostic
+          path: touch-evidence
