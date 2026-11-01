@@ -112,6 +112,9 @@ final class MetalHostView: UIView {
     /// madeira-bcd (round 604): the in-game menu's "Touches that miss the controls" for this session; nil leaves the rule above as it is.
     static var override: Mode?
     static func suppressing(touchpad: Bool, desktop: Bool) -> Bool {
+        // A pack handles direct touches itself, including relative mouse packs.
+        // Legacy mouse fallback must never also consume those fingers.
+        if LibraryModel.shared.current != nil, BCDPackStore.shared.enabled, BCDPackStore.shared.pack != nil { return true }
         switch override ?? mode {
         case .on: return false
         case .off: return true
@@ -2801,6 +2804,12 @@ final class ControlsWindow: UIWindow {
         if library.current != nil {
             if library.menu || library.launching || library.menuButtonRect.contains(point) ||
                 library.performanceRect.contains(point) {   // the HUD's frame is zero except while the player moves it (BCDHUDHost)
+                return super.hitTest(point, with: event)
+            }
+            // The pack assigns roles across the full surface at touch-down.
+            // Stock-control geometry cannot decide which of its touches exist.
+            if BCDPackStore.shared.enabled, BCDPackStore.shared.pack != nil {
+                if HardwareInput.isPointerEvent(event) { return nil }
                 return super.hitTest(point, with: event)
             }
             guard m.hitsInteractive(point, in: bounds, topBar: false) else { return nil }

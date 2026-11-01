@@ -20,7 +20,10 @@ with tempfile.TemporaryDirectory(prefix='touch-preview-') as tmp:
     tmp=Path(tmp);app=tmp/'TouchPreview.app';app.mkdir()
     text=(ROOT/'app/Madeira/TouchGamepad.swift').read_text()
     state=tmp/'State.swift';state.write_text('import Foundation\nstruct GamepadSample'+text.split('struct GamepadSample',1)[1].split('// MARK: - UIKit touch lifetime',1)[0])
-    sources=[ROOT/'app/Madeira/BCDMouseJoystick.swift',ROOT/'app/Madeira/BCDControlPack.swift',state,ROOT/'app/Madeira/BCDControlPackLive.swift',ROOT/'app/Madeira/BCDControlPackSurface.swift',ROOT/'tests/host/touch_pack_ui_stubs.swift',ROOT/'tests/host/touch_pack_preview.swift']
+    routing=(ROOT/'app/Madeira/ContentView.swift').read_text()
+    window=tmp/'Window.swift';window.write_text('import UIKit\nfinal class ControlsWindow: UIWindow {'+routing.split('final class ControlsWindow: UIWindow {',1)[1].split('\nenum TouchControlsHost',1)[0])
+    gate=tmp/'Gate.swift';gate.write_text('import UIKit\n@MainActor enum TouchMouseGate {'+routing.split('@MainActor enum TouchMouseGate {',1)[1].split('\n}\n',1)[0]+'\n}')
+    sources=[ROOT/'app/Madeira/BCDMouseJoystick.swift',ROOT/'app/Madeira/BCDControlPack.swift',state,window,gate,ROOT/'app/Madeira/BCDControlPackLive.swift',ROOT/'app/Madeira/BCDControlPackSurface.swift',ROOT/'tests/host/touch_pack_ui_stubs.swift',ROOT/'tests/host/touch_pack_preview.swift']
     subprocess.run(['xcrun','swiftc','-target',os.uname().machine+'-apple-ios18.0-simulator','-sdk',sdk,'-parse-as-library',*map(str,sources),'-o',str(app/'TouchPreview')],check=True)
     info=dict(CFBundleIdentifier='com.arjunkl.bcdtouch.preview',CFBundleExecutable='TouchPreview',CFBundleName='Touch Preview',CFBundlePackageType='APPL',CFBundleVersion='1',CFBundleShortVersionString='1',MinimumOSVersion='18.0',LSRequiresIPhoneOS=True,UIDeviceFamily=[1,2],UIRequiresFullScreen=True,UISupportedInterfaceOrientations=['UIInterfaceOrientationLandscapeLeft','UIInterfaceOrientationLandscapeRight'])
     (app/'Info.plist').write_bytes(plistlib.dumps(info))
@@ -36,6 +39,7 @@ with tempfile.TemporaryDirectory(prefix='touch-preview-') as tmp:
         if len(list(container.glob('*.png')))==8 and (container/'client-phase-1.txt').exists():break
         time.sleep(1)
     for p in container.glob('client-*.txt'):shutil.copyfile(p,out/p.name)
+    for p in container.glob('*routing*.txt'):shutil.copyfile(p,out/p.name)
     assert (container/'client-phase-1.txt').exists(),'Production Swift store client fixture did not finish'
     subprocess.run(['xcrun','simctl','launch','--terminate-running-process',uid,'com.arjunkl.bcdtouch.preview'],env=dict(os.environ,SIMCTL_CHILD_PACK_FIXTURES='1',SIMCTL_CHILD_PACK_CLIENT_RESUME='1'),check=True,timeout=120)
     for _ in range(30):

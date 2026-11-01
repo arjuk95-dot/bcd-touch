@@ -93,6 +93,8 @@ import UIKit
         store.prepare(entry);store.prepare(entry)
         assert(store.status=="Validated cached pack")
         store.activate(entry)
+        try await Task.sleep(nanoseconds:200_000_000)
+        try checkWindowRouting(original)
         var moved=store.pack!;moved.phone.controls[index].x=movedX;store.saveEdits(moved)
         var regenerated=original;regenerated.title += " fixture regeneration"
         try BCDPackStore.encoded(regenerated).write(to:cached,options:.atomic)
@@ -115,5 +117,40 @@ import UIKit
         assert(jobs.count==1 && jobs[key]?.attempts==1, "Duplicate preparation created duplicate jobs")
         try BCDPackStore.encoded(regenerated).write(to:cached,options:.atomic)
         try Data("PASS: production Swift store cached/duplicate preparation, invalid cache rejection, real loopback connection failure fallback, and moved override after simulated cache regeneration. Simulator fixture; no real install-completion event or guest.".utf8).write(to:folder.appendingPathComponent("client-phase-1.txt"),options:.atomic)
+    }
+    @MainActor private func checkWindowRouting(_ p:BCDControlPack) throws {
+        let scene=UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first!
+        func surfaces(_ v:UIView)->[BCDPackView] {
+            (v as? BCDPackView).map { [$0] } ?? v.subviews.flatMap { surfaces($0) }
+        }
+        let live=scene.windows.flatMap { surfaces($0) }
+        assert(live.contains { $0.bounds.width>300 && $0.bounds.height>180 }, "SwiftUI pack surface has no playable frame")
+        let library=LibraryModel.shared,store=BCDPackStore.shared
+        let previous=library.current,wasEnabled=store.enabled,previousOverride=TouchMouseGate.override
+        library.current=NSObject();store.enabled=true;TouchMouseGate.override = .on
+        let window=ControlsWindow(windowScene:scene);window.frame=scene.coordinateSpace.bounds
+        let root=UIViewController();root.view=UIView(frame:window.bounds)
+        let surface=BCDPackView();surface.frame=window.bounds;surface.autoresizingMask=[.flexibleWidth,.flexibleHeight]
+        surface.configure(p,context:p.contexts[0],debug:false,editing:false);root.view.addSubview(surface)
+        window.rootViewController=root;window.windowLevel = .normal+101;window.isHidden=false;window.layoutIfNeeded()
+        defer {
+            window.isHidden=true;library.current=previous;store.enabled=wasEnabled
+            TouchMouseGate.override=previousOverride;HardwareInput.fixturePointer=false
+        }
+        for x in [0.2,0.4,0.6,0.8] {
+            for y in [0.25,0.5,0.75] {
+                let point=CGPoint(x:window.bounds.width*x,y:window.bounds.height*y)
+                assert(window.hitTest(point,with:nil) === surface, "Legacy window geometry stole an open-area pack touch")
+            }
+        }
+        assert(TouchMouseGate.suppressing(touchpad:false,desktop:false), "Legacy always-mouse override leaked under a pack")
+        let center=CGPoint(x:window.bounds.midX,y:window.bounds.midY)
+        HardwareInput.fixturePointer=true
+        assert(window.hitTest(center,with:nil)==nil, "Pack swallowed a physical pointer")
+        HardwareInput.fixturePointer=false;store.enabled=false
+        assert(window.hitTest(center,with:nil)==nil, "Stock hit testing was not restored")
+        assert(!TouchMouseGate.suppressing(touchpad:false,desktop:false), "Stock mouse override was not restored")
+        let folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
+        try Data("PASS: production ControlsWindow routes twelve open-area points to pack surface; legacy mouse override suppressed; physical pointer and stock routing preserved. Actual simulator UIKit hit tests with engine/model boundary stubs, no guest.".utf8).write(to:folder.appendingPathComponent("controls-window-routing.txt"),options:.atomic)
     }
 }
