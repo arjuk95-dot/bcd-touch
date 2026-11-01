@@ -5,6 +5,7 @@ def stabilize(pack,previous):
     used=set()
     for a in pack['actions']:
         matches=[old for old in previous['actions'] if old['label']==a['label'] and sorted(old['contexts'])==sorted(a['contexts'])]
+        if not matches:matches=[old for old in previous['actions'] if old['label']==a['label']]
         exact=[old for old in matches if old['output']==a['output']]
         if len(exact)==1:matches=exact
         if len(matches)==1 and matches[0]['id'] not in used:
@@ -13,6 +14,7 @@ def stabilize(pack,previous):
         for c in pack[device]['controls']:
             c['action']=changed.get(c['action'],c['action'])
             matches=[old for old in previous[device]['controls'] if old['action']==c['action'] and old['role']==c['role']]
+            if not matches:matches=[old for old in previous[device]['controls'] if old['action']==c['action']]
             if len(matches)==1:c['id']=matches[0]['id']
     pack['radial']=[changed.get(a,a) for a in pack['radial']]
     for g in pack['gestures']:g['action']=changed.get(g['action'],g['action'])
