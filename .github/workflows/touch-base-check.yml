@@ -1,0 +1,22 @@
+name: Pinned base runtime recovery check
+on: workflow_dispatch
+jobs:
+  runtime:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Recover only missing exact-release runtime dependencies
+        run: python3 tools/touch-packs/stage-base-runtime.py
+      - name: Verify the release kernelbase and setupapi variants
+        run: |
+          python3 tools/verify-kernelbase-optin.py app/Madeira/arm64ec-windows/kernelbase-optin.dll app/Madeira/arm64ec-windows/kernelbase.dll
+          python3 tools/patch-wine-setupapi-devinst-lock.py --verify app/Madeira/arm64ec-windows/setupapi-optin.dll app/Madeira/arm64ec-windows/setupapi.dll
+          python3 tools/check-optin-dlls-shipped.py app/Madeira/arm64ec-windows
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pinned-base-runtime-provenance
+          path: build-out/base-runtime-provenance.json
+          retention-days: 7
