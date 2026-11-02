@@ -19,7 +19,7 @@ static double last_heartbeat;
 static double now(void) { LARGE_INTEGER t; QueryPerformanceCounter(&t); return (double)t.QuadPart/frequency.QuadPart; }
 static void record(unsigned slot,DWORD result,const XINPUT_STATE *s) {
     const XINPUT_GAMEPAD *p=&s->Gamepad;
-    int simultaneous=(p->sThumbLX!=0 || p->sThumbLY!=0) && p->bRightTrigger>0 && (p->sThumbRX!=0 || p->sThumbRY!=0);
+    int simultaneous=result==ERROR_SUCCESS && (p->sThumbLX!=0 || p->sThumbLY!=0) && p->bRightTrigger>0 && (p->sThumbRX!=0 || p->sThumbRY!=0);
     if (!logfile) return;
     fprintf(logfile,"{\"t\":%.6f,\"slot\":%u,\"result\":%lu,\"buttons\":%u,\"lt\":%u,\"rt\":%u,\"lx\":%d,\"ly\":%d,\"rx\":%d,\"ry\":%d,\"keyEvents\":%lu,\"mouseEvents\":%lu,\"rawKeyEvents\":%lu,\"rawMouseEvents\":%lu,\"simultaneous\":%s}\n",now(),slot,(unsigned long)result,p->wButtons,p->bLeftTrigger,p->bRightTrigger,p->sThumbLX,p->sThumbLY,p->sThumbRX,p->sThumbRY,keys,mouse,raw_keys,raw_mouse,simultaneous?"true":"false");
     fflush(logfile);
