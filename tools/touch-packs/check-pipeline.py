@@ -23,7 +23,7 @@ with tempfile.TemporaryDirectory(prefix='touch-pipeline-') as tmp:
     info=dict(CFBundleIdentifier='com.arjunkl.bcdtouch.pipeline',CFBundleExecutable='Pipeline',CFBundleName='Input Pipeline Fixture',CFBundlePackageType='APPL',CFBundleVersion='1',CFBundleShortVersionString='1',MinimumOSVersion='18.0',LSRequiresIPhoneOS=True,UIDeviceFamily=[1])
     (app/'Info.plist').write_bytes(plistlib.dumps(info))
     if device['state']!='Booted':subprocess.run(['xcrun','simctl','boot',uid],check=True)
-    subprocess.run(['xcrun','simctl','bootstatus',uid,'-b'],check=True,timeout=180)
+    subprocess.run(['xcrun','simctl','bootstatus',uid,'-b'],check=True,timeout=360)
     subprocess.run(['xcrun','simctl','install',uid,str(app)],check=True,timeout=180)
     subprocess.run(['xcrun','simctl','launch',uid,'com.arjunkl.bcdtouch.pipeline'],check=True,timeout=120)
     data=Path(run(['xcrun','simctl','get_app_container',uid,'com.arjunkl.bcdtouch.pipeline','data']))/'Documents/pipeline-receipt.txt'

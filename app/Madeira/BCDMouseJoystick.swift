@@ -13,18 +13,26 @@ struct BCDMouseJoystick {
     }
     private var lastTime: Double?
     private var activeInterval = 1.0 / 60
+    private var lastDelivery: Double?
+    private var deliveryInterval = 1.0 / 60
     private var expires = 0.0
     private var x = 0.0, y = 0.0
-    mutating func reset() { lastTime = nil; activeInterval = 1.0 / 60; expires = 0; x = 0; y = 0 }
-    mutating func begin(time: Double) { reset(); if time.isFinite { lastTime = time } }
-    mutating func move(dx: Double, dy: Double, time: Double, calibration c: Calibration) {
-        guard time.isFinite, dx.isFinite, dy.isFinite, let previous = lastTime, time > previous else { return }
+    mutating func reset() { lastTime = nil; lastDelivery = nil; activeInterval = 1.0 / 60; deliveryInterval = 1.0 / 60; expires = 0; x = 0; y = 0 }
+    mutating func begin(time: Double, receivedAt: Double? = nil) {
+        reset()
+        let delivery = receivedAt ?? time
+        if time.isFinite && delivery.isFinite { lastTime = time; lastDelivery = delivery }
+    }
+    mutating func move(dx: Double, dy: Double, time: Double, receivedAt: Double? = nil, calibration c: Calibration) {
+        let delivery = receivedAt ?? time
+        guard time.isFinite, delivery.isFinite, dx.isFinite, dy.isFinite, let previous = lastTime, time > previous,
+              lastDelivery == nil || delivery >= lastDelivery! else { return }
         let gap = time - previous
         lastTime = time
         // UIKit emits no stationary samples. A fresh delta after resting must
         // still produce a fine correction, using the last active cadence.
-        // Expiry remains tied to the event timestamp: queued old events are
-        // already neutral when sampled on the publishing clock.
+        // Source timestamps determine velocity. Delivery timestamps are on the
+        // publisher's uptime clock: UIKit may deliver old/coalesced samples.
         let dt = gap > 0.1 ? activeInterval : max(gap, 1.0 / 240)
         if gap <= 0.1 { activeInterval = min(1.0 / 30, max(1.0 / 240, gap)) }
         var vx = dx / max(dt, 1.0 / 240) * c.sensitivity / c.fullSpeed
@@ -35,8 +43,15 @@ struct BCDMouseJoystick {
             vx = vx / length * amplitude; vy = vy / length * amplitude
         }
         x = vx; y = vy
+        if let before = lastDelivery {
+            let interval = delivery - before
+            if interval > 0 && interval <= 0.1 { deliveryInterval = min(1.0 / 30, max(1.0 / 240, interval)) }
+        }
+        lastDelivery = delivery
         // Recomputed by GamepadInput's 4 ms clock even with no physical pad or move events.
-        expires = time + min(0.025, max(0.012, dt * 1.5))
+        // The main actor captures delivery BEFORE its serial queue hop. A delayed
+        // queued publication still expires; queue execution never renews motion.
+        expires = delivery + min(0.042, max(0.012, deliveryInterval * 1.25 + 0.004))
     }
     func sample(time: Double) -> (x: Double, y: Double) {
         guard time.isFinite, time < expires else { return (0, 0) }

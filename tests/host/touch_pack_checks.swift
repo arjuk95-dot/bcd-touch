@@ -48,6 +48,42 @@ import Foundation
                 assert(GamepadSample.merge(physical:physical,touch:TouchPadAction.sample("RS",x:-0.7)).rx == physical.rx)
             }
         }
+        // Real touch source timestamps can precede delivery by several frames.
+        // Velocity uses source time; expiry must use the publisher's receipt clock.
+        var delayed=BCDMouseJoystick()
+        delayed.begin(time:1000,receivedAt:10)
+        delayed.move(dx:5,dy:0,time:1000.016,receivedAt:10.056,calibration:calibration)
+        assert(delayed.sample(time:10.057).x>0,"Delayed fresh motion was discarded on arrival")
+        assert(delayed.sample(time:10.105).x==0,"Source clock offset sustained stale motion")
+        delayed.reset();assert(delayed.sample(time:10.057).x==0)
+        var deliveryRecords:[[String:Double]]=[]
+        for sourceHz in [60.0,120.0] {
+            for batchHz in [30.0,60.0,120.0] where batchHz<=sourceHz {
+                for fps in [30.0,60.0] {
+                    var aim=BCDMouseJoystick();aim.begin(time:0,receivedAt:50.04)
+                    var previousSource=0.0,lastReceipt=0.0
+                    for batch in 1...20 {
+                        let source=floor(Double(batch)/batchHz*sourceHz+0.000001)/sourceHz
+                        let receipt=50.04+Double(batch)/batchHz
+                        aim.move(dx:300*(source-previousSource),dy:0,time:source,receivedAt:receipt,calibration:calibration)
+                        assert(aim.sample(time:receipt+0.001).x>0,"Coalesced batch arrived expired")
+                        // Four-millisecond publications remain live until the next batch.
+                        for tick in stride(from:0.004,to:1/batchHz,by:0.004) {
+                            assert(aim.sample(time:receipt+tick).x>0,"Continuous delivered sweep contains a neutral gap")
+                        }
+                        previousSource=source;lastReceipt=receipt
+                    }
+                    var neutral=0.0
+                    for ms in stride(from:0.0,through:60.0,by:4.0) {
+                        if aim.sample(time:lastReceipt+ms/1000).x==0 {neutral=ms;break}
+                    }
+                    assert(neutral>0 && neutral<=44,"Stationary thumb output outlived its delivery deadline")
+                    deliveryRecords.append(["sourceHz":sourceHz,"deliveryHz":batchHz,"gameFPS":fps,"deliveryDelayMs":40,"neutralMs":neutral])
+                    // Work queued before a pause cannot renew itself when processed late.
+                    assert(aim.sample(time:lastReceipt+0.2).x==0)
+                }
+            }
+        }
         for path in CommandLine.arguments.dropFirst() {
             let p = try BCDControlPack.decode(Data(contentsOf: URL(fileURLWithPath:path)))
             var invalid = p; invalid.version = 2
@@ -59,7 +95,7 @@ import Foundation
             invalid = p; invalid.identity.build = "wrong-build"
             assert((try? invalid.validate(for:p.identity)) == nil)
         }
-        let d = try JSONSerialization.data(withJSONObject: ["kind":"host fixture, production Swift arithmetic/state", "timing":records],options:[.prettyPrinted,.sortedKeys])
+        let d = try JSONSerialization.data(withJSONObject: ["kind":"host fixture, production Swift arithmetic/state", "timing":records,"delayedDelivery":deliveryRecords],options:[.prettyPrinted,.sortedKeys])
         print(String(data:d,encoding:.utf8)!)
         print("PASS: simultaneous LS/RT/RS, duplicate fire release, reversals, saturation, stale expiry, reset, pause, physical arbitration and invalid packs")
     }

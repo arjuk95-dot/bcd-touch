@@ -107,6 +107,9 @@ final class GamepadInput: @unchecked Sendable {
     @MainActor func beginPadSession() {
         let mode = Self.configuredPadMode()
         let output = Self.configuredPadOutput()
+        let trace = (MadeiraConfig.gameValue("env.BCD_TOUCH_TRACE") ?? MadeiraConfig.get("env.BCD_TOUCH_TRACE")
+            ?? ProcessInfo.processInfo.environment["BCD_TOUCH_TRACE"]) == "1"
+        queue.async { [self] in packTrace = trace }
         SystemGestures.beginSession(enabled: Self.enabled)   // madeira-bcd: env.MADEIRA_PAD_SYSTEM_GESTURES (opt-in)
         unsetenv("MADEIRA_HIDPAD"); unsetenv("MADEIRA_HIDPAD_NAME")
         // An earlier session in this app run may have taken player 1 off XInput.
@@ -223,7 +226,8 @@ final class GamepadInput: @unchecked Sendable {
     private let packControl = UUID()
     private var packAimOwner: UUID?
     private var lastPackTrace = GamepadSample()
-    private let packTrace = ProcessInfo.processInfo.environment["BCD_TOUCH_TRACE"] == "1"
+    private var packTrace = ProcessInfo.processInfo.environment["BCD_TOUCH_TRACE"] == "1"
+    private var lastLookSource = 0.0, lastLookDelivery = 0.0
 
     @MainActor func configurePack(enabled: Bool, accepting: Bool, calibration: BCDMouseJoystick.Calibration) {
         if enabled { keyboardMouseOn = false }
@@ -252,13 +256,17 @@ final class GamepadInput: @unchecked Sendable {
             packState.update(owner: owner, control: packControl, value: value); sample()
         }
     }
-    @MainActor func packLook(owner: UUID, phase: Int, dx: Double = 0, dy: Double = 0, time: Double) {
+    @MainActor func packLook(owner: UUID, phase: Int, dx: Double = 0, dy: Double = 0, time: Double, receivedAt: Double? = nil) {
+        let delivery = receivedAt ?? ProcessInfo.processInfo.systemUptime
         queue.async { [self] in
             if phase == 2 {
                 if packAimOwner == owner { packAim.reset(); packAimOwner = nil }
             } else if active && packState.acceptingInput && packState.reserved {
-                if phase == 0 && packAimOwner == nil { packAimOwner = owner; packAim.begin(time: time) }
-                if phase == 1 && packAimOwner == owner { packAim.move(dx: dx, dy: dy, time: time, calibration: packCalibration) }
+                if phase == 0 && packAimOwner == nil { packAimOwner = owner; packAim.begin(time: time, receivedAt: delivery) }
+                if phase == 1 && packAimOwner == owner {
+                    lastLookSource = time; lastLookDelivery = delivery
+                    packAim.move(dx: dx, dy: dy, time: time, receivedAt: delivery, calibration: packCalibration)
+                }
             }
             sample()
         }
@@ -486,7 +494,7 @@ final class GamepadInput: @unchecked Sendable {
                 let published = GamepadSample(buttons:state.buttons,lt:state.left_trigger,rt:state.right_trigger,lx:state.lx,ly:state.ly,rx:state.rx,ry:state.ry)
                 if published != lastPackTrace {
                     lastPackTrace = published
-                    fputs("[touch-pack-publish] slot=0 t=\(ProcessInfo.processInfo.systemUptime) buttons=\(published.buttons) lt=\(published.lt) rt=\(published.rt) lx=\(published.lx) ly=\(published.ly) rx=\(published.rx) ry=\(published.ry)\n", stderr)
+                    fputs("[touch-pack-publish] slot=0 t=\(ProcessInfo.processInfo.systemUptime) source=\(lastLookSource) delivered=\(lastLookDelivery) buttons=\(published.buttons) lt=\(published.lt) rt=\(published.rt) lx=\(published.lx) ly=\(published.ly) rx=\(published.rx) ry=\(published.ry)\n", stderr)
                 }
             }
             if hid {

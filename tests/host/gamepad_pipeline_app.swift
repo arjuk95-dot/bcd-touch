@@ -13,8 +13,10 @@ import UIKit
             pad.packTouch(owner:fire,value:TouchPadAction.sample("RT"))
             pad.packTouch(owner:secondFire,value:TouchPadAction.sample("RT"))
             let t=ProcessInfo.processInfo.systemUptime
-            pad.packLook(owner:look,phase:0,time:t-1.0/60)
-            pad.packLook(owner:look,phase:1,dx:2,dy:0,time:t)
+            // A real event can be 40 ms old when UIKit delivers it. It must
+            // still publish now, then expire on the captured delivery clock.
+            pad.packLook(owner:look,phase:0,time:t-0.09,receivedAt:t-1.0/60)
+            pad.packLook(owner:look,phase:1,dx:2,dy:0,time:t-0.04,receivedAt:t)
             DispatchQueue.main.asyncAfter(deadline:.now()+0.15) {
                 let (state,simultaneous,gyro)=PipelineSpy.read()
                 assert(simultaneous && gyro && state.lx<0 && state.right_trigger==255 && state.rx==0 && state.ry==0)
@@ -30,7 +32,7 @@ import UIKit
                     DispatchQueue.main.asyncAfter(deadline:.now()+0.1) {
                         let s=PipelineSpy.read().0
                         assert(s.connected==1 && s.lx==0 && s.right_trigger==0 && s.rx==0 && s.ry==0)
-                        let receipt="PASS: production GamepadInput serial publisher observed simultaneous slot0 LS/RT/RS; stale aim neutralized; gyro stage saw held trigger; repeated configuration preserved movement/fire; stale keyboard focus did not erase pack input; independent fire release; explicit pack focus loss rejected delayed input. Engine-spy simulator fixture, no Wine guest or physical controller."
+                        let receipt="PASS: production GamepadInput serial publisher observed simultaneous slot0 LS/RT/RS from a 40ms-old touch event using captured delivery time; stale aim neutralized; gyro stage saw held trigger; repeated configuration preserved movement/fire; stale keyboard focus did not erase pack input; independent fire release; explicit pack focus loss rejected delayed input. Engine-spy simulator fixture, no Wine guest or physical controller."
                         let file=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0].appendingPathComponent("pipeline-receipt.txt")
                         try? Data(receipt.utf8).write(to:file)
                     }

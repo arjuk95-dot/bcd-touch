@@ -215,9 +215,10 @@ final class BCDPackView: UIView {
         }
     }
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        for t in touches { beginTouch(ObjectIdentifier(t), at: t.location(in: self), time: t.timestamp) }
+        let delivery = ProcessInfo.processInfo.systemUptime
+        for t in touches { beginTouch(ObjectIdentifier(t), at: t.location(in: self), time: t.timestamp, receivedAt: delivery) }
     }
-    func beginTouch(_ identity: AnyHashable, at point: CGPoint, time: Double) {
+    func beginTouch(_ identity: AnyHashable, at point: CGPoint, time: Double, receivedAt: Double? = nil) {
         guard UIApplication.shared.applicationState == .active, !LibraryModel.shared.blocksGameplayTouch,
               BCDPackFocus.shared.refresh(), let pack else { clear(); return }
         // Idempotent configuration keeps another finger's movement/fire held.
@@ -235,7 +236,7 @@ final class BCDPackView: UIView {
         var finger = Finger(role: role, control: control, start: point, last: point, time: time)
         if role == "radial" { finger.radialCenter = radialCenter(at: point) }
         if role == "look" || role == "fireAim" {
-            GamepadInput.shared.packLook(owner: finger.owner, phase: 0, time: time)
+            GamepadInput.shared.packLook(owner: finger.owner, phase: 0, time: time, receivedAt: receivedAt)
         }
         if role == "move" { GamepadInput.shared.packTouch(owner: finger.owner, value: TouchPadAction.sample("LS")) }
         if let control, let binding = action(control.action), role == "button" || role == "fireAim" {
@@ -246,19 +247,22 @@ final class BCDPackView: UIView {
         setNeedsDisplay()
     }
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        let delivery = ProcessInfo.processInfo.systemUptime
         for t in touches {
-            for sample in event?.coalescedTouches(for: t) ?? [t] {
-                moveTouch(ObjectIdentifier(t), to: sample.location(in: self), time: sample.timestamp)
-            }
+            // Publish one displacement/time interval per delivered batch. Replaying
+            // every historical sample made the final sub-sample's tiny interval
+            // dictate expiry, even when batches arrived only every 16-33 ms.
+            let sample = ((event?.coalescedTouches(for: t) ?? []) + [t]).max { $0.timestamp < $1.timestamp } ?? t
+            moveTouch(ObjectIdentifier(t), to: sample.location(in: self), time: sample.timestamp, receivedAt: delivery)
         }
     }
-    func moveTouch(_ identity: AnyHashable, to point: CGPoint, time: Double) {
+    func moveTouch(_ identity: AnyHashable, to point: CGPoint, time: Double, receivedAt: Double? = nil) {
         guard UIApplication.shared.applicationState == .active, !LibraryModel.shared.blocksGameplayTouch,
               BCDPackFocus.shared.refresh() else { clear(); return }
         guard var finger = fingers[identity], time > finger.time else { return }
         if finger.role == "look" || finger.role == "fireAim" {
             if pack?.inputMode == "controller" {
-                GamepadInput.shared.packLook(owner: finger.owner, phase: 1, dx: Double(point.x - finger.last.x), dy: Double(point.y - finger.last.y), time: time)
+                GamepadInput.shared.packLook(owner: finger.owner, phase: 1, dx: Double(point.x - finger.last.x), dy: Double(point.y - finger.last.y), time: time, receivedAt: receivedAt)
             } else if let calibration = pack?.aim {
                 HardwareInput.shared.postRelative(Int32(max(-30000, min(30000, Double(point.x - finger.last.x) * calibration.sensitivity * 2))),
                     Int32(max(-30000, min(30000, Double(point.y - finger.last.y) * calibration.sensitivity * calibration.vertical * 2 * (calibration.invertY ? -1 : 1)))))
