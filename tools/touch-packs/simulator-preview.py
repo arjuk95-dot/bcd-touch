@@ -31,7 +31,7 @@ with tempfile.TemporaryDirectory(prefix='touch-preview-') as tmp:
     for p in pilots:shutil.copyfile(p,app/p.name)
     shutil.copyfile(pilots[0],app/'pack.json')
     if device['state']!='Booted':subprocess.run(['xcrun','simctl','boot',uid],check=True)
-    subprocess.run(['xcrun','simctl','bootstatus',uid,'-b'],check=True,timeout=180)
+    subprocess.run(['xcrun','simctl','bootstatus',uid,'-b'],check=True,timeout=360)
     subprocess.run(['xcrun','simctl','uninstall',uid,'com.arjunkl.bcdtouch.preview'],check=False,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     subprocess.run(['xcrun','simctl','install',uid,str(app)],check=True,timeout=180)
     subprocess.run(['xcrun','simctl','launch','--terminate-running-process',uid,'com.arjunkl.bcdtouch.preview'],env=dict(os.environ,SIMCTL_CHILD_PACK_FIXTURES='1'),check=True,timeout=120)
