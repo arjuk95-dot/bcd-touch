@@ -4,9 +4,9 @@ concurrency:
   cancel-in-progress: false
 jobs:
   build:
-    # macOS 15 is ARM64 too; retain the same pinned Xcode 26.3 below.
-    # The macOS 26 ARM pool failed to acquire a runner before any build step.
-    runs-on: macos-15
+    # The iOS/PE targets are cross-compiled; only Wine's host tools run here.
+    # Keep an Intel option when GitHub cannot allocate an ARM host.
+    runs-on: ${{ inputs.runner || 'macos-15' }}
     permissions:
       contents: read
       actions: read
@@ -22,7 +22,7 @@ jobs:
       run: |
         test -d /Applications/Xcode_26.3.app
         sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
-        test "$(uname -m)" = arm64
+        case "$(uname -m)" in arm64|x86_64) ;; *) exit 1 ;; esac
         xcodebuild -version
     - name: Build number
       id: bn
@@ -79,7 +79,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: wine/build-native
-        key: wine-native-v1-${{ steps.winerev.outputs.sha }}
+        key: wine-native-v2-${{ inputs.runner }}-${{ runner.arch }}-${{ steps.winerev.outputs.sha }}
     - name: 'Build native wine (for host-side tools: widl/wrc/wmc)'
       if: steps.winenative.outputs.cache-hit != 'true'
       run: 'set -euo pipefail
@@ -108,7 +108,7 @@ jobs:
       uses: actions/cache/save@v4
       with:
         path: wine/build-native
-        key: wine-native-v1-${{ steps.winerev.outputs.sha }}
+        key: wine-native-v2-${{ inputs.runner }}-${{ runner.arch }}-${{ steps.winerev.outputs.sha }}
     - name: Diagnose native wine tools build
       run: "echo \"-- looking for widl (proof the native tools built) --\"\nfind wine/build-native/tools -maxdepth 2 -name \"widl*\" 2>&1 || echo \"not found\"\n\
         if [ ! -x wine/build-native/tools/widl/widl ]; then\n  echo \"::error::native widl NOT built -- dumping tails\"\n  NCTAIL=$(tail -n 30 wine-native-configure.log\
@@ -751,7 +751,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: wine/build-arm64ec
-        key: wine-arm64ec-${{ steps.winerev.outputs.sha }}-v1
+        key: wine-arm64ec-${{ runner.arch }}-${{ steps.winerev.outputs.sha }}-v2
     - name: Build extra Wine DLLs for arm64ec
       continue-on-error: true
       run: bash tools/build-wine-extra-dlls.sh "$GITHUB_WORKSPACE/wine/build-native"
@@ -770,7 +770,7 @@ jobs:
       uses: actions/cache/save@v4
       with:
         path: wine/build-arm64ec
-        key: wine-arm64ec-${{ steps.winerev.outputs.sha }}-v1
+        key: wine-arm64ec-${{ runner.arch }}-${{ steps.winerev.outputs.sha }}-v2
     - name: Build stand-in DLLs (d3d10, avifil32, vulkan-1)
       continue-on-error: true
       run: "M=toolchains/llvm-mingw-20260421-ucrt-macos-universal/bin\npython3 tools/build-stub-dlls.py wine build/stub-dlls \"$M/arm64ec-w64-mingw32-clang\" \\\n\
@@ -956,4 +956,13 @@ jobs:
         if-no-files-found: warn
         retention-days: 7
 'on':
-  workflow_dispatch: null
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: Host runner (all choices produce the same iOS ARM64 target)
+        type: choice
+        default: macos-15
+        options:
+        - macos-15
+        - macos-26
+        - macos-26-intel
