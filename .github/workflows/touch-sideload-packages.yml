@@ -23,7 +23,7 @@ concurrency:
 jobs:
   package:
     # Repackaging/codesign does not execute the ARM app or rebuild its engine.
-    runs-on: macos-15-intel
+    runs-on: macos-26-intel
     timeout-minutes: 15
     env:
       SOURCE_COMMIT: ${{ inputs.source_commit }}
