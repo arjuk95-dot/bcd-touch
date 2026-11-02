@@ -161,7 +161,7 @@ final class BCDPackView: UIView {
     var activeTouchRoles: [String] { fingers.values.map(\.role).sorted() }
     var movementVisual: (origin: CGPoint, thumb: CGPoint, radius: CGFloat)? {
         guard let finger = fingers.values.first(where: { $0.role == "move" }) else { return nil }
-        let radius = max(1, unit * (finger.control?.radius ?? 0.14))
+        let radius = max(CGFloat(1), unit * CGFloat(finger.control?.radius ?? 0.14))
         let dx = finger.last.x - finger.start.x, dy = finger.last.y - finger.start.y
         let scale = max(1, hypot(dx, dy) / radius)
         return (finger.start, CGPoint(x: finger.start.x + dx / scale, y: finger.start.y + dy / scale), radius)
@@ -264,7 +264,7 @@ final class BCDPackView: UIView {
                     Int32(max(-30000, min(30000, Double(point.y - finger.last.y) * calibration.sensitivity * calibration.vertical * 2 * (calibration.invertY ? -1 : 1)))))
             }
         } else if finger.role == "move" {
-            let radius = max(1, unit * (finger.control?.radius ?? 0.14))
+            let radius = max(CGFloat(1), unit * CGFloat(finger.control?.radius ?? 0.14))
             GamepadInput.shared.packTouch(owner: finger.owner, value: TouchPadAction.sample("LS", x: Double((point.x - finger.start.x) / radius), y: Double((finger.start.y - point.y) / radius)))
         } else if finger.role == "radial", !radialActions.isEmpty {
             let previous = finger.selection
