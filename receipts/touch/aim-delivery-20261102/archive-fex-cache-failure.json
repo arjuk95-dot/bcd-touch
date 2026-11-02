@@ -1,0 +1,19 @@
+{
+  "conclusion": "failure",
+  "headSha": "3abef905e832376dde88aaa00a09a5ed3d96fd73",
+  "status": "completed",
+  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41482281634",
+  "failedStep": "Verify committed PE DLLs",
+  "failure": "Required ARM64EC rpmalloc span4 module was not built; refusing the fallback IPA",
+  "cause": {
+    "steps": [
+      "Build xtajit64.dll (FEX fixes, AVX opt-in)",
+      "Build xtajit.dll (WOW64, CPUID index fix)"
+    ],
+    "error": "CMake tried /opt/homebrew/bin/ninja --version on Intel; no such file or directory",
+    "continuedPastConfigureFailure": true
+  },
+  "ipaCreated": false,
+  "appArchiveRan": false,
+  "correction": "Host-architecture-specific FEX caches; critical ARM64EC build no longer continues on failure."
+}

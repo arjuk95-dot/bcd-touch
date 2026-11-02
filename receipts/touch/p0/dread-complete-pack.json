@@ -36,8 +36,8 @@
     "workerCachedHTTP200": true,
     "newModelGeneration": false,
     "newIPARequired": false,
-    "newControlsPhysicallyTested": false,
-    "activePlayerRemapsLocated": false
+    "activePlayerRemapsLocated": false,
+    "completeBindingVerification": false
   },
   "playerResultBeforeThisUpdate": {
     "movementAfterWGI": "working",
@@ -49,6 +49,15 @@
     "newControls": "welcome addition by player report",
     "movement": "working; player reports improved dead-zone feel",
     "swipeAim": "failed: tiny motion and missed swipes",
+    "blockParry": "not explicitly confirmed"
+  },
+  "physicalRetest": {
+    "performed": true,
+    "accepted": false,
+    "appSource": "033603f365a7c9a69a7b1027e58edcb7c3acfd1b",
+    "movement": "working",
+    "attack": "working",
+    "aim": "failed: tiny movement and missed swipes",
     "blockParry": "not explicitly confirmed"
   }
 }

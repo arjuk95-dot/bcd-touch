@@ -1,0 +1,25 @@
+{
+  "conclusion": "cancelled",
+  "headSha": "d057620fcf9d06b4fdf2e4ad3a3987999c061b20",
+  "jobs": [
+    {
+      "name": "build",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "steps": [
+        {
+          "completedAt": "0001-01-01T00:00:00Z",
+          "conclusion": "",
+          "name": "Install llvm (need lld/llvm-dlltool for aarch64-windows PE cross target)",
+          "number": 8,
+          "startedAt": "2026-11-02T16:20:29Z",
+          "status": "in_progress"
+        }
+      ]
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41480015911",
+  "capturedAt": "2026-11-02T17:35:39.542555+00:00",
+  "note": "Owner-task agent cancelled an unversioned Homebrew LLVM install; logs not available. Homebrew currently has no Intel macOS LLVM bottle, so a source install is inferred, not a captured compiler failure."
+}

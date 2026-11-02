@@ -1,0 +1,16 @@
+{
+  "conclusion": "cancelled",
+  "headSha": "2c032e09a7b5087b34bc8d0b2a5dbd0c5139d4b7",
+  "jobs": [
+    {
+      "name": "build",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "steps": []
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41478819769",
+  "capturedAt": "2026-11-02T17:35:37.835959+00:00",
+  "note": "Cancelled while queued; no build steps ran."
+}

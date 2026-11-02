@@ -1,15 +1,24 @@
 {
   "conclusion": "",
-  "headSha": "2c032e09a7b5087b34bc8d0b2a5dbd0c5139d4b7",
+  "headSha": "df25bb3f0bb7308b81a79adcd79f4242502e7ac4",
   "jobs": [
     {
       "name": "build",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": "",
-      "steps": []
+      "steps": [
+        {
+          "completedAt": "0001-01-01T00:00:00Z",
+          "conclusion": "",
+          "name": "Configure wine (build-macos, cross)",
+          "number": 15,
+          "startedAt": "2026-11-02T17:34:35Z",
+          "status": "in_progress"
+        }
+      ]
     }
   ],
-  "status": "queued",
-  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41478819769",
-  "capturedAt": "2026-11-02T16:11:19.293382+00:00"
+  "status": "in_progress",
+  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41491849116",
+  "capturedAt": "2026-11-02T17:35:35.907756+00:00"
 }
