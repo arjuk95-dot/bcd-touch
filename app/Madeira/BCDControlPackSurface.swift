@@ -182,7 +182,7 @@ final class BCDPackView: UIView {
             return (action,CGRect(x:point.x-size.width/2,y:point.y-size.height/2,width:size.width,height:size.height))
         }
     }
-    var radialLabelFrames: [CGRect] { fingers.values.filter { $0.role == "radial" }.flatMap { radialLabels($0).map(\.frame) } }
+    var radialLabelFrames: [CGRect] { fingers.values.filter { $0.role == "radial" }.flatMap { radialLabels($0).map { $0.frame } } }
     func clear() {
         epoch = UUID()
         for f in fingers.values { release(f.owner) }

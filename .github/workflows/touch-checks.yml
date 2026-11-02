@@ -2,7 +2,7 @@ name: Touch fork checks
 on: [workflow_dispatch, push]
 jobs:
   touch:
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
       - name: Production Swift timing, state, schema and UIKit checks

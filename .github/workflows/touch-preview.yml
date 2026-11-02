@@ -2,7 +2,7 @@ name: Touch HUD simulator previews
 on: [workflow_dispatch]
 jobs:
   preview:
-    runs-on: macos-15
+    runs-on: macos-15-intel
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
