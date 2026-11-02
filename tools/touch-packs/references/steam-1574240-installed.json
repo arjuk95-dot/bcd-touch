@@ -1,0 +1,387 @@
+{
+  "kind": "Installed-game serialized InputBinding records; defaults, not proof of active player remaps",
+  "asset": "windows_content/Dread Delusion_Data/resources.assets",
+  "assetSHA256": "c05186b4f7402ebc436159309607e1cb4155b868843ba6f1d8443721b7c3f1e3",
+  "bindings": [
+    {
+      "action": "Move",
+      "path": "<Gamepad>/leftStick",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7402984,
+      "context": "onFoot"
+    },
+    {
+      "action": "Jump",
+      "path": "<Gamepad>/buttonNorth",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7403192,
+      "context": "onFoot"
+    },
+    {
+      "action": "Sprint",
+      "path": "<Gamepad>/leftShoulder",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7403412,
+      "context": "onFoot"
+    },
+    {
+      "action": "Crouch",
+      "path": "<Gamepad>/rightStickPress",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7403628,
+      "context": "onFoot"
+    },
+    {
+      "action": "Interact",
+      "path": "<Gamepad>/buttonSouth",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7403848,
+      "context": "onFoot"
+    },
+    {
+      "action": "Attack",
+      "path": "<Gamepad>/rightTrigger",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7404072,
+      "context": "onFoot"
+    },
+    {
+      "action": "Spell",
+      "path": "<Gamepad>/leftTrigger",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7404296,
+      "context": "onFoot"
+    },
+    {
+      "action": "Item",
+      "path": "<Gamepad>/dpad/up",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7404508,
+      "context": "onFoot"
+    },
+    {
+      "action": "Block",
+      "path": "<Gamepad>/rightShoulder",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7404716,
+      "context": "onFoot"
+    },
+    {
+      "action": "SwitchWeapon",
+      "path": "<Gamepad>/dpad/down",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7404936,
+      "context": "onFoot"
+    },
+    {
+      "action": "SwitchSpell",
+      "path": "<Gamepad>/dpad/left",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7405160,
+      "context": "onFoot"
+    },
+    {
+      "action": "SwitchItem",
+      "path": "<Gamepad>/dpad/right",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7405380,
+      "context": "onFoot"
+    },
+    {
+      "action": "Look",
+      "path": "<Gamepad>/rightStick",
+      "interactions": "",
+      "processors": "StickDeadzone(min=0.2),ScaleVector2(x=50,y=40)",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7405596,
+      "context": "onFoot"
+    },
+    {
+      "action": "Menu",
+      "path": "<Gamepad>/start",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7405856,
+      "context": "onFoot"
+    },
+    {
+      "action": "Inventory",
+      "path": "<Gamepad>/buttonWest",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7406068,
+      "context": "onFoot"
+    },
+    {
+      "action": "Map",
+      "path": "<Gamepad>/select",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7406396,
+      "context": "onFoot"
+    },
+    {
+      "action": "PageLeft",
+      "path": "<Gamepad>/leftShoulder",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7407980,
+      "context": "menu"
+    },
+    {
+      "action": "PageRight",
+      "path": "<Gamepad>/rightShoulder",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7408212,
+      "context": "menu"
+    },
+    {
+      "action": "Cancel",
+      "path": "<Gamepad>/buttonEast",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7408440,
+      "context": "menu"
+    },
+    {
+      "action": "PanelLeft",
+      "path": "<Gamepad>/leftTrigger",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7408660,
+      "context": "menu"
+    },
+    {
+      "action": "PanelRight",
+      "path": "<Gamepad>/rightTrigger",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7408892,
+      "context": "menu"
+    },
+    {
+      "action": "Confirm",
+      "path": "<Gamepad>/buttonSouth",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7409224,
+      "context": "menu"
+    },
+    {
+      "action": "ScrollAxis",
+      "path": "<Gamepad>/rightStick",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7409432,
+      "context": "menu"
+    },
+    {
+      "action": "Inventory",
+      "path": "<Gamepad>/buttonWest",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7409656,
+      "context": "menu"
+    },
+    {
+      "action": "ToggleLandmarks",
+      "path": "<Gamepad>/buttonNorth",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7410000,
+      "context": "menu"
+    },
+    {
+      "action": "Move",
+      "path": "<Gamepad>/leftStick",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7412116,
+      "context": "airship"
+    },
+    {
+      "action": "Boost",
+      "path": "<Gamepad>/buttonNorth",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7412328,
+      "context": "airship"
+    },
+    {
+      "action": "Exit",
+      "path": "<Gamepad>/buttonWest",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7412544,
+      "context": "airship"
+    },
+    {
+      "action": "Look",
+      "path": "<Gamepad>/rightStick",
+      "interactions": "",
+      "processors": "StickDeadzone(min=0.2),ScaleVector2(x=50,y=40)",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7412752,
+      "context": "airship"
+    },
+    {
+      "action": "Map",
+      "path": "<Gamepad>/select",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7413120,
+      "context": "airship"
+    },
+    {
+      "action": "TiltDown",
+      "path": "<Gamepad>/rightTrigger",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7413440,
+      "context": "airship"
+    },
+    {
+      "action": "RecenterCamera",
+      "path": "<Gamepad>/rightStickPress",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7413664,
+      "context": "airship"
+    },
+    {
+      "action": "Interact",
+      "path": "<Gamepad>/buttonSouth",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7413896,
+      "context": "airship"
+    },
+    {
+      "action": "TiltUp",
+      "path": "<Gamepad>/leftTrigger",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7414112,
+      "context": "airship"
+    },
+    {
+      "action": "Ascend",
+      "path": "<Gamepad>/rightShoulder",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7414332,
+      "context": "airship"
+    },
+    {
+      "action": "Descend",
+      "path": "<Gamepad>/leftShoulder",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7414552,
+      "context": "airship"
+    },
+    {
+      "action": "Reverse",
+      "path": "<Gamepad>/buttonEast",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7414768,
+      "context": "airship"
+    },
+    {
+      "action": "Zoom",
+      "path": "<Gamepad>/dpad/y",
+      "interactions": "",
+      "processors": "",
+      "groups": "Controller",
+      "flags": 0,
+      "offset": 7414876,
+      "context": "airship"
+    }
+  ]
+}

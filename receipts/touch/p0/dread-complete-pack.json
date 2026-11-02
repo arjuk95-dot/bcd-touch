@@ -1,0 +1,29 @@
+{
+  "date": "2026-11-02",
+  "kind": "Reviewed installed-input data update; existing IPA 033603f",
+  "installedAssetSHA256": "c05186b4f7402ebc436159309607e1cb4155b868843ba6f1d8443721b7c3f1e3",
+  "phonePackSHA256": "68e50d4ca02d522b66e059ec3254993d2f942064f18fd5b66b2557405270160f",
+  "phoneCacheAndOverridesReadbackVerified": true,
+  "actions": 33,
+  "contexts": ["onFoot", "menu", "airship"],
+  "personalEditsPreserved": ["phone attack x", "phone attack y", "phone radial x", "pad radial x"],
+  "aim": {"deadZone": 0.3, "fullSpeed": 600, "vertical": 1.25, "sensitivity": 1, "invertY": false},
+  "calibrationEvidence": {
+    "installedLookProcessors": "StickDeadzone(min=0.2),ScaleVector2(x=50,y=40)",
+    "assumedStandardUnityControlDeadZoneMin": 0.125,
+    "oldFineSwipeAfterBothDeadZones": 0,
+    "revisedFineSwipeAfterBothDeadZones": 0.05,
+    "physicalAcceptance": false
+  },
+  "checks": {
+    "pythonSchemaModeIdentityAndReachability": true,
+    "perContextCircleOverlapFixture": "pass at phone aspect 2.0 and pad aspect 1.33, including preserved edits",
+    "workerCachedHTTP200": true,
+    "newModelGeneration": false,
+    "newIPARequired": false,
+    "newControlsPhysicallyTested": false,
+    "activePlayerRemapsLocated": false
+  },
+  "playerResultBeforeThisUpdate": {"movementAfterWGI": "working", "attackAfterWGI": "working", "swipeAim": "failed: intermittent tiny movement"},
+  "note": "Defaults came from the installed game's serialized controller bindings, not guesses from genre. Current camera settings and physical aim feel remain pending. A delivery-expiry timing concern remains for testing if calibration alone does not resolve aim."
+}

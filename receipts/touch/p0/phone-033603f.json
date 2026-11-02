@@ -10,7 +10,10 @@
     "stockControllerGameplay": "failed",
     "keyboardMouseOverlayGameplay": "working",
     "priorStockControllerIntermittency": true,
-    "dialogAndEditorFixes": "not reported"
+    "dialogAndEditorFixes": "not reported",
+    "movementAfterWGI": "working",
+    "attackAfterWGI": "working",
+    "swipeAimAfterWGI": "failed: occasional tiny movement"
   },
   "diagnosis": {
     "xinputEnabledInLaunchLog": true,
@@ -22,9 +25,9 @@
     "wgiHostBridgeEnabledInDreadProfile": true,
     "wgiSettingApplied": true,
     "wgiSettingReadbackVerified": true,
-    "wgiGameplayRetest": "pending",
+    "wgiGameplayRetest": "movement and attack accepted; aim failed before data calibration update",
     "rootCauseConfirmed": false,
     "guestTraceCaptured": false
   },
-  "note": "Player's physical result overrides earlier fixture passes. The Dread-only WGI opt-in was backed up, applied and read back after reconnection on 2026-11-02. It remains an unconfirmed compatibility experiment pending gameplay retest. No additional IPA built for this diagnosis."
+  "note": "WGI compatibility restored movement and Attack by player report. Swipe aim still failed. A complete installed-default control pack and revised aim calibration were then applied; their physical retest remains pending. No new IPA."
 }

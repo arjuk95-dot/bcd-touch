@@ -12,6 +12,38 @@ sys.path.insert(0,str(ROOT/'tools/touch-packs'))
 spec=importlib.util.spec_from_file_location('worker',ROOT/'tools/touch-packs/worker.py');w=importlib.util.module_from_spec(spec);spec.loader.exec_module(w)
 packs=list((ROOT/'packs/pilots').glob('*.json'))
 assert packs, 'Pilot packs missing'
+from dread_bindings import apply_dread_bindings
+from inspect_unity_bindings import extract
+import struct
+def unityString(value):
+    encoded=value.encode('utf-8');raw=struct.pack('<I',len(encoded))+encoded
+    return raw+b'\0'*((-len(raw))%4)
+record=b''.join(unityString(s) for s in ['8ad5bc9a-0620-48e4-8a31-64d1246589cc','<Gamepad>/rightShoulder','','','Controller','Block'])+struct.pack('<I',0)
+parsed=extract(record)
+assert len(parsed)==1 and parsed[0]['action']=='Block' and parsed[0]['path']=='<Gamepad>/rightShoulder'
+assert not extract(b'<Gamepad>/rightShoulder') and not extract(record[:-5]), 'Truncated or incidental strings are not binding evidence'
+dreadRequest=json.loads((ROOT/'packs/requests/dread-delusion-installed-iphone.json').read_text(encoding='utf-8'))
+dreadPilot=json.loads((ROOT/'packs/pilots/dread-delusion-installed-iphone.json').read_text(encoding='utf-8'))
+dread=apply_dread_bindings(dreadPilot,dreadRequest);w.validate(dread,dreadRequest['identity'])
+byID={a['id']:a for a in dread['actions']}
+assert {id:byID[id]['output'] for id in ['block','spell','sprint','crouch','use-item','raw-y','raw-a']}==dict(block='RB',spell='LT',sprint='LB',crouch='R3',**{'use-item':'D↑','raw-y':'Y','raw-a':'A'})
+assert byID['block']['behavior']=='hold' and byID['block']['contexts']==['onFoot']
+assert byID['panel-right']['contexts']==['menu'] and byID['ascend']['contexts']==['airship']
+assert all(a['output'] in w.OUTPUTS for a in dread['actions'])
+actualRemaps=copy.deepcopy(dreadRequest);actualRemaps['bindings']={'actual-input-file':'player overrides'}
+assert apply_dread_bindings(dreadPilot,actualRemaps)==dreadPilot, 'Defaults must never replace unparsed actual remaps'
+import math
+for device,aspect in [('phone',2.0),('pad',1.33)]:
+    for context in dread['contexts']:
+        visible=[c for c in dread[device]['controls'] if c['role'] not in ['move','radial'] and context in byID[c['action']]['contexts']]
+        for i,c in enumerate(visible):
+            for other in visible[i+1:]:
+                assert math.hypot((c['x']-other['x'])*aspect,c['y']-other['y'])>=c['hitRadius']+other['hitRadius'], 'Same-context buttons overlap'
+def gameDeadzone(value,minimum,maximum=.925): return max(0,min(1,(value-minimum)/(maximum-minimum)))
+oldFine=.18+.82*(.2*60/900)
+newFine=dread['aim']['deadZone']+(1-dread['aim']['deadZone'])*(.2*60/dread['aim']['fullSpeed'])
+assert gameDeadzone(gameDeadzone(oldFine,.125),.2)==0
+assert gameDeadzone(gameDeadzone(newFine,.125),.2)>0, 'Fine aim must survive the installed binding and assumed standard control dead zones'
 assert w.reference_for(dict(storeID='local',executable='Games/Dread Delusion.exe'))['identifiedBy'].startswith('unique executable')
 assert w.reference_for(dict(storeID='local',executable='unknown.exe')) is None
 local_request=json.loads((ROOT/'packs/requests/chronicles-of-the-wolf.json').read_text(encoding='utf-8'));local_request['identity']['storeID']='local'
