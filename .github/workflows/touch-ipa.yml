@@ -4,7 +4,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: macos-26
     permissions:
       contents: read
       actions: read
@@ -15,11 +15,13 @@ jobs:
         submodules: recursive
     - name: Restore pinned converter omitted from upstream Git tree
       run: python3 tools/touch-packs/stage-converter.py
-    - name: Select newest Xcode
+    - name: Select the previously tested Xcode 26.3
       shell: bash
-      run: "echo \"-- installed Xcodes --\"\nls -d /Applications/Xcode*.app 2>/dev/null || echo \"(none beyond the default)\"\nNEWEST=$(ls -d /Applications/Xcode*.app\
-        \ 2>/dev/null | sort -V | tail -1)\nif [ -n \"$NEWEST\" ]; then\n  sudo xcode-select -s \"$NEWEST/Contents/Developer\"\n  echo \"::notice::selected $NEWEST\"\
-        \nfi\n"
+      run: |
+        test -d /Applications/Xcode_26.3.app
+        sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+        test "$(uname -m)" = arm64
+        xcodebuild -version
     - name: Build number
       id: bn
       shell: bash
