@@ -6,11 +6,14 @@ jobs:
   build:
     # The iOS/PE targets are cross-compiled; only Wine's host tools run here.
     # Keep an Intel option when GitHub cannot allocate an ARM host.
-    runs-on: ${{ inputs.runner || 'macos-15' }}
+    runs-on: ${{ inputs.runner || 'macos-15-intel' }}
     permissions:
       contents: read
       actions: read
     timeout-minutes: 360
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: '1'
+      HOMEBREW_NO_INSTALL_UPGRADE: '1'
     steps:
     - uses: actions/checkout@v4
       with:
@@ -337,7 +340,7 @@ jobs:
         key: llvm-mingw-20260421-ucrt-macos-universal
     - name: Install ninja/meson and fetch llvm-mingw
       shell: bash
-      run: "brew install ninja meson\nmkdir -p toolchains\nMINGW=toolchains/llvm-mingw-20260421-ucrt-macos-universal\nif [ -x \"$MINGW/bin/arm64ec-w64-mingw32-clang++\"\
+      run: "command -v ninja\npython3 -m venv /tmp/bcd-meson\n/tmp/bcd-meson/bin/pip install meson==1.12.1\necho /tmp/bcd-meson/bin >> $GITHUB_PATH\nmkdir -p toolchains\nMINGW=toolchains/llvm-mingw-20260421-ucrt-macos-universal\nif [ -x \"$MINGW/bin/arm64ec-w64-mingw32-clang++\"\
         \ ]; then\n  echo \"::notice::llvm-mingw restored from cache\"\n  echo \"MINGW_OK=1\" >> \"$GITHUB_ENV\"\nelse\n  # Piping curl into tar hid a failed download.\
         \ Run 71 received 92\n  # bytes of error page, tar said \"Unrecognized archive format\", the\n  # step exited 0, and the IPA shipped the committed xtajit64.dll\n\
         \  # instead of ours -- with the job green throughout. Download to a\n  # file, retry, and check what arrived before unpacking.\n  URL=https://github.com/mstorsjo/llvm-mingw/releases/download/20260421/llvm-mingw-20260421-ucrt-macos-universal.tar.xz\n\
@@ -969,9 +972,8 @@ jobs:
       runner:
         description: Host runner (all choices produce the same iOS ARM64 target)
         type: choice
-        default: macos-15
+        default: macos-15-intel
         options:
         - macos-15
         - macos-26
-        - macos-26-intel
         - macos-15-intel
