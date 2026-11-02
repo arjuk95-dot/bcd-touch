@@ -1,0 +1,10 @@
+{
+  "kind": "Binary marker inspection; not guest execution",
+  "appSource": "df25bb3f0bb7308b81a79adcd79f4242502e7ac4",
+  "member": "Payload/Madeira.app/arm64ec-windows/windows.gaming.input.dll",
+  "bytes": 720896,
+  "sha256": "0a1db9baaf7f72f38b08a92cf9454596d098c03f2278f4ac4f3f92e0bfd9c0cd",
+  "peMachine": "0x8664",
+  "wgiHostPadBridgePresent": true,
+  "physicallyTested": false
+}

@@ -1,0 +1,32 @@
+{
+  "updatedUTC": "2026-11-02T18:32:53.380576+00:00",
+  "localDate": "2026-11-03",
+  "base": "adc9cc742f52601a42f52ac6b4fbcc701bdb16ad",
+  "branch": "wo-bcd-touch-001",
+  "appSource": "df25bb3f0bb7308b81a79adcd79f4242502e7ac4",
+  "localIPA": "BCD-Touch-aim-df25bb3.ipa",
+  "bytes": 185549333,
+  "sha256": "b9f39cdf541185e8fb3150cbf8ac67cb75e55775315786c03bcdd02d4827200a",
+  "build": "passed",
+  "nativePackageChecks": "passed",
+  "localArchiveChecks": "passed",
+  "stagedOnPhone": false,
+  "installedOnPhone": false,
+  "physicallyTested": false,
+  "phoneConnection": "not visible to the existing usbmux pairing at transfer preparation",
+  "freshMetadataBackup": "not completed: device not found before any remote write",
+  "lastPhoneBuild": "033603f365a7c9a69a7b1027e58edcb7c3acfd1b",
+  "lastPhoneResult": "movement and Attack work after per-game WGI setting; aim failed after complete pack update",
+  "pending": [
+    "transfer and personal SideStore signing in existing BCD slot",
+    "installed-source, entitlement and data-preservation readback",
+    "actual Dread camera settings and swipe feel",
+    "dialog/editor escape and all binding acceptance",
+    "guest LS/RT/RS and zero keyboard/mouse evidence",
+    "physical stop latency, touch ownership and cancellation",
+    "physical controller/gyro regression and iPad playtest"
+  ],
+  "workerInstructions": "tools/touch-packs/README.md",
+  "schema": "tools/touch-packs/pack.schema.json",
+  "pilot": "packs/pilots/dread-delusion-installed-iphone.json"
+}

@@ -1,0 +1,15 @@
+{
+  "conclusion": "success",
+  "headSha": "152900618d28e38eb8b75ff258a224971c774da3",
+  "jobs": [
+    {
+      "name": "package",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": []
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41500353783",
+  "capturedAt": "2026-11-02T18:29:51.987734+00:00"
+}
