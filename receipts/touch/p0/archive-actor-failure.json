@@ -1,0 +1,24 @@
+{
+  "conclusion": "failure",
+  "headSha": "1a0dfd61ca5b3b90bd04a79893f5003c18cf5ae1",
+  "jobs": [
+    {
+      "name": "build",
+      "status": "completed",
+      "conclusion": "failure",
+      "steps": [
+        {
+          "completedAt": "2026-11-02T10:13:25Z",
+          "conclusion": "failure",
+          "name": "Archive (unsigned)",
+          "number": 173,
+          "startedAt": "2026-11-02T10:11:34Z",
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41422618559",
+  "capturedAt": "2026-11-02T11:05:27.462371+00:00"
+}

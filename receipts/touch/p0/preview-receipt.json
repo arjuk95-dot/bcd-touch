@@ -10,8 +10,12 @@
     "editor-320-simulator.png",
     "dread-delusion-phone-hud.png",
     "dread-delusion-pad-hits.png",
+    "dread-delusion-installed-iphone-phone-hud.png",
     "chronicles-of-the-wolf-phone-hud.png",
     "chronicles-of-the-wolf-pad-hud.png",
-    "chronicles-of-the-wolf-pad-hits.png"
+    "dread-delusion-installed-iphone-phone-hits.png",
+    "dread-delusion-installed-iphone-pad-hits.png",
+    "chronicles-of-the-wolf-pad-hits.png",
+    "dread-delusion-installed-iphone-pad-hud.png"
   ]
 }

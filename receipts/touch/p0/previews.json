@@ -1,6 +1,6 @@
 {
   "conclusion": "success",
-  "headSha": "9b5fc22b5b7ba96f46c55a45f3cb60b8cea7dc27",
+  "headSha": "033603f365a7c9a69a7b1027e58edcb7c3acfd1b",
   "jobs": [
     {
       "name": "preview",
@@ -10,6 +10,6 @@
     }
   ],
   "status": "completed",
-  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41419876532",
-  "capturedAt": "2026-11-02T09:38:29.164378+00:00"
+  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41427632228",
+  "capturedAt": "2026-11-02T11:05:21.532557+00:00"
 }

@@ -5,15 +5,15 @@ on:
       source_run:
         description: Full-build run containing BCD-Touch-Lab-build
         required: true
-        default: '41325781697'
+        default: '41427627554'
       source_commit:
         description: App source commit embedded in that IPA
         required: true
-        default: c06c500614690f4e65fd935c54a3f9e1b793e39c
+        default: 033603f365a7c9a69a7b1027e58edcb7c3acfd1b
       source_sha256:
         description: SHA-256 of the source IPA
         required: true
-        default: 602bb64719babbb08e97dfe278cc2634b55eae5b89f2b02331d60fe8fa29f4ba
+        default: fab02909d6e358c26725fd53b0e07ff6c4823d20d9dfdc22bafe2f7baad08f98
 permissions:
   contents: read
   actions: read
