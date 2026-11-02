@@ -2850,7 +2850,8 @@ enum TouchControlsHost {
             window = w
         }
         window?.frame = scene.coordinateSpace.bounds
-        if let window { BCDPackFocus.shared.observe(window) }
+        // The pack view observes its window in didMoveToWindow on UIKit's
+        // main actor, including when this legacy host attaches it later.
         fputs("[controls] ml644 overlay attached frame=\(window?.frame ?? .zero) " +
               "controls=\(TouchControlsModel.shared.controls.count)\n", stderr)
     }
