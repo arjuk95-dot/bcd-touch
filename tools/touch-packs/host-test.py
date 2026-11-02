@@ -6,6 +6,7 @@ Use the already installed Homebrew LLVM >=22 only for host test children.
 The iOS app and runtime build retain their selected Xcode toolchain.
 """
 import os
+import platform
 from pathlib import Path
 import re
 import subprocess
@@ -18,9 +19,10 @@ if not script.is_relative_to(root / 'tests/host'):
     raise ValueError('Expected a repository host test')
 uses_asan = any('fsanitize=' in line and 'address' in line
                 for line in script.read_text(encoding='utf-8').splitlines())
-if not uses_asan:
+needs_runtime_workaround = uses_asan and platform.system() == 'Darwin' and int(platform.mac_ver()[0].split('.')[0]) >= 26
+if not needs_runtime_workaround:
     # Preserve upstream's warning/compiler behavior for checks without ASan.
-    print('Host tests: selected Xcode compiler (no AddressSanitizer)', flush=True)
+    print('Host tests: selected compiler; sanitizer flags unchanged (macOS 26 runtime workaround not needed)', flush=True)
     raise SystemExit(subprocess.run([sys.executable, str(script), *sys.argv[2:]],
                      env=dict(os.environ, PYTHONUNBUFFERED='1')).returncode)
 prefix = subprocess.check_output(['brew', '--prefix', 'llvm'], text=True, timeout=30).strip()

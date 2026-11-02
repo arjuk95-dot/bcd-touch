@@ -45,14 +45,22 @@ jobs:
         echo "$(brew --prefix bison)/bin" >> "$GITHUB_PATH"
 
         '
-    - name: Install llvm (need lld/llvm-dlltool for aarch64-windows PE cross target)
-      run: 'brew install llvm lld
-
-        echo "$(brew --prefix llvm)/bin" >> "$GITHUB_PATH"
-
-        echo "$(brew --prefix lld)/bin" >> "$GITHUB_PATH"
-
-        '
+    - name: Select LLVM tools without building a host compiler from source
+      shell: bash
+      run: |
+        if [ "$(uname -m)" = x86_64 ]; then
+          # Current Homebrew LLVM bottles omit Intel macOS. The macOS 15
+          # image already carries these tools; actual PE compilers below
+          # remain the pinned universal llvm-mingw 20260421 distribution.
+          prefix=$(brew --prefix llvm@18)
+          for tool in llvm-dlltool llvm-objcopy ld.lld; do test -x "$prefix/bin/$tool"; done
+          echo "$prefix/bin" >> "$GITHUB_PATH"
+          "$prefix/bin/clang" --version
+        else
+          brew install llvm lld
+          echo "$(brew --prefix llvm)/bin" >> "$GITHUB_PATH"
+          echo "$(brew --prefix lld)/bin" >> "$GITHUB_PATH"
+        fi
     - name: Wine submodule revision
       id: winerev
       shell: bash
@@ -966,3 +974,4 @@ jobs:
         - macos-15
         - macos-26
         - macos-26-intel
+        - macos-15-intel
