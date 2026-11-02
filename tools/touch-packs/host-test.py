@@ -16,6 +16,13 @@ root = Path(__file__).resolve().parents[2]
 script = (root / sys.argv[1]).resolve()
 if not script.is_relative_to(root / 'tests/host'):
     raise ValueError('Expected a repository host test')
+uses_asan = any('fsanitize=' in line and 'address' in line
+                for line in script.read_text(encoding='utf-8').splitlines())
+if not uses_asan:
+    # Preserve upstream's warning/compiler behavior for checks without ASan.
+    print('Host tests: selected Xcode compiler (no AddressSanitizer)', flush=True)
+    raise SystemExit(subprocess.run([sys.executable, str(script), *sys.argv[2:]],
+                     env=dict(os.environ, PYTHONUNBUFFERED='1')).returncode)
 prefix = subprocess.check_output(['brew', '--prefix', 'llvm'], text=True, timeout=30).strip()
 compiler = Path(prefix) / 'bin/clang'
 version = subprocess.check_output([str(compiler), '--version'], text=True, timeout=30)
