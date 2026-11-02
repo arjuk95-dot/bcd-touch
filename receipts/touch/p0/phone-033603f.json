@@ -1,0 +1,28 @@
+{
+  "date": "2026-11-02",
+  "appSource": "033603f365a7c9a69a7b1027e58edcb7c3acfd1b",
+  "installedSourceReadbackVerified": true,
+  "effectiveIncreasedMemory": true,
+  "effectiveDebuggable": true,
+  "dataPreservationVerified": false,
+  "playerReport": {
+    "generatedDreadControllerGameplay": "failed",
+    "stockControllerGameplay": "failed",
+    "keyboardMouseOverlayGameplay": "working",
+    "priorStockControllerIntermittency": true,
+    "dialogAndEditorFixes": "not reported"
+  },
+  "diagnosis": {
+    "xinputEnabledInLaunchLog": true,
+    "touchXinputEnabledInLaunchLog": true,
+    "sessionPadMode": "xinput",
+    "dreadRequestsWindowsGamingInputGamepad": true,
+    "xinputDLLLoadObservedInTwoReviewedDreadLogs": false,
+    "shippedArm64ecWgiHostBridgeMarkerVerified": true,
+    "wgiHostBridgeEnabledInDreadProfile": false,
+    "wgiSettingApplied": false,
+    "rootCauseConfirmed": false,
+    "guestTraceCaptured": false
+  },
+  "note": "Player's physical result overrides earlier fixture passes. WGI opt-in is a testable compatibility lead, not a confirmed fix. Phone disconnected before applying it. No additional IPA built for this diagnosis."
+}
