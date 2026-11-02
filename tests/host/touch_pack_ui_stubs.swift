@@ -50,7 +50,8 @@ struct LibraryEntry {
     static var fixturePointer=false
     static func isPointerEvent(_ event:UIEvent?) -> Bool { fixturePointer }
 }
-@MainActor final class TouchControlsModel {
+// Match the upstream legacy model's isolation; the pack focus remains @MainActor.
+final class TouchControlsModel {
     static let shared=TouchControlsModel()
     var editing=false, sessionPanel=false
     var controls:[Int]=[]
