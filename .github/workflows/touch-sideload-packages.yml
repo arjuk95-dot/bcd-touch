@@ -1,6 +1,19 @@
 name: Touch sideload packages
 on:
   workflow_dispatch:
+    inputs:
+      source_run:
+        description: Full-build run containing BCD-Touch-Lab-build
+        required: true
+        default: '41325781697'
+      source_commit:
+        description: App source commit embedded in that IPA
+        required: true
+        default: c06c500614690f4e65fd935c54a3f9e1b793e39c
+      source_sha256:
+        description: SHA-256 of the source IPA
+        required: true
+        default: 602bb64719babbb08e97dfe278cc2634b55eae5b89f2b02331d60fe8fa29f4ba
 permissions:
   contents: read
   actions: read
@@ -11,20 +24,23 @@ jobs:
   package:
     runs-on: macos-26
     timeout-minutes: 15
+    env:
+      SOURCE_COMMIT: ${{ inputs.source_commit }}
+      SOURCE_SHA256: ${{ inputs.source_sha256 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: BCD-Touch-Lab-build
           path: source-artifact
-          run-id: 41325781697
+          run-id: ${{ inputs.source_run }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Prepare update for the existing BCD slot
         run: >-
           python3 tools/touch-packs/package-sideload.py source-artifact/build-out/BCD-Touch-Lab-unsigned.ipa
           --mode existing --output update-package
-          --expected-source c06c500614690f4e65fd935c54a3f9e1b793e39c
-          --expected-ipa-sha 602bb64719babbb08e97dfe278cc2634b55eae5b89f2b02331d60fe8fa29f4ba
+          --expected-source "$SOURCE_COMMIT"
+          --expected-ipa-sha "$SOURCE_SHA256"
       - uses: actions/upload-artifact@v4
         with:
           name: BCD-Touch-existing-update
@@ -36,8 +52,8 @@ jobs:
         run: >-
           python3 tools/touch-packs/package-sideload.py source-artifact/build-out/BCD-Touch-Lab-unsigned.ipa
           --mode separate --output separate-package
-          --expected-source c06c500614690f4e65fd935c54a3f9e1b793e39c
-          --expected-ipa-sha 602bb64719babbb08e97dfe278cc2634b55eae5b89f2b02331d60fe8fa29f4ba
+          --expected-source "$SOURCE_COMMIT"
+          --expected-ipa-sha "$SOURCE_SHA256"
       - uses: actions/upload-artifact@v4
         with:
           name: BCD-Touch-Lab-sideload

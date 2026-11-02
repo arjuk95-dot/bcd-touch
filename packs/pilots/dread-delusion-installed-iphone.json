@@ -1,0 +1,378 @@
+{
+  "actions": [
+    {
+      "behavior": "hold",
+      "contexts": [
+        "manual-controller"
+      ],
+      "evidence": "raw",
+      "icon": "l.joystick",
+      "id": "raw-ls",
+      "label": "LS",
+      "output": "LS"
+    },
+    {
+      "behavior": "hold",
+      "contexts": [
+        "manual-controller"
+      ],
+      "evidence": "raw",
+      "icon": "r.joystick",
+      "id": "raw-rs",
+      "label": "RS",
+      "output": "RS"
+    },
+    {
+      "behavior": "hold",
+      "contexts": [
+        "manual-controller"
+      ],
+      "evidence": "player-confirmed-2026-11-02",
+      "icon": "figure.fencing",
+      "id": "raw-rt",
+      "label": "Attack",
+      "output": "RT"
+    },
+    {
+      "behavior": "hold",
+      "contexts": [
+        "manual-controller"
+      ],
+      "evidence": "raw",
+      "icon": "a.circle",
+      "id": "raw-a",
+      "label": "A",
+      "output": "A"
+    },
+    {
+      "behavior": "hold",
+      "contexts": [
+        "manual-controller"
+      ],
+      "evidence": "raw",
+      "icon": "b.circle",
+      "id": "raw-b",
+      "label": "B",
+      "output": "B"
+    },
+    {
+      "behavior": "hold",
+      "contexts": [
+        "manual-controller"
+      ],
+      "evidence": "raw",
+      "icon": "y.circle",
+      "id": "raw-y",
+      "label": "Y",
+      "output": "Y"
+    },
+    {
+      "behavior": "tap",
+      "contexts": [
+        "manual-controller"
+      ],
+      "evidence": "developer-guide-2022",
+      "icon": "bag",
+      "id": "equipment",
+      "label": "Equipment",
+      "output": "X"
+    },
+    {
+      "behavior": "tap",
+      "contexts": [
+        "manual-controller"
+      ],
+      "evidence": "developer-guide-2022",
+      "icon": "arrow.triangle.2.circlepath",
+      "id": "next-weapon",
+      "label": "Next weapon",
+      "output": "D↓"
+    },
+    {
+      "behavior": "tap",
+      "contexts": [
+        "manual-controller"
+      ],
+      "evidence": "developer-guide-2022",
+      "icon": "cross.case",
+      "id": "next-item",
+      "label": "Next item",
+      "output": "D→"
+    },
+    {
+      "behavior": "tap",
+      "contexts": [
+        "manual-controller"
+      ],
+      "evidence": "developer-guide-2022",
+      "icon": "sparkles",
+      "id": "next-spell",
+      "label": "Next spell",
+      "output": "D←"
+    },
+    {
+      "behavior": "tap",
+      "contexts": [
+        "manual-controller"
+      ],
+      "evidence": "map-patch-2022",
+      "icon": "map",
+      "id": "map",
+      "label": "Map",
+      "output": "View"
+    },
+    {
+      "behavior": "hold",
+      "contexts": [
+        "manual-controller"
+      ],
+      "evidence": "raw",
+      "icon": "line.3.horizontal",
+      "id": "raw-menu",
+      "label": "Menu",
+      "output": "Menu"
+    }
+  ],
+  "aim": {
+    "deadZone": 0.18,
+    "fullSpeed": 900,
+    "invertY": false,
+    "sensitivity": 1,
+    "vertical": 1
+  },
+  "contexts": [
+    "manual-controller"
+  ],
+  "evidence": [
+    {
+      "detail": "Identified by supplied Steam store ID 1574240. Lovely Hellplace and Lazarus developer guide, Early Access, updated 2022-06-18; web search retrieved the guide and confirmed documented defaults: X opens equipment; D↓ cycles weapons, D→ items, D← spells. Installed edition/build and personal remaps remain unverified.",
+      "id": "developer-guide-2022",
+      "source": "https://steamcommunity.com/sharedfiles/filedetails/?id=2821074709"
+    },
+    {
+      "detail": "Supplied reviewed developer announcement for Steam 1574240, version 0.5.036, 2022-08-19: documented default Map uses BACK, represented as Xbox View. This search did not independently retrieve the primary announcement body. Installed edition/build and personal remaps remain unverified.",
+      "id": "map-patch-2022",
+      "source": "https://steamcommunity.com/games/1574240/announcements/detail/3347883562123143180"
+    },
+    {
+      "detail": "Supplied bindings are empty. Official-documentation web searches established no additional reliable controller meanings. LS, RS, RT, A, B, Y and Menu are raw output labels; move and fireAim describe touch roles, not verified gameplay meanings. Holds own output from touch-down until release; axes are continuous.",
+      "id": "raw",
+      "source": "request.bindings"
+    },
+    {
+      "detail": "BLACK thin translucent outlines with local SF Symbols. Swipe rectangles reserved first; all hit squares stay outside them. Low-left floating LS; larger right RT supports simultaneous swipe. Unclaimed space swipes RS, without momentum, edge spin or accumulated motion. Radial opens at its own control and exposes labelled selections outside aimRect. No gestures. Context is manually selected; no menu or vehicle detection.",
+      "id": "layout",
+      "source": "request.requirements"
+    },
+    {
+      "id": "player-confirmed-2026-11-02",
+      "source": "user-confirmed:2026-11-02",
+      "detail": "The player explicitly confirmed RT is Attack while testing this installed iPhone pilot. This is player evidence, not an inferred official default."
+    }
+  ],
+  "gestures": [],
+  "id": "dread-delusion-controller-v1",
+  "identity": {
+    "bindingDigest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "build": "unreported",
+    "edition": "installed",
+    "executable": "program files (x86)/steam/steamapps/common/dread delusion",
+    "storeID": "steam:1574240"
+  },
+  "inputMode": "controller",
+  "pad": {
+    "aimRect": {
+      "x": 0.34,
+      "y": 0.18,
+      "width": 0.4,
+      "height": 0.58
+    },
+    "controls": [
+      {
+        "action": "raw-ls",
+        "hitRadius": 0.1,
+        "id": "pad-ls",
+        "opacity": 0.25,
+        "radius": 0.1,
+        "role": "move",
+        "x": 0.14,
+        "y": 0.79
+      },
+      {
+        "action": "raw-rt",
+        "hitRadius": 0.085,
+        "id": "pad-rt",
+        "opacity": 0.28,
+        "radius": 0.085,
+        "role": "fireAim",
+        "x": 0.89,
+        "y": 0.77
+      },
+      {
+        "action": "raw-a",
+        "hitRadius": 0.045,
+        "id": "pad-a",
+        "opacity": 0.25,
+        "radius": 0.045,
+        "role": "button",
+        "x": 0.95,
+        "y": 0.43
+      },
+      {
+        "action": "raw-b",
+        "hitRadius": 0.045,
+        "id": "pad-b",
+        "opacity": 0.25,
+        "radius": 0.045,
+        "role": "button",
+        "x": 0.82,
+        "y": 0.38
+      },
+      {
+        "action": "raw-y",
+        "hitRadius": 0.045,
+        "id": "pad-y",
+        "opacity": 0.25,
+        "radius": 0.045,
+        "role": "button",
+        "x": 0.96,
+        "y": 0.23
+      },
+      {
+        "action": "raw-menu",
+        "hitRadius": 0.035,
+        "id": "pad-menu",
+        "opacity": 0.25,
+        "radius": 0.035,
+        "role": "button",
+        "x": 0.57,
+        "y": 0.08
+      },
+      {
+        "action": "map",
+        "hitRadius": 0.035,
+        "id": "pad-map",
+        "opacity": 0.25,
+        "radius": 0.035,
+        "role": "button",
+        "x": 0.43,
+        "y": 0.08
+      },
+      {
+        "action": "equipment",
+        "hitRadius": 0.05,
+        "id": "pad-radial",
+        "opacity": 0.25,
+        "radius": 0.05,
+        "role": "radial",
+        "x": 0.5,
+        "y": 0.92
+      }
+    ]
+  },
+  "phone": {
+    "aimRect": {
+      "x": 0.34,
+      "y": 0.18,
+      "width": 0.4,
+      "height": 0.58
+    },
+    "controls": [
+      {
+        "action": "raw-ls",
+        "hitRadius": 0.13,
+        "id": "phone-ls",
+        "opacity": 0.25,
+        "radius": 0.13,
+        "role": "move",
+        "x": 0.14,
+        "y": 0.79
+      },
+      {
+        "action": "raw-rt",
+        "hitRadius": 0.12,
+        "id": "phone-rt",
+        "opacity": 0.28,
+        "radius": 0.12,
+        "role": "fireAim",
+        "x": 0.88,
+        "y": 0.68
+      },
+      {
+        "action": "raw-a",
+        "hitRadius": 0.045,
+        "id": "phone-a",
+        "opacity": 0.25,
+        "radius": 0.045,
+        "role": "button",
+        "x": 0.95,
+        "y": 0.43
+      },
+      {
+        "action": "raw-b",
+        "hitRadius": 0.045,
+        "id": "phone-b",
+        "opacity": 0.25,
+        "radius": 0.045,
+        "role": "button",
+        "x": 0.82,
+        "y": 0.38
+      },
+      {
+        "action": "raw-y",
+        "hitRadius": 0.045,
+        "id": "phone-y",
+        "opacity": 0.25,
+        "radius": 0.045,
+        "role": "button",
+        "x": 0.96,
+        "y": 0.23
+      },
+      {
+        "action": "raw-menu",
+        "hitRadius": 0.035,
+        "id": "phone-menu",
+        "opacity": 0.25,
+        "radius": 0.035,
+        "role": "button",
+        "x": 0.57,
+        "y": 0.08
+      },
+      {
+        "action": "map",
+        "hitRadius": 0.035,
+        "id": "phone-map",
+        "opacity": 0.25,
+        "radius": 0.035,
+        "role": "button",
+        "x": 0.43,
+        "y": 0.08
+      },
+      {
+        "action": "equipment",
+        "hitRadius": 0.05,
+        "id": "phone-radial",
+        "opacity": 0.25,
+        "radius": 0.05,
+        "role": "radial",
+        "x": 0.5,
+        "y": 0.92
+      }
+    ]
+  },
+  "radial": [
+    "equipment",
+    "next-weapon",
+    "next-item",
+    "next-spell"
+  ],
+  "title": "Dread Delusion",
+  "unresolved": [
+    "Installed build is unreported; historical defaults and personal remaps require comparison with the installed game.",
+    "Gameplay meanings of LS, RS, A, B, Y and Menu are unverified; interact, jump and block remain unresolved.",
+    "Map default uses the supplied reviewed primary-source evidence; announcement body was not independently retrieved in this search.",
+    "Cycle bindings expose no named weapon, item or spell slots.",
+    "HUD positions are unverified; layouts minimize overlay density but cannot guarantee HUD clearance."
+  ],
+  "version": 1
+}

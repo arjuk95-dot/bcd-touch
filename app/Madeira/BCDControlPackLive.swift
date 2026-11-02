@@ -147,7 +147,7 @@ import UIKit
             merged.aim = personal.aim
             if (try? merged.validate(for: b.identity)) != nil { pack = merged }
         }
-        if let p = pack { if !p.contexts.contains(context) { context = p.contexts[0] }; status = "Validated · physical test pending" }
+        if let p = pack { if !p.contexts.contains(context) { context = p.contexts[0] }; status = "Validated · playtest required" }
         else { status = "Stock fallback · pack pending"; prepare(entry) }
         for k in jobs.keys where jobs[k]?.state != "validated" { resume(k) }
     }
@@ -197,35 +197,48 @@ import UIKit
 struct BCDPackLayer: View {
     @ObservedObject private var store = BCDPackStore.shared
     @ObservedObject private var library = LibraryModel.shared
+    @ObservedObject private var focus = BCDPackFocus.shared
     var body: some View {
         if let p = store.pack, store.enabled {
             GeometryReader { geo in
                 ZStack(alignment: .topLeading) {
                     BCDPackSurface(pack: p, context: store.context, debug: store.debug, editing: store.editing)
-                        .id(p.id + store.context + String(store.editing))
-                    if store.editing { BCDPackInspector().frame(width: min(360, geo.size.width * 0.42)).padding(.leading, geo.safeAreaInsets.leading + 8).padding(.top, 12) }
+                        .id(p.id + store.context + String(store.editing) + String(focus.gameFocused))
+                    if store.editing {
+                        BCDPackInspector().frame(width: min(380, geo.size.width * 0.46), height: max(120, geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom - 24))
+                            .padding(.leading, geo.safeAreaInsets.leading + 8).padding(.top, geo.safeAreaInsets.top + 12)
+                    }
                 }
             }.onAppear { configure() }
                 .onChange(of: p) { _, _ in configure() }
                 .onChange(of: store.editing) { _, _ in configure() }
                 .onChange(of: library.blocksGameplayTouch) { _, _ in configure() }
-                .onDisappear { GamepadInput.shared.configurePack(enabled: store.pack != nil && store.enabled && p.inputMode == "controller", accepting: false, calibration: p.aim) }
+                .onChange(of: focus.gameFocused) { _, _ in configure() }
+                .onDisappear { GamepadInput.shared.configurePack(enabled: library.current != nil && store.pack != nil && store.enabled && p.inputMode == "controller", accepting: false, calibration: p.aim) }
         }
     }
     private func configure() {
         guard let p = store.pack else { return }
-        GamepadInput.shared.configurePack(enabled: p.inputMode == "controller", accepting: !library.blocksGameplayTouch && !store.editing, calibration: p.aim)
+        focus.setMonitoring(true)
+        GamepadInput.shared.configurePack(enabled: p.inputMode == "controller", accepting: focus.gameFocused && !library.blocksGameplayTouch && !store.editing, calibration: p.aim)
     }
 }
 
-private struct BCDPackInspector: View {
+struct BCDPackInspector: View {
     @ObservedObject var store = BCDPackStore.shared
     @State var selected = ""
     @State var pad = UIDevice.current.userInterfaceIdiom == .pad
     func edit(_ f: (inout BCDControlPack) -> Void) { if var p = store.pack { f(&p); store.saveEdits(p) } }
     var body: some View {
-        VStack {
-            Text("Touch pack · drag to move").font(.headline)
+        VStack(spacing: 8) {
+            HStack {
+                Text("Edit controls").font(.headline)
+                Spacer()
+                Button("Back to game", systemImage: "xmark") { store.editing = false }
+                    .frame(minHeight: 44).accessibilityIdentifier("pack-editor-close")
+            }
+            ScrollView {
+            VStack(spacing: 10) {
             Text(store.status).font(.caption)
             Toggle("iPad layout", isOn: $pad)
             if let p = store.pack {
@@ -259,6 +272,8 @@ private struct BCDPackInspector: View {
             }
             Toggle("Show actual hit regions", isOn: $store.debug)
             HStack { Button("Reset") { store.reset() }; Button("Done") { store.editing = false } }
+            }
+            }
         }.padding(12).background(.ultraThinMaterial).clipShape(RoundedRectangle(cornerRadius: 14))
     }
     func changeControl(_ f: (inout BCDControlPack.Control) -> Void) {
@@ -273,6 +288,7 @@ struct BCDPackTools: View {
     @ObservedObject var store = BCDPackStore.shared
     var body: some View {
         Menu {
+            Button("Back to game", systemImage: "xmark") { store.editing = false }
             Button("Edit pack") { store.editing = true }
             Toggle("Show hit regions", isOn: $store.debug)
             if let p = store.pack {

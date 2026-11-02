@@ -228,6 +228,8 @@ final class GamepadInput: @unchecked Sendable {
     @MainActor func configurePack(enabled: Bool, accepting: Bool, calibration: BCDMouseJoystick.Calibration) {
         if enabled { keyboardMouseOn = false }
         queue.async { [self] in
+            let accepting = enabled && accepting
+            guard packState.reserved != enabled || packState.acceptingInput != accepting || packCalibration != calibration else { return }
             packState.reserved = enabled
             packState.configure(enabled ? [packControl] : [], acceptingInput: accepting)
             packCalibration = calibration; packAim.reset(); packAimOwner = nil
@@ -236,6 +238,12 @@ final class GamepadInput: @unchecked Sendable {
                 keyboardMouse = nil
             }
             updateTimer(); sample()
+        }
+    }
+    @MainActor func packFocusLost() {
+        queue.async { [self] in
+            packState.configure(packState.reserved ? [packControl] : [], acceptingInput: false)
+            packAim.reset(); packAimOwner = nil; sample()
         }
     }
     @MainActor func packTouch(owner: UUID, value: GamepadSample?) {
@@ -369,7 +377,7 @@ final class GamepadInput: @unchecked Sendable {
     }
 
     private func sample() {
-        if !active || LibraryController.shared.ownsInput || !HardwareInput.shared.baseFocused {
+        if !active || LibraryController.shared.ownsInput || !packState.acceptingInput {
             packState.clear(); packAim.reset(); packAimOwner = nil
         }
         // madeira-bcd (round 604): "Player N: press a button on the controller" (BCDPlayersLive.swift); one static flag, -1, while nobody is choosing.

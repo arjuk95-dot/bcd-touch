@@ -32,21 +32,23 @@ with tempfile.TemporaryDirectory(prefix='touch-preview-') as tmp:
     shutil.copyfile(pilots[0],app/'pack.json')
     if device['state']!='Booted':subprocess.run(['xcrun','simctl','boot',uid],check=True)
     subprocess.run(['xcrun','simctl','bootstatus',uid,'-b'],check=True,timeout=180)
+    subprocess.run(['xcrun','simctl','uninstall',uid,'com.arjunkl.bcdtouch.preview'],check=False,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     subprocess.run(['xcrun','simctl','install',uid,str(app)],check=True,timeout=180)
     subprocess.run(['xcrun','simctl','launch','--terminate-running-process',uid,'com.arjunkl.bcdtouch.preview'],env=dict(os.environ,SIMCTL_CHILD_PACK_FIXTURES='1'),check=True,timeout=120)
     container=Path(run(['xcrun','simctl','get_app_container',uid,'com.arjunkl.bcdtouch.preview','data']))/'Documents'
     for _ in range(45):
-        if len(list(container.glob('*.png')))==8 and (container/'client-phase-1.txt').exists():break
+        if len(list(container.glob('*.png')))==10 and (container/'client-phase-1.txt').exists():break
         time.sleep(1)
     for p in container.glob('client-*.txt'):shutil.copyfile(p,out/p.name)
     for p in container.glob('*routing*.txt'):shutil.copyfile(p,out/p.name)
+    for p in container.glob('*regression*.txt'):shutil.copyfile(p,out/p.name)
     assert (container/'client-phase-1.txt').exists(),'Production Swift store client fixture did not finish'
     subprocess.run(['xcrun','simctl','launch','--terminate-running-process',uid,'com.arjunkl.bcdtouch.preview'],env=dict(os.environ,SIMCTL_CHILD_PACK_FIXTURES='1',SIMCTL_CHILD_PACK_CLIENT_RESUME='1'),check=True,timeout=120)
     for _ in range(30):
         if (container/'client-phase-2.txt').exists():break
         time.sleep(1)
     assert (container/'client-phase-2.txt').exists(),'Production Swift store restart fixture did not finish'
-    images=list(container.glob('*.png'));assert len(images)==8,'Renderer fixture export did not complete'
+    images=list(container.glob('*.png'));assert len(images)==10,'Renderer/editor fixture export did not complete'
     for p in images:shutil.copyfile(p,out/p.name)
     for p in container.glob('*-swift-identity.txt'):shutil.copyfile(p,out/p.name)
     for p in container.glob('*-context-visibility.txt'):shutil.copyfile(p,out/p.name)

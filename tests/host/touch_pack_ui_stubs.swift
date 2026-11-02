@@ -19,10 +19,30 @@ struct LibraryEntry {
     static let shared = GamepadInput()
     static var sessionHIDKind:String?
     static var packControllerSession=false
-    func configurePack(enabled:Bool, accepting:Bool, calibration:BCDMouseJoystick.Calibration) {}
-    func packTouch(owner:UUID,value:GamepadSample?) {}
-    func packLook(owner:UUID,phase:Int,dx:Double=0,dy:Double=0,time:Double) {}
+    private var accepting=false
+    private var holds:[UUID:GamepadSample]=[:]
+    private(set) var lookOwner:UUID?
+    private(set) var lookMoves=0
+    var sample:GamepadSample {
+        holds.values.reduce(GamepadSample()) { GamepadSample.merge(physical:$0,touch:$1) }
+    }
+    func configurePack(enabled:Bool, accepting:Bool, calibration:BCDMouseJoystick.Calibration) {
+        self.accepting=enabled && accepting
+        if !self.accepting { holds.removeAll();lookOwner=nil }
+    }
+    func packFocusLost() { accepting=false;holds.removeAll();lookOwner=nil }
+    func packTouch(owner:UUID,value:GamepadSample?) {
+        if value==nil { holds[owner]=nil }
+        else if accepting { holds[owner]=value }
+    }
+    func packLook(owner:UUID,phase:Int,dx:Double=0,dy:Double=0,time:Double) {
+        if phase==2 { if lookOwner==owner {lookOwner=nil};return }
+        guard accepting else{return}
+        if phase==0 && lookOwner==nil {lookOwner=owner}
+        if phase==1 && lookOwner==owner {lookMoves += 1}
+    }
 }
+@MainActor final class MetalBackedView:UIView { static weak var keyboardTarget:UIView? }
 @MainActor final class HardwareInput {
     static let shared = HardwareInput()
     func postRelative(_ x:Int32,_ y:Int32) {}
@@ -44,5 +64,6 @@ struct LibraryEntry {
 enum MadeiraConfig { static func gameValue(_ name:String)->String? { nil };static func get(_ name:String)->String? { nil } }
 @MainActor final class LogStore { static let shared=LogStore();func log(_ message:String) {} }
 @MainActor final class BCDInputLive { static let shared = BCDInputLive(); func refresh() {} }
-func winios_post_key(_ key:Int32,_ down:Int32) {}
-func winios_pointer(_ x:Int32,_ y:Int32,_ flags:UInt32,_ wheel:Int32) {}
+@MainActor enum PackBoundarySpy { static var keyboardEvents=0;static var mouseEvents=0 }
+@MainActor func winios_post_key(_ key:Int32,_ down:Int32) { PackBoundarySpy.keyboardEvents += 1 }
+@MainActor func winios_pointer(_ x:Int32,_ y:Int32,_ flags:UInt32,_ wheel:Int32) { PackBoundarySpy.mouseEvents += 1 }

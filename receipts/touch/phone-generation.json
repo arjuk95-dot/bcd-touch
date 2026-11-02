@@ -1,0 +1,33 @@
+{
+  "kind": "Real iPhone preparation request to desktop HTTP worker",
+  "requestKey": "9a4ca6de6139b1c63ec99e71503f12ee4047f0853fbe4411576580a97dce4902",
+  "phoneRequestObserved": true,
+  "generator": {
+    "attempts": 1,
+    "finished": 1793606627.8457997,
+    "generated": true,
+    "generation": "initial",
+    "key": "9a4ca6de6139b1c63ec99e71503f12ee4047f0853fbe4411576580a97dce4902",
+    "physicallyTested": false,
+    "researchEnabled": true,
+    "started": 1793606533.7494712,
+    "validated": true,
+    "webSearchCalls": 2
+  },
+  "research": [
+    {
+      "query": "site.steamcommunity.com/sharedfiles/filedetails/ 2821074709 Dread Delusion controls ...",
+      "type": "web_search"
+    },
+    {
+      "query": "https://steamcommunity.com/sharedfiles/filedetails/?id=2821074709 ...",
+      "type": "web_search"
+    }
+  ],
+  "generatedPackSHA256": "8c01ebf30938505dd189ec868983e32c7b764748d8bdd65fcc0c0b7c4c6df8c5",
+  "reviewedPackSHA256": "910abda9c782ec890a132e249d811f6b67b15a7d235d5938245bd4bb3f94b7bb",
+  "review": "Player-confirmed RT Attack label/icon, unchanged deployed action ID; radial moved out of floating movement area. No new Codex call. Reviewed pack not yet pushed to device.",
+  "onDeviceValidationConfirmed": true,
+  "physicalPlaytestResult": "FAILED on c06: player reports unresponsive controls, blocked notifications, clipped editor exit and fixed movement acquisition.",
+  "guestTraceTested": false
+}

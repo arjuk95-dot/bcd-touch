@@ -1,0 +1,21 @@
+{
+  "bindings": {},
+  "generation": "initial",
+  "identity": {
+    "bindingDigest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "build": "unreported",
+    "edition": "installed",
+    "executable": "program files (x86)/steam/steamapps/common/dread delusion",
+    "storeID": "steam:1574240"
+  },
+  "requirements": {
+    "genre": "first-person",
+    "hud": "BLACK thin outlines; reserve continuous swipe rectangle first",
+    "mode": "prefer controller; unresolved meanings labelled by actual output",
+    "ownership": "touch-down until release",
+    "pad": "iPad landscape independent reach",
+    "phone": "iPhone 16 Pro Max landscape safe area"
+  },
+  "title": "Dread Delusion",
+  "version": 1
+}

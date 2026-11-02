@@ -2,9 +2,19 @@
   "version": 1,
   "storeID": "steam:1574240",
   "executables": ["dread delusion.exe"],
-  "retrieved": "2026-11-01",
-  "status": "Documented historical defaults; installed build and personal remaps unverified",
+  "retrieved": "2026-11-02",
+  "status": "Documented historical defaults plus this player's confirmed RT attack; installed build unreported",
   "sources": [
+    {
+      "id": "player-confirmed-2026-11-02",
+      "url": "user-confirmed:2026-11-02",
+      "author": "Player of the installed iPhone pilot",
+      "edition": "Current pilot; Steam build ID unreported",
+      "bindings": [
+        {"id": "raw-rt", "label": "Attack", "output": "RT", "behavior": "hold", "icon": "figure.fencing"}
+      ],
+      "note": "The player explicitly confirmed RT is attack. Preserve the deployed action ID; actual supplied remaps still take priority. This is player evidence, not an official default."
+    },
     {
       "id": "developer-guide-2022",
       "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2821074709",
@@ -29,7 +39,7 @@
     }
   ],
   "unresolved": [
-    "Attack, interact, jump and block controller defaults lack verified developer documentation in this lookup.",
+    "Interact, jump and block controller defaults lack verified developer documentation in this lookup.",
     "These historical defaults require comparison with the installed edition/build and any personal remaps.",
     "A cycle action does not expose named weapon, spell or item slots."
   ]

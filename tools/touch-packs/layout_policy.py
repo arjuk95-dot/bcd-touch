@@ -15,7 +15,7 @@ def apply_layout_policy(pack, request):
                 primary=True;x,y,r=(.88,.68,.12) if device=='phone' else (.89,.77,.085)
             elif output=='Menu':x,y,r=.57,.08,.035
             elif output=='View':x,y,r=.43,.08,.035
-            elif c['role']=='radial':x,y,r=.25,.92,.05
+            elif c['role']=='radial':x,y,r=.50,.92,.05
             else:
                 x,y=next(secondary,(.08,.4));r=.045
             c.update(x=x,y=y,radius=r,hitRadius=r,opacity=max(.25,c['opacity']))

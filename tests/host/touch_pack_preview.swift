@@ -95,6 +95,8 @@ import UIKit
         store.activate(entry)
         try await Task.sleep(nanoseconds:200_000_000)
         try checkWindowRouting(original)
+        try await checkPackInteractions(original)
+        try await captureEditorFixtures()
         var moved=store.pack!;moved.phone.controls[index].x=movedX;store.saveEdits(moved)
         var regenerated=original;regenerated.title += " fixture regeneration"
         try BCDPackStore.encoded(regenerated).write(to:cached,options:.atomic)
@@ -152,5 +154,111 @@ import UIKit
         assert(!TouchMouseGate.suppressing(touchpad:false,desktop:false), "Stock mouse override was not restored")
         let folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
         try Data("PASS: production ControlsWindow routes twelve open-area points to pack surface; legacy mouse override suppressed; physical pointer and stock routing preserved. Actual simulator UIKit hit tests with engine/model boundary stubs, no guest.".utf8).write(to:folder.appendingPathComponent("controls-window-routing.txt"),options:.atomic)
+    }
+    @MainActor private func checkPackInteractions(_ original:BCDControlPack) async throws {
+        for _ in 0..<50 {
+            if UIApplication.shared.applicationState == .active { break }
+            try await Task.sleep(nanoseconds:100_000_000)
+        }
+        assert(UIApplication.shared.applicationState == .active)
+        let scene=UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first!
+        let library=LibraryModel.shared,store=BCDPackStore.shared,focus=BCDPackFocus.shared,pad=GamepadInput.shared
+        let oldCurrent=library.current,oldEnabled=store.enabled,oldTarget=MetalBackedView.keyboardTarget
+        let gameWindow=UIWindow(windowScene:scene);gameWindow.frame=scene.coordinateSpace.bounds;gameWindow.windowLevel = .normal+50
+        let gameRoot=UIViewController();gameRoot.view=UIView(frame:gameWindow.bounds)
+        let gameView=UIView(frame:gameRoot.view.bounds);gameRoot.view.addSubview(gameView)
+        gameWindow.rootViewController=gameRoot;gameWindow.isHidden=false;MetalBackedView.keyboardTarget=gameView
+        let overlay=ControlsWindow(windowScene:scene);overlay.frame=scene.coordinateSpace.bounds;overlay.windowLevel = .normal+101
+        let root=UIViewController();root.view=UIView(frame:overlay.bounds)
+        var p=original
+        let fireAction=p.actions.first { $0.output=="RT" }!
+        let duplicate=BCDControlPack.Control(id:"fixture-left-fire",action:fireAction.id,role:"button",x:0.12,y:0.35,radius:0.04,hitRadius:0.04,opacity:0.5)
+        p.phone.controls.append(duplicate)
+        let surface=BCDPackView();surface.frame=overlay.bounds;surface.configure(p,context:p.contexts[0],debug:true,editing:false)
+        root.view.addSubview(surface);overlay.rootViewController=root;overlay.isHidden=false;overlay.layoutIfNeeded()
+        library.current=NSObject();library.blocksGameplayTouch=false;store.enabled=true
+        focus.observe(overlay);focus.setMonitoring(true)
+        defer {
+            surface.clear();overlay.isHidden=true;gameWindow.isHidden=true
+            MetalBackedView.keyboardTarget=oldTarget;library.current=oldCurrent;store.enabled=oldEnabled
+            focus.setMonitoring(false)
+        }
+        assert(focus.refresh())
+        let safe=surface.bounds.inset(by:surface.safeAreaInsets)
+        func point(_ c:BCDControlPack.Control)->CGPoint {CGPoint(x:safe.minX+c.x*safe.width,y:safe.minY+c.y*safe.height)}
+        let zone=surface.movementStartRegion
+        let start=CGPoint(x:zone.minX+zone.width*0.08,y:zone.minY+zone.height*0.45)
+        let move=p.phone.controls.first { $0.role=="move" }!
+        assert(hypot(start.x-point(move).x,start.y-point(move).y)>move.hitRadius*min(safe.width,safe.height),"Fixture must start outside the old fixed pad")
+        var t=ProcessInfo.processInfo.systemUptime
+        surface.beginTouch("move",at:start,time:t)
+        assert(surface.activeTouchRoles==["move"] && surface.movementVisual!.origin==start,"Floating movement did not acquire at thumb landing")
+        t+=0.02;surface.moveTouch("move",to:CGPoint(x:start.x+45,y:start.y),time:t)
+        assert(pad.sample.lx>0)
+        surface.beginTouch("left-fire",at:point(duplicate),time:t)
+        let aim=p.phone.aimRect
+        let look=CGPoint(x:safe.minX+(aim.x+aim.width/2)*safe.width,y:safe.minY+(aim.y+aim.height/2)*safe.height)
+        surface.beginTouch("look",at:look,time:t)
+        let primary=p.phone.controls.first { $0.role=="fireAim" }!
+        surface.beginTouch("primary-fire",at:point(primary),time:t)
+        assert(pad.sample.lx>0 && pad.sample.rt==255,"Another finger cleared movement/fire")
+        let lookOwner=pad.lookOwner
+        surface.endTouch("primary-fire",at:point(primary),cancelled:false)
+        assert(pad.sample.rt==255 && pad.sample.lx>0 && pad.lookOwner==lookOwner,"Primary release cancelled an independent owner")
+        t+=0.02;surface.moveTouch("look",to:point(primary),time:t)
+        assert(surface.activeTouchRoles.contains("look") && pad.lookMoves>0,"Swipe crossing a button lost ownership")
+        if let radial=p.phone.controls.first(where:{$0.role=="radial"}) {
+            surface.beginTouch("radial",at:point(radial),time:t)
+            assert(!surface.radialLabelFrames.isEmpty)
+            assert(surface.radialLabelFrames.allSatisfy { safe.insetBy(dx:-1,dy:-1).contains($0) },"Peripheral radial labels clipped off-screen")
+            surface.endTouch("radial",at:point(radial),cancelled:true)
+        }
+        assert(PackBoundarySpy.keyboardEvents==0 && PackBoundarySpy.mouseEvents==0,"Controller surface emitted keyboard/mouse events")
+        // The exact failure on the phone: main-window alert below the full-screen controls window.
+        let alert=UIAlertController(title:"Fixture notification",message:"Must own its buttons",preferredStyle:.alert)
+        alert.addAction(UIAlertAction(title:"OK",style:.default))
+        gameRoot.present(alert,animated:false)
+        try await Task.sleep(nanoseconds:150_000_000)
+        assert(!focus.refresh() && focus.blockedByPresentation)
+        assert(surface.activeTouchRoles.isEmpty && pad.sample==GamepadSample(),"Dialog did not clear held inputs")
+        let alertPoint=alert.view.convert(CGPoint(x:alert.view.bounds.midX,y:alert.view.bounds.midY),to:overlay)
+        assert(overlay.hitTest(alertPoint,with:nil)==nil,"Pack stole the main-window alert touch")
+        alert.dismiss(animated:false)
+        try await Task.sleep(nanoseconds:150_000_000)
+        assert(focus.refresh() && !focus.blockedByPresentation)
+        surface.beginTouch("after-dialog",at:point(duplicate),time:t+1)
+        assert(pad.sample.rt==255,"First touch after dialog dismissal was lost to stale focus")
+        surface.endTouch("after-dialog",at:point(duplicate),cancelled:true)
+        // A native presentation belonging to the controls window must remain interactive.
+        let own=UIAlertController(title:"Pack settings fixture",message:nil,preferredStyle:.alert)
+        own.addAction(UIAlertAction(title:"Back to game",style:.cancel))
+        root.present(own,animated:false)
+        try await Task.sleep(nanoseconds:150_000_000)
+        assert(!focus.refresh() && !focus.blockedByPresentation)
+        let ownPoint=own.view.convert(CGPoint(x:own.view.bounds.midX,y:own.view.bounds.midY),to:overlay)
+        assert(overlay.hitTest(ownPoint,with:nil)?.isDescendant(of:own.view)==true,"Pack settings lost their native dismissal surface")
+        own.dismiss(animated:false)
+        try await Task.sleep(nanoseconds:150_000_000)
+        assert(focus.refresh())
+        let folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
+        try Data("PASS: actual BCDPackView event adapters acquire floating movement outside the old circle; base follows thumb landing; simultaneous movement/independent RT/look ownership; crossing controls stays look; zero keyboard/mouse emissions; actual main-window UIAlert owns touches and clears held input; first touch after dismissal works; native pack dialog keeps dismissal routing. Simulator UIKit with engine boundary spies, not a guest game.".utf8).write(to:folder.appendingPathComponent("pack-interaction-regression.txt"),options:.atomic)
+    }
+    @MainActor private func captureEditorFixtures() async throws {
+        let scene=UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first!
+        let folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
+        for height in [320,440] {
+            let size=CGSize(width:956,height:CGFloat(height))
+            let window=UIWindow(windowScene:scene);window.frame=CGRect(origin:.zero,size:size);window.windowLevel = .normal+102
+            let host=UIHostingController(rootView:ZStack(alignment:.topLeading) {
+                Color.black
+                BCDPackInspector().frame(width:380,height:CGFloat(height)-24).padding(12)
+            })
+            window.rootViewController=host;window.isHidden=false;host.view.layoutIfNeeded()
+            try await Task.sleep(nanoseconds:150_000_000)
+            let format=UIGraphicsImageRendererFormat();format.scale=2;format.opaque=true
+            let image=UIGraphicsImageRenderer(size:size,format:format).image { _ in host.view.drawHierarchy(in:CGRect(origin:.zero,size:size),afterScreenUpdates:true) }
+            try image.pngData()!.write(to:folder.appendingPathComponent("editor-\(height)-simulator.png"))
+            window.isHidden=true
+        }
     }
 }

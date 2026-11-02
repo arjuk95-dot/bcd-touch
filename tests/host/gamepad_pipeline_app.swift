@@ -18,15 +18,19 @@ import UIKit
             DispatchQueue.main.asyncAfter(deadline:.now()+0.15) {
                 let (state,simultaneous,gyro)=PipelineSpy.read()
                 assert(simultaneous && gyro && state.lx<0 && state.right_trigger==255 && state.rx==0 && state.ry==0)
+                // A second finger/configuration pass must not clear held movement/fire.
+                // Touch-only packs do not depend on the keyboard/mouse focus cache.
+                HardwareInput.shared.baseFocused=false
+                pad.configurePack(enabled:true,accepting:true,calibration:c)
                 pad.packTouch(owner:fire,value:nil)
                 DispatchQueue.main.asyncAfter(deadline:.now()+0.1) {
-                    assert(PipelineSpy.read().0.right_trigger==255)
-                    pad.configurePack(enabled:true,accepting:false,calibration:c)
+                    assert(PipelineSpy.read().0.right_trigger==255 && PipelineSpy.read().0.lx<0)
+                    pad.packFocusLost()
                     pad.packTouch(owner:move,value:TouchPadAction.sample("LS",x:1))
                     DispatchQueue.main.asyncAfter(deadline:.now()+0.1) {
                         let s=PipelineSpy.read().0
                         assert(s.connected==1 && s.lx==0 && s.right_trigger==0 && s.rx==0 && s.ry==0)
-                        let receipt="PASS: production GamepadInput serial publisher observed simultaneous slot0 LS/RT/RS; stale aim neutralized; gyro stage saw held trigger; independent fire release; pause rejected delayed input. Engine-spy simulator fixture, no Wine guest or physical controller."
+                        let receipt="PASS: production GamepadInput serial publisher observed simultaneous slot0 LS/RT/RS; stale aim neutralized; gyro stage saw held trigger; repeated configuration preserved movement/fire; stale keyboard focus did not erase pack input; independent fire release; explicit pack focus loss rejected delayed input. Engine-spy simulator fixture, no Wine guest or physical controller."
                         let file=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0].appendingPathComponent("pipeline-receipt.txt")
                         try? Data(receipt.utf8).write(to:file)
                     }
