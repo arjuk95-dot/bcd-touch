@@ -1,0 +1,17 @@
+{
+  "kind": "Windows PC fixture; not Wine/iPhone",
+  "sourceCommit": "4d140e6",
+  "buildRun": "https://github.com/arjunkl/bcd-touch/actions/runs/41458303594",
+  "bytes": 99840,
+  "sha256": "c1c208bfac4ce1f215434ee59ddedeefc8a0cd44141a26e65db08d89e064eeb2",
+  "machine": "x86_64",
+  "automaticRecording": true,
+  "allFourSlots": true,
+  "heartbeatObserved": true,
+  "observedResultCodes": [
+    1167
+  ],
+  "samples": 16,
+  "wineGuestRun": false,
+  "physicallyTestedOnPhone": false
+}
