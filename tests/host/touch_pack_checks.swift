@@ -78,7 +78,54 @@ import Foundation
                         if aim.sample(time:lastReceipt+ms/1000).x==0 {neutral=ms;break}
                     }
                     assert(neutral>0 && neutral<=44,"Stationary thumb output outlived its delivery deadline")
-                    deliveryRecords.append(["sourceHz":sourceHz,"deliveryHz":batchHz,"gameFPS":fps,"deliveryDelayMs":40,"neutralMs":neutral])
+                    // The publisher clock is independent of touch delivery and
+                    // the game's frame clock. Exercise their relative phases;
+                    // a loop that merely labels a result with FPS misses this.
+                    var worstPublishedNeutral=0.0,worstFrameNeutral=0.0
+                    let firstReceipt=50.04+1/batchHz
+                    for publisherPhase in [0.0,0.001,0.0039] {
+                        var sampledAim=BCDMouseJoystick()
+                        sampledAim.begin(time:0,receivedAt:50.04)
+                        var nextBatch=1,previous=0.0
+                        var publications:[(time:Double,x:Double)]=[]
+                        var firstNeutral:Double?
+                        for tick in 0...Int(ceil((lastReceipt-50.04+0.15)/0.004)) {
+                            let clock=50.04+publisherPhase+Double(tick)*0.004
+                            while nextBatch<=20 && 50.04+Double(nextBatch)/batchHz<=clock {
+                                let source=floor(Double(nextBatch)/batchHz*sourceHz+0.000001)/sourceHz
+                                sampledAim.move(dx:300*(source-previous),dy:0,time:source,
+                                                receivedAt:50.04+Double(nextBatch)/batchHz,calibration:calibration)
+                                previous=source;nextBatch+=1
+                            }
+                            let output=sampledAim.sample(time:clock).x
+                            publications.append((clock,output))
+                            if clock>=firstReceipt+0.004 && clock<lastReceipt {
+                                assert(output>0,"Independent publisher clock missed a continuous sweep")
+                            }
+                            if clock>=lastReceipt && output==0 && firstNeutral==nil {firstNeutral=clock}
+                        }
+                        let publishedNeutral=try require(firstNeutral,"Publisher did not neutralize")
+                        let publishedMs=(publishedNeutral-lastReceipt)*1000
+                        assert(publishedMs>0 && publishedMs<=46.001,"Independent clock exceeded expiry plus one 4ms tick")
+                        worstPublishedNeutral=max(worstPublishedNeutral,publishedMs)
+                        for framePhase in [0.0,0.25,0.5,0.75] {
+                            var firstNeutralFrame:Double?
+                            for frame in 0...Int(ceil((lastReceipt-50.04+0.15)*fps)) {
+                                let time=50.04+(Double(frame)+framePhase)/fps
+                                guard time>=firstReceipt+0.008,
+                                      let snapshot=publications.last(where:{$0.time<=time}) else {continue}
+                                if time<lastReceipt {assert(snapshot.x>0,"Game frame missed a continuous published sweep")}
+                                if time>=lastReceipt && snapshot.x==0 {firstNeutralFrame=time;break}
+                            }
+                            let observed=try require(firstNeutralFrame,"Game frame never observed neutral")
+                            let frameMs=(observed-lastReceipt)*1000
+                            assert(frameMs<=46.001+1000/fps,"Neutral was not visible within one game frame of publication")
+                            worstFrameNeutral=max(worstFrameNeutral,frameMs)
+                        }
+                    }
+                    deliveryRecords.append(["sourceHz":sourceHz,"deliveryHz":batchHz,"gameFPS":fps,"deliveryDelayMs":40,
+                                            "alignedNeutralMs":neutral,"worstPublishedNeutralMs":worstPublishedNeutral,
+                                            "worstFrameNeutralMs":worstFrameNeutral])
                     // Work queued before a pause cannot renew itself when processed late.
                     assert(aim.sample(time:lastReceipt+0.2).x==0)
                 }
@@ -98,5 +145,9 @@ import Foundation
         let d = try JSONSerialization.data(withJSONObject: ["kind":"host fixture, production Swift arithmetic/state", "timing":records,"delayedDelivery":deliveryRecords],options:[.prettyPrinted,.sortedKeys])
         print(String(data:d,encoding:.utf8)!)
         print("PASS: simultaneous LS/RT/RS, duplicate fire release, reversals, saturation, stale expiry, reset, pause, physical arbitration and invalid packs")
+    }
+    static func require<T>(_ value:T?,_ message:String) throws -> T {
+        guard let value=value else {throw NSError(domain:"TouchPackChecks",code:1,userInfo:[NSLocalizedDescriptionKey:message])}
+        return value
     }
 }

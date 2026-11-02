@@ -29,5 +29,11 @@
     "rootCauseConfirmed": false,
     "guestTraceCaptured": false
   },
-  "note": "WGI compatibility restored movement and Attack by player report. Swipe aim still failed. A complete installed-default control pack and revised aim calibration were then applied; their physical retest remains pending. No new IPA."
+  "note": "Complete pack was applied and physically tried on app 033603f. Movement/Attack work, but aim remains failed. New delivery-clock timing code d2433a8 passes simulator checks and is not yet installed; no physical fix is claimed.",
+  "playerResultAfterCompletePack": {
+    "newControls": "welcome addition by player report",
+    "movement": "working; player reports improved dead-zone feel",
+    "swipeAim": "failed: tiny motion and missed swipes",
+    "blockParry": "not explicitly confirmed"
+  }
 }

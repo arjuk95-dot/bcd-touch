@@ -5,9 +5,24 @@
   "phonePackSHA256": "68e50d4ca02d522b66e059ec3254993d2f942064f18fd5b66b2557405270160f",
   "phoneCacheAndOverridesReadbackVerified": true,
   "actions": 33,
-  "contexts": ["onFoot", "menu", "airship"],
-  "personalEditsPreserved": ["phone attack x", "phone attack y", "phone radial x", "pad radial x"],
-  "aim": {"deadZone": 0.3, "fullSpeed": 600, "vertical": 1.25, "sensitivity": 1, "invertY": false},
+  "contexts": [
+    "onFoot",
+    "menu",
+    "airship"
+  ],
+  "personalEditsPreserved": [
+    "phone attack x",
+    "phone attack y",
+    "phone radial x",
+    "pad radial x"
+  ],
+  "aim": {
+    "deadZone": 0.3,
+    "fullSpeed": 600,
+    "vertical": 1.25,
+    "sensitivity": 1,
+    "invertY": false
+  },
   "calibrationEvidence": {
     "installedLookProcessors": "StickDeadzone(min=0.2),ScaleVector2(x=50,y=40)",
     "assumedStandardUnityControlDeadZoneMin": 0.125,
@@ -24,6 +39,16 @@
     "newControlsPhysicallyTested": false,
     "activePlayerRemapsLocated": false
   },
-  "playerResultBeforeThisUpdate": {"movementAfterWGI": "working", "attackAfterWGI": "working", "swipeAim": "failed: intermittent tiny movement"},
-  "note": "Defaults came from the installed game's serialized controller bindings, not guesses from genre. Current camera settings and physical aim feel remain pending. A delivery-expiry timing concern remains for testing if calibration alone does not resolve aim."
+  "playerResultBeforeThisUpdate": {
+    "movementAfterWGI": "working",
+    "attackAfterWGI": "working",
+    "swipeAim": "failed: intermittent tiny movement"
+  },
+  "note": "Complete pack was applied and physically tried on app 033603f. Movement/Attack work, but aim remains failed. New delivery-clock timing code d2433a8 passes simulator checks and is not yet installed; no physical fix is claimed.",
+  "playerResultAfterCompletePack": {
+    "newControls": "welcome addition by player report",
+    "movement": "working; player reports improved dead-zone feel",
+    "swipeAim": "failed: tiny motion and missed swipes",
+    "blockParry": "not explicitly confirmed"
+  }
 }
