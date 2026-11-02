@@ -4,7 +4,9 @@ concurrency:
   cancel-in-progress: false
 jobs:
   build:
-    runs-on: macos-26
+    # macOS 15 is ARM64 too; retain the same pinned Xcode 26.3 below.
+    # The macOS 26 ARM pool failed to acquire a runner before any build step.
+    runs-on: macos-15
     permissions:
       contents: read
       actions: read
