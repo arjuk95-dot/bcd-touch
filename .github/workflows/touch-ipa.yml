@@ -1,6 +1,6 @@
 name: BCD Touch Lab unsigned IPA
 concurrency:
-  group: bcd-touch-ipa
+  group: bcd-touch-ipa-${{ inputs.runner || 'macos-15-intel' }}
   cancel-in-progress: false
 jobs:
   build:
