@@ -418,23 +418,22 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: FEX/build-arm64ec
-        key: fex-arm64ec-${{ steps.fexrev.outputs.sha }}-v2
+        key: fex-arm64ec-${{ runner.arch }}-${{ steps.fexrev.outputs.sha }}-v3
     - name: Build xtajit64.dll (FEX fixes, AVX opt-in)
       if: env.MINGW_OK == '1'
-      continue-on-error: true
       run: bash tools/build-xtajit64.sh
     - name: Save FEX ARM64EC build
       if: steps.fexeccache.outputs.cache-hit != 'true' && hashFiles('FEX/build-arm64ec/Bin/libarm64ecfex.dll') != ''
       uses: actions/cache/save@v4
       with:
         path: FEX/build-arm64ec
-        key: fex-arm64ec-${{ steps.fexrev.outputs.sha }}-v2
+        key: fex-arm64ec-${{ runner.arch }}-${{ steps.fexrev.outputs.sha }}-v3
     - name: Restore FEX WOW64 build
       id: fexwowcache
       uses: actions/cache/restore@v4
       with:
         path: FEX/build-wow64
-        key: fex-wow64-${{ steps.fexrev.outputs.sha }}-v1
+        key: fex-wow64-${{ runner.arch }}-${{ steps.fexrev.outputs.sha }}-v2
     - name: Build xtajit.dll (WOW64, CPUID index fix)
       if: env.MINGW_OK == '1'
       continue-on-error: true
@@ -444,7 +443,7 @@ jobs:
       uses: actions/cache/save@v4
       with:
         path: FEX/build-wow64
-        key: fex-wow64-${{ steps.fexrev.outputs.sha }}-v1
+        key: fex-wow64-${{ runner.arch }}-${{ steps.fexrev.outputs.sha }}-v2
     - name: Restore LLVM 15.0.7 iOS build
       id: llvmcache
       uses: actions/cache/restore@v4
@@ -745,9 +744,8 @@ jobs:
       run: "bash tools/build-bcd-openurl.sh\nfor f in app/Madeira/arm64ec-windows/winebrowser.exe app/Madeira/aarch64-windows/winebrowser.exe app/Madeira/i386-windows/winebrowser.exe;\
         \ do\n  if [ -f \"$f\" ] && LC_ALL=C grep -aq \"\\[open-url\\] madeira-bcd\" \"$f\"; then echo \"::notice::$f is BCD's\"; else echo \"::warning::$f is not\
         \ BCD's winebrowser.exe\"; fi\ndone\n"
-    - name: Build 7-Zip (7zFM.exe and 7z.exe, without the RAR code)
-      continue-on-error: true
-      run: bash tools/build-7zip.sh
+    - name: Retain verified unchanged base 7-Zip programs
+      run: python3 tools/touch-packs/verify-base-7zip.py
     - name: Build DXMT nvapi64.dll
       continue-on-error: true
       run: bash tools/build-dxmt-nvapi.sh

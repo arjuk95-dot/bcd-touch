@@ -1,0 +1,25 @@
+{
+  "base": "adc9cc742f52601a42f52ac6b4fbcc701bdb16ad",
+  "files": {
+    "tools/build-7zip.py": {
+      "sha256": "73cdedfe257747651e0370d775c74704f044be66092d759befe978ba6fc52a56",
+      "normalizeLF": true
+    },
+    "tools/7zip-shim.c": {
+      "sha256": "876539bfcffa67c1cd301e0a8db69f9f81314cc86ca125d6d917d8255d119a4b",
+      "normalizeLF": true
+    },
+    "third-party/7zip/7z2605-src.tar.xz": {
+      "sha256": "0b6080b8c3e7a579161d2d495224c0e51c467576cb4c7048b0ab485ef44cc22e",
+      "normalizeLF": false
+    },
+    "app/Madeira/arm64ec-windows/7z.exe": {
+      "sha256": "e9e146187a241dfe52e2e8f464a20ec3f5a57ff60b73af810bfd9383f5a20a3d",
+      "normalizeLF": false
+    },
+    "app/Madeira/arm64ec-windows/7zFM.exe": {
+      "sha256": "ff01c3560d52de950022f591d9c7e4ba90c5103e31078240e98dd2e77205246e",
+      "normalizeLF": false
+    }
+  }
+}
