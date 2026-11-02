@@ -174,14 +174,17 @@ int main( int argc, char **argv )
 """
     c = t / "gl.c"; c.write_text(harness)
     exe = t / "gl"
+    print("guest-log: compiling sanitizer harness", flush=True)
     subprocess.run(["cc", "-std=gnu11", "-Wall", "-Wno-unused-function", "-fsanitize=address,undefined",
-                    str(c), "-o", str(exe)], check=True)
+                    str(c), "-o", str(exe)], check=True, timeout=90)
+    print("guest-log: sanitizer harness compiled", flush=True)
 
     def run(env_extra, scenario=None):
         d = tempfile.mkdtemp(dir=t)
         env = {k: v for k, v in os.environ.items() if not k.startswith("MADEIRA_GUEST_LOG")}
         env.update(env_extra)
-        r = subprocess.run([str(exe), d] + ([scenario] if scenario else []), capture_output=True, text=True, env=env)
+        print("guest-log: running " + str(env_extra) + " scenario=" + str(scenario), flush=True)
+        r = subprocess.run([str(exe), d] + ([scenario] if scenario else []), capture_output=True, text=True, env=env, timeout=30)
         assert r.returncode == 0, (env_extra, r.returncode, r.stderr)
         return [l for l in r.stderr.splitlines() if l.startswith("[guest-log]")]
 
