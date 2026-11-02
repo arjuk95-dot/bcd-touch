@@ -26,8 +26,10 @@
   ],
   "generatedPackSHA256": "8c01ebf30938505dd189ec868983e32c7b764748d8bdd65fcc0c0b7c4c6df8c5",
   "reviewedPackSHA256": "910abda9c782ec890a132e249d811f6b67b15a7d235d5938245bd4bb3f94b7bb",
-  "review": "Player-confirmed RT Attack label/icon, unchanged deployed action ID; radial moved out of floating movement area. No new Codex call. Reviewed pack not yet pushed to device.",
+  "review": "Player-confirmed RT Attack label/icon, unchanged deployed action ID; radial moved out of floating movement area. Reviewed cache validated and readback verified on the phone and desktop worker; no new Codex call. Overrides retained.",
   "onDeviceValidationConfirmed": true,
   "physicalPlaytestResult": "FAILED on c06: player reports unresponsive controls, blocked notifications, clipped editor exit and fixed movement acquisition.",
-  "guestTraceTested": false
+  "guestTraceTested": false,
+  "reviewedCacheApplied": true,
+  "reviewedActiveGameplayTested": false
 }

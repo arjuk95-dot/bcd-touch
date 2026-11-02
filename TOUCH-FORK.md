@@ -73,3 +73,8 @@ Pending on the corrected iPhone build: dialog taps, visible editor escape, float
 Pending guest evidence: run the compiled `bcd-touch-input-trace-x64.exe` from the guest-diagnostic artifact. Start/Menu arms recording. Exercise the touch pack, radial and gestures without touching keyboard/mouse. `touch-input-trace.jsonl` records XInput slot 0 and legacy/raw keyboard/mouse counters. This tool generates no input. It has not yet been run in Wine on the phone, and no zero-keyboard/mouse guest result is claimed.
 
 Simulator images use the production UIKit renderer with engine stubs and an explicitly labelled empty backdrop. They establish visible controls and hit geometry, not gameplay, iPhone feel, actual game HUD clearance or guest delivery. BLACK comparison remains a visual design assessment until the same in-game view can be captured physically.
+
+
+## Deferred editor scope
+
+After physical acceptance of the soft-lock and input fixes, expand the editor with a reusable action-icon catalog (sword/attack, bullet/shoot, hand/use, bag/inventory), per-control XInput or keyboard/mouse binding selection, and genre presets. Game-specific generation should research binding meanings and select matching icons; unresolved bindings keep honest output labels. Preserve mode validation, a reserved swipe area, visible hit regions, separate phone/iPad reach, persistent overrides and an always-reachable return control. This is recorded future work, not part of the current fix.
