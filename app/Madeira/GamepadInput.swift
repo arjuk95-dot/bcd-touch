@@ -228,10 +228,10 @@ final class GamepadInput: @unchecked Sendable {
     @MainActor func configurePack(enabled: Bool, accepting: Bool, calibration: BCDMouseJoystick.Calibration) {
         if enabled { keyboardMouseOn = false }
         queue.async { [self] in
-            let accepting = enabled && accepting
-            guard packState.reserved != enabled || packState.acceptingInput != accepting || packCalibration != calibration else { return }
+            let acceptsInput = enabled && accepting
+            guard packState.reserved != enabled || packState.acceptingInput != acceptsInput || packCalibration != calibration else { return }
             packState.reserved = enabled
-            packState.configure(enabled ? [packControl] : [], acceptingInput: accepting)
+            packState.configure(enabled ? [packControl] : [], acceptingInput: acceptsInput)
             packCalibration = calibration; packAim.reset(); packAimOwner = nil
             if enabled {
                 if keyboardMouse != nil { PadKeyboardMouse.shared.releaseAll("controller pack activated") }

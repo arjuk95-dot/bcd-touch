@@ -238,9 +238,9 @@ final class BCDPackView: UIView {
             GamepadInput.shared.packLook(owner: finger.owner, phase: 0, time: time)
         }
         if role == "move" { GamepadInput.shared.packTouch(owner: finger.owner, value: TouchPadAction.sample("LS")) }
-        if let control, let action = action(control.action), role == "button" || role == "fireAim" {
-            if action.behavior == "tap" { pulse(action) }
-            else if action.behavior == "hold" { send(action, owner: finger.owner) }
+        if let control, let binding = action(control.action), role == "button" || role == "fireAim" {
+            if binding.behavior == "tap" { pulse(binding) }
+            else if binding.behavior == "hold" { send(binding, owner: finger.owner) }
         }
         fingers[identity] = finger
         setNeedsDisplay()
