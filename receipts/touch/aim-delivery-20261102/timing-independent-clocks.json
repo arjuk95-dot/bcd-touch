@@ -1,0 +1,124 @@
+{
+  "delayedDelivery": [
+    {
+      "alignedNeutralMs": 44,
+      "deliveryDelayMs": 40,
+      "deliveryHz": 30,
+      "gameFPS": 30,
+      "sourceHz": 60,
+      "worstFrameNeutralMs": 75.00000000000284,
+      "worstPublishedNeutralMs": 45.333333333339
+    },
+    {
+      "alignedNeutralMs": 44,
+      "deliveryDelayMs": 40,
+      "deliveryHz": 30,
+      "gameFPS": 60,
+      "sourceHz": 60,
+      "worstFrameNeutralMs": 58.33333333333712,
+      "worstPublishedNeutralMs": 45.333333333339
+    },
+    {
+      "alignedNeutralMs": 28,
+      "deliveryDelayMs": 40,
+      "deliveryHz": 60,
+      "gameFPS": 30,
+      "sourceHz": 60,
+      "worstFrameNeutralMs": 58.33333333333002,
+      "worstPublishedNeutralMs": 27.6666666666614
+    },
+    {
+      "alignedNeutralMs": 28,
+      "deliveryDelayMs": 40,
+      "deliveryHz": 60,
+      "gameFPS": 60,
+      "sourceHz": 60,
+      "worstFrameNeutralMs": 41.6666666666643,
+      "worstPublishedNeutralMs": 27.6666666666614
+    },
+    {
+      "alignedNeutralMs": 44,
+      "deliveryDelayMs": 40,
+      "deliveryHz": 30,
+      "gameFPS": 30,
+      "sourceHz": 120,
+      "worstFrameNeutralMs": 75.00000000000284,
+      "worstPublishedNeutralMs": 45.333333333339
+    },
+    {
+      "alignedNeutralMs": 44,
+      "deliveryDelayMs": 40,
+      "deliveryHz": 30,
+      "gameFPS": 60,
+      "sourceHz": 120,
+      "worstFrameNeutralMs": 58.33333333333712,
+      "worstPublishedNeutralMs": 45.333333333339
+    },
+    {
+      "alignedNeutralMs": 28,
+      "deliveryDelayMs": 40,
+      "deliveryHz": 60,
+      "gameFPS": 30,
+      "sourceHz": 120,
+      "worstFrameNeutralMs": 58.33333333333002,
+      "worstPublishedNeutralMs": 27.6666666666614
+    },
+    {
+      "alignedNeutralMs": 28,
+      "deliveryDelayMs": 40,
+      "deliveryHz": 60,
+      "gameFPS": 60,
+      "sourceHz": 120,
+      "worstFrameNeutralMs": 41.6666666666643,
+      "worstPublishedNeutralMs": 27.6666666666614
+    },
+    {
+      "alignedNeutralMs": 16,
+      "deliveryDelayMs": 40,
+      "deliveryHz": 120,
+      "gameFPS": 30,
+      "sourceHz": 120,
+      "worstFrameNeutralMs": 50.00000000000426,
+      "worstPublishedNeutralMs": 18.33333333333087
+    },
+    {
+      "alignedNeutralMs": 16,
+      "deliveryDelayMs": 40,
+      "deliveryHz": 120,
+      "gameFPS": 60,
+      "sourceHz": 120,
+      "worstFrameNeutralMs": 33.333333333338544,
+      "worstPublishedNeutralMs": 18.33333333333087
+    }
+  ],
+  "kind": "host fixture, production Swift arithmetic/state",
+  "timing": [
+    {
+      "gameFPS": 30,
+      "gameObservationUpperBoundMs": 61.333333333333336,
+      "inputHz": 60,
+      "samplingNeutralMs": 28
+    },
+    {
+      "gameFPS": 60,
+      "gameObservationUpperBoundMs": 44.66666666666667,
+      "inputHz": 60,
+      "samplingNeutralMs": 28
+    },
+    {
+      "gameFPS": 30,
+      "gameObservationUpperBoundMs": 49.333333333333336,
+      "inputHz": 120,
+      "samplingNeutralMs": 16
+    },
+    {
+      "gameFPS": 60,
+      "gameObservationUpperBoundMs": 32.66666666666667,
+      "inputHz": 120,
+      "samplingNeutralMs": 16
+    }
+  ],
+  "sourceRun": "https://github.com/arjunkl/bcd-touch/actions/runs/41479598119",
+  "sourceCommit": "3d30a1686ce2e9432b14b663d38d9d1f6df0525e",
+  "boundary": "Synthetic events 40ms late; independent 4ms publisher and 30/60FPS consumers. Times measured after last delivery, not physical camera latency."
+}
