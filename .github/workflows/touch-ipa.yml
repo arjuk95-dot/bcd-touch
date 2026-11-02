@@ -196,31 +196,31 @@ jobs:
         path: toolchains/ffmpeg-ios
         key: ffmpeg-ios-${{ hashFiles('build/ffmpeg/build.sh', 'build/ffmpeg/src/SHA256SUMS') }}
     - name: Patch wine with the game text-log mirror
-      run: 'python3 tests/host/check-guest-log.py
+      run: 'python3 tools/touch-packs/host-test.py tests/host/check-guest-log.py
 
         python3 tools/patch-wine-guest-log.py wine/dlls/ntdll/unix/file.c
 
         '
     - name: Patch wine text-log mirror to ignore the [DISPLAY] log level
-      run: 'python3 tests/host/check-guest-log-tag.py
+      run: 'python3 tools/touch-packs/host-test.py tests/host/check-guest-log-tag.py
 
         python3 tools/patch-wine-guest-log-tag.py wine/dlls/ntdll/unix/file.c
 
         '
     - name: Patch wine text-log mirror to mirror the Rockstar service's own files
-      run: 'python3 tests/host/check-guest-log-service.py
+      run: 'python3 tools/touch-packs/host-test.py tests/host/check-guest-log-service.py
 
         python3 tools/patch-wine-guest-log-service.py wine/dlls/ntdll/unix/file.c
 
         '
     - name: Patch wine text-log mirror to mirror a Ren'Py game's error files
-      run: 'python3 tests/host/check-guest-log-renpy.py
+      run: 'python3 tools/touch-packs/host-test.py tests/host/check-guest-log-renpy.py
 
         python3 tools/patch-wine-guest-log-renpy.py wine/dlls/ntdll/unix/file.c
 
         '
     - name: Patch wine text-log mirror to keep the stack trace under an exception line
-      run: 'python3 tests/host/check-guest-log-trace.py
+      run: 'python3 tools/touch-packs/host-test.py tests/host/check-guest-log-trace.py
 
         python3 tools/patch-wine-guest-log-trace.py wine/dlls/ntdll/unix/file.c
 
@@ -228,7 +228,7 @@ jobs:
     - name: Patch wine with the guest file trace
       run: python3 tools/patch-wine-file-trace.py wine/dlls/ntdll/unix/file.c
     - name: Patch wine with the file-lookup census
-      run: 'python3 tests/host/check-wine-file-census.py
+      run: 'python3 tools/touch-packs/host-test.py tests/host/check-wine-file-census.py
 
         python3 tools/patch-wine-file-census.py wine/dlls/ntdll/unix/file.c
 
@@ -244,7 +244,7 @@ jobs:
     - name: Patch wine CPU-error diagnostics
       run: python3 tools/patch-wine-cpu-error-diag.py wine
     - name: Patch wine with the 64-bit [steam-api] hook
-      run: 'python3 tests/host/check-steam-api-diag.py
+      run: 'python3 tools/touch-packs/host-test.py tests/host/check-steam-api-diag.py
 
         python3 tools/patch-ntdll-unix-dbg-write-hook.py wine/dlls/ntdll/unix/debug.c
 
@@ -252,7 +252,7 @@ jobs:
     - name: Patch wine with fault-safe waiter diagnostics
       run: python3 tools/patch-wine-waiter-read.py wine/dlls/ntdll/unix/sync.c
     - name: Patch wine with the opt-in safe orphan-lock reaper
-      run: 'python3 tests/host/check-lock-orphan.py
+      run: 'python3 tools/touch-packs/host-test.py tests/host/check-lock-orphan.py
 
         python3 tools/patch-wine-lock-orphan.py wine/dlls/ntdll/unix/sync.c
 
@@ -260,7 +260,7 @@ jobs:
     - name: Patch wine with the opt-in yield mode
       run: python3 tools/patch-wine-yield-mode.py wine/dlls/ntdll/unix/sync.c
     - name: Patch wine with the opt-in available memory
-      run: 'python3 tests/host/check-avail-phys.py
+      run: 'python3 tools/touch-packs/host-test.py tests/host/check-avail-phys.py
 
         python3 tools/patch-wine-avail-phys.py wine/dlls/ntdll/unix/system.c
 
@@ -287,13 +287,13 @@ jobs:
     - name: Patch wineserver thread priorities (keep pthread QoS)
       run: python3 tools/patch-wine-thread-qos.py
     - name: Patch the wineserver's cancel_process_async (keep the async alive while it is cancelled)
-      run: 'python3 tests/host/check-wineserver-async-cancel.py
+      run: 'python3 tools/touch-packs/host-test.py tests/host/check-wineserver-async-cancel.py
 
         python3 tools/patch-wineserver-async-cancel.py wine
 
         '
     - name: Patch the wineserver's process log
-      run: 'python3 tests/host/check-wineserver-proc-log.py
+      run: 'python3 tools/touch-packs/host-test.py tests/host/check-wineserver-proc-log.py
 
         python3 tools/patch-wineserver-proc-log.py wine
 
@@ -620,19 +620,19 @@ jobs:
     - name: Patch winemetal pause while inactive
       run: python3 tools/patch-winemetal-pause-inactive.py
     - name: Patch wine for the opt-in x64 machine answer (i386 farm only)
-      run: 'python3 tests/host/check-x64-machine.py
+      run: 'python3 tools/touch-packs/host-test.py tests/host/check-x64-machine.py
 
         python3 tools/patch-wine-x64-machine.py wine
 
         '
     - name: Patch wine with the exception-handler registration log (i386 farm only)
-      run: 'python3 tests/host/check-veh-add-log.py
+      run: 'python3 tools/touch-packs/host-test.py tests/host/check-veh-add-log.py
 
         python3 tools/patch-wine-veh-add-log.py wine
 
         '
     - name: Patch wine with the msvcrt init diagnostics (i386 farm only)
-      run: 'python3 tests/host/check-msvcrt-initdiag.py
+      run: 'python3 tools/touch-packs/host-test.py tests/host/check-msvcrt-initdiag.py
 
         python3 tools/patch-wine-msvcrt-initdiag.py wine
 
@@ -791,7 +791,7 @@ jobs:
         if b'ec-exit-lean-v1 madeira-bcd' not in module:\n    raise SystemExit('Required ARM64EC lean JIT exit module was not built; refusing the fallback IPA')\n\
         if b'ec-ret-direct-v1 madeira-bcd' not in module:\n    raise SystemExit('Required ARM64EC direct return module was not built; refusing the fallback IPA')\n\
         print('ARM64EC rpmalloc: span4 build marker verified')\nPYEOF\n# Verify the linked x64 entries; never silently ship a fallback DLL\n# that accepts the option\
-        \ but lacks the required interop ABI.\npython3 tests/host/check-x64-graphics-entry.py \\\n  --factory app/Madeira/arm64ec-windows/dxgi-src.dll \\\n  --d3d12\
+        \ but lacks the required interop ABI.\npython3 tools/touch-packs/host-test.py tests/host/check-x64-graphics-entry.py \\\n  --factory app/Madeira/arm64ec-windows/dxgi-src.dll \\\n  --d3d12\
         \ app/Madeira/arm64ec-windows/madeira_d3d12.dll\n# Likewise tools/build-d3d11-dll.sh (env.MADEIRA_D3D11_SRC). Round 620: BCD's Direct3D 11\n# patches reach\
         \ a 64-bit game only through d3d11-src.dll, and recommended lists ask for it\n# (F1 2020), so an IPA in which no 64-bit d3d11.dll carries them is refused.\n\
         NEED=\"\"\n# Round 624: Dark Souls III's [srv-getdesc] and WRC 9's [query-stuck] too (build 624's first IPA shipped a\n# d3d11-src.dll without the second:\
