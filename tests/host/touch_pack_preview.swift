@@ -30,11 +30,12 @@ import UIKit
     }
     @MainActor private func captureFixtures() {
         let folder = FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
-        for title in ["dread-delusion","chronicles-of-the-wolf"] {
+        for title in ["dread-delusion","chronicles-of-the-wolf","dread-delusion-installed-iphone"] {
             guard let url=Bundle.main.url(forResource:title,withExtension:"json"), let data=try? Data(contentsOf:url), let original=try? BCDControlPack.decode(data) else { continue }
             let expected = ["steam:1574240":"b2c8962db5b66d02870857cbc88678f5bc0f7e2357445534b137f349aeada2c8", "steam:2371890":"e055f885bade4adf937e0229ee017112a040cebef41b3f6202d0039a49115a65"]
             let key = BCDPackStore.hash(BCDPackStore.encoded(original.identity))
-            assert(key == expected[original.identity.storeID], "Swift/worker identity hash mismatch")
+            let expectedKey = title == "dread-delusion-installed-iphone" ? "9a4ca6de6139b1c63ec99e71503f12ee4047f0853fbe4411576580a97dce4902" : expected[original.identity.storeID]
+            assert(key == expectedKey, "Swift/worker identity hash mismatch")
             try? Data(key.utf8).write(to:folder.appendingPathComponent(title+"-swift-identity.txt"))
             for isPad in [false,true] {
                 let size=isPad ? CGSize(width:1194,height:834) : CGSize(width:956,height:440)
