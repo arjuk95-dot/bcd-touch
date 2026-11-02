@@ -53,6 +53,7 @@ struct LibraryEntry {
 @MainActor final class TouchControlsModel {
     static let shared=TouchControlsModel()
     var editing=false, sessionPanel=false
+    var controls:[Int]=[]
     func hitsInteractive(_ point:CGPoint,in bounds:CGRect,topBar:Bool=true)->Bool { false }
 }
 @MainActor enum ControlPresetsModel { static let enabled=false }

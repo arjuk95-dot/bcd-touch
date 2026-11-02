@@ -20,5 +20,10 @@ with tempfile.TemporaryDirectory(prefix='bcd-touch-check-') as tmp:
         def bridge(name):return library.split('// WO-BCD-TOUCH-001 '+name+' actor bridge begin',1)[1].split('// WO-BCD-TOUCH-001 '+name+' actor bridge end',1)[0]
         hooks=tmp/'LegacyHooks.swift'
         hooks.write_text('import Foundation\nstruct DockGame {}\nfinal class LegacyHookProbe {\nfunc begin(_ entry:LibraryEntry,remember:Bool=true,dock:DockGame?=nil) {\n'+bridge('launch')+'\n}\nfunc save(_ entry:LibraryEntry,isNew:Bool) {\n'+bridge('install')+'\n}\n}')
-        subprocess.run(['xcrun','swiftc','-typecheck','-parse-as-library','-target',f'{arch}-apple-ios18.0-simulator','-sdk',sdk,*map(str,core),str(ROOT/'app/Madeira/BCDControlPackLive.swift'),str(ROOT/'app/Madeira/BCDControlPackSurface.swift'),str(ROOT/'tests/host/touch_pack_ui_stubs.swift'),str(hooks)],check=True)
-        print('PASS: production pack views typechecked against iOS SDK (engine stubs)')
+        content=(ROOT/'app/Madeira/ContentView.swift').read_text()
+        routing=tmp/'WindowAttachment.swift'
+        routing.write_text('import UIKit\nimport SwiftUI\nfinal class ControlsWindow: UIWindow {'+
+            content.split('final class ControlsWindow: UIWindow {',1)[1].split('\nstruct TouchControlsOverlay:',1)[0]+
+            '\nstruct TouchControlsOverlay:View { nonisolated init() {}\nvar body:some View { EmptyView() } }\n')
+        subprocess.run(['xcrun','swiftc','-typecheck','-parse-as-library','-target',f'{arch}-apple-ios18.0-simulator','-sdk',sdk,*map(str,core),str(ROOT/'app/Madeira/BCDControlPackLive.swift'),str(ROOT/'app/Madeira/BCDControlPackSurface.swift'),str(ROOT/'tests/host/touch_pack_ui_stubs.swift'),str(hooks),str(routing)],check=True)
+        print('PASS: production pack views, window routing and legacy attachment typechecked against iOS SDK (engine/view boundaries stubbed)')
