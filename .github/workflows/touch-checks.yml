@@ -2,9 +2,13 @@ name: Touch fork checks
 on: [workflow_dispatch, push]
 jobs:
   touch:
-    runs-on: macos-26
+    runs-on: macos-15-intel
     steps:
       - uses: actions/checkout@v4
+      - name: Select the iOS 18 simulator SDK used by the preview checks
+        run: |
+          if [ -d /Applications/Xcode_16.4.app ]; then sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer; fi
+          xcodebuild -version
       - name: Production Swift timing, state, schema and UIKit checks
         run: python3 tools/touch-packs/check-swift.py
       - name: Stock touch and physical controller regression
