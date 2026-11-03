@@ -46,5 +46,11 @@
   "preparedUTC": "2026-11-03T19:42:53.028818+00:00",
   "ipaStagedInSideStore": true,
   "phoneStagedReadbackSHA256Verified": true,
-  "ownerInstallAndClosedReplyPending": true
+  "ownerInstallAndClosedReplyPending": true,
+  "directHTTPVerified": true,
+  "downloadHost": "192.168.1.5",
+  "downloadPort": 8940,
+  "downloadExpiresUTC": "2026-11-03T21:43:21.409193+00:00",
+  "downloadScope": "Eight explicit intended files; no directory access",
+  "downloadPhoneReachability": "Not yet confirmed"
 }

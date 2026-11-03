@@ -1,0 +1,74 @@
+{
+  "host": "192.168.1.5",
+  "port": 8940,
+  "expiresUTC": "2026-11-03T21:43:21.409193+00:00",
+  "verifiedOn": "Arjun Windows PC",
+  "phoneAndCloudReachabilityNotClaimed": true,
+  "unlistedRoutes404": true,
+  "files": [
+    {
+      "name": "BCD-Touch-Tenebris-b78e960.ipa",
+      "bytes": 185774208,
+      "sha256": "0ea62cab60aba01f4e99425fdf32c98692ff2d16e7aba4a19d052b16b10e5acd",
+      "head": true,
+      "range": true,
+      "fullHTTPHash": true
+    },
+    {
+      "name": "Tenebris-Controls-v3.json",
+      "bytes": 9601,
+      "sha256": "81405dd31014757760bbe1dcc25e95360bb40fccbca81054108dc0ffd110637a",
+      "head": true,
+      "range": true,
+      "fullHTTPHash": true
+    },
+    {
+      "name": "tenebris-owner-phone-active-hud.png",
+      "bytes": 99372,
+      "sha256": "4903e71715e81e968a30ecf10b1bcb7074a2c0fb15a33e4b065d7ac38881a4a2",
+      "head": true,
+      "range": true,
+      "fullHTTPHash": true
+    },
+    {
+      "name": "tenebris-owner-phone-active-hits.png",
+      "bytes": 115894,
+      "sha256": "69c36f3f8fbbf5933ac761cf1a42c07f9ce2ddf47b94ba3e9af24f632c72732a",
+      "head": true,
+      "range": true,
+      "fullHTTPHash": true
+    },
+    {
+      "name": "tenebris-owner-pad-active-hud.png",
+      "bytes": 167361,
+      "sha256": "c0d258a8ce608dde103252e3fbc42cbf8ec0dfb436ee4653266328c31b44df45",
+      "head": true,
+      "range": true,
+      "fullHTTPHash": true
+    },
+    {
+      "name": "tenebris-owner-pad-active-hits.png",
+      "bytes": 191568,
+      "sha256": "2576e4b8c692be71f728a11a151f5e7e338b6cec5a30c24b442e3ba08be71ef0",
+      "head": true,
+      "range": true,
+      "fullHTTPHash": true
+    },
+    {
+      "name": "BCD-Touch-Tenebris-b78e960.patch",
+      "bytes": 10210349,
+      "sha256": "e98d5d4d50d1dc87bccbb40fab0f71f8afe97b7e3b763dc285acb09e66e11948",
+      "head": true,
+      "range": true,
+      "fullHTTPHash": true
+    },
+    {
+      "name": "BCD-Touch-Tenebris-test-receipt.json",
+      "bytes": 2466,
+      "sha256": "b8cffc76ddd9df48c486e3e4509a91743be1a7bf46c19245dc3dfbfbc63875e1",
+      "head": true,
+      "range": true,
+      "fullHTTPHash": true
+    }
+  ]
+}
