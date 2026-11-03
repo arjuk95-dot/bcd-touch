@@ -8,6 +8,8 @@
   "newGeneration": false,
   "credentialsUnchanged": true,
   "originalWorkerLeftRunning": true,
-  "phoneEndpointChanged": false,
-  "layoutQualityChecksLoaded": true
+  "phoneEndpointChanged": true,
+  "layoutQualityChecksLoaded": true,
+  "phoneEndpointUSBReadbackVerified": true,
+  "desktopCachedRecheckHTTP": 200
 }
