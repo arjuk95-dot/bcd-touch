@@ -1,0 +1,15 @@
+{
+  "staged": true,
+  "installed": false,
+  "remote": "/Documents/BCD Touch Aim 2026-11-02/BCD-Touch-aim-df25bb3.ipa",
+  "bytes": 185549333,
+  "sha256": "b9f39cdf541185e8fb3150cbf8ac67cb75e55775315786c03bcdd02d4827200a",
+  "appSource": "df25bb3f0bb7308b81a79adcd79f4242502e7ac4",
+  "phoneReadbackSHA256Verified": true,
+  "appDataUntouched": true,
+  "metadataBackup": {
+    "files": 13,
+    "bytes": 86899,
+    "remoteModified": false
+  }
+}

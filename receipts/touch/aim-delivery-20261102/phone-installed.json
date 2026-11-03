@@ -1,0 +1,32 @@
+{
+  "verifiedUTC": "2026-11-03T07:08:08.996431+00:00",
+  "appSource": "df25bb3f0bb7308b81a79adcd79f4242502e7ac4",
+  "installedSourceReadbackVerified": true,
+  "effectiveIncreasedMemory": true,
+  "effectiveDebuggable": true,
+  "extendedVirtualAddressing": "not reported by device lookup",
+  "metadataPreservation": {
+    "byteIdenticalFiles": 12,
+    "comparedFiles": 13,
+    "onlyChangedPreferenceKeys": [
+      "swiftsteam_cm_servers_websocket"
+    ],
+    "controlPacksOverridesAndGameConfigUnchanged": true,
+    "gameAndSaveDirectoriesPresent": true,
+    "allGameSaveBytesCompared": false,
+    "comparisonTakenBeforeIntentionalWorkerEndpointUpdate": true,
+    "additionalIntentionalChange": "worker.json URL only; credentials and all other keys preserved"
+  },
+  "worker": {
+    "endpointUpdatedForCurrentPC": true,
+    "phoneReadbackVerified": true,
+    "credentialsPreserved": true,
+    "otherPhoneConfigKeysPreserved": true,
+    "cachedHTTP200FromDesktop": true,
+    "actions": 33,
+    "newModelGeneration": false
+  },
+  "newBinaryPhysicalTest": "pending player report",
+  "guestTraceCaptured": false,
+  "liveHUDCapture": "not captured: phone disconnected; no developer-image or JIT changes attempted"
+}
