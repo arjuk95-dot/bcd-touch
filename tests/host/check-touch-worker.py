@@ -61,6 +61,29 @@ dreadRequest=json.loads((ROOT/'packs/requests/dread-delusion-installed-iphone.js
 dreadPilot=json.loads((ROOT/'packs/pilots/dread-delusion-installed-iphone.json').read_text(encoding='utf-8'))
 dread=apply_dread_bindings(dreadPilot,dreadRequest);w.validate(dread,dreadRequest['identity'])
 byID={a['id']:a for a in dread['actions']}
+from layout_policy import apply_layout_policy,check_generated_geometry
+layout_request=dict(requirements=dict(genre='first-person'))
+policy=apply_layout_policy(copy.deepcopy(dread),layout_request)
+assert policy['phone']['controls']==dread['phone']['controls'] and policy['pad']['controls']==dread['pad']['controls'], 'Valid per-game layout was flattened into generic slots'
+check_generated_geometry(policy)
+left=copy.deepcopy(dread)
+for device in ['phone','pad']:
+    primary=next(c for c in left[device]['controls'] if c['role']=='fireAim')
+    duplicate=dict(primary,id='left-fire-fixture',x=.10,y=.30,radius=.04,hitRadius=.04)
+    left[device]['controls'].append(duplicate)
+left=apply_layout_policy(left,layout_request)
+assert all(next(c for c in left[device]['controls'] if c['id']=='left-fire-fixture')['role']=='button' for device in ['phone','pad'])
+collision=copy.deepcopy(dread)
+control=next(c for c in collision['phone']['controls'] if c['role']=='fireAim')
+collision['phone']['controls'].append(dict(control,id='colliding-fixture'))
+try:check_generated_geometry(collision)
+except ValueError:pass
+else:raise AssertionError('Overlapping generated buttons accepted')
+keyboard_policy=copy.deepcopy(json.loads((ROOT/'packs/pilots/chronicles-of-the-wolf.json').read_text(encoding='utf-8')))
+assert apply_layout_policy(copy.deepcopy(keyboard_policy),layout_request)==keyboard_policy,'Keyboard layout was overwritten by controller hierarchy'
+check_generated_geometry(json.loads((ROOT/'receipts/touch/authoring-20261103/chronicles-generated-v2.json').read_text(encoding='utf-8')))
+
+
 for altered,requirements in [(dread,dict(packVersion='2',inputMode='keyboardMouse')),(dict(dread,version=2),dict(packVersion='1',inputMode='controller'))]:
     try:w.validate_result(altered,dict(identity=dread['identity'],requirements=requirements))
     except Exception:pass

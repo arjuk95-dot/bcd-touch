@@ -16,7 +16,7 @@ import time
 import uuid
 
 HERE = Path(__file__).resolve().parent
-from layout_policy import apply_layout_policy
+from layout_policy import apply_layout_policy, check_generated_geometry
 from installed_bindings import apply_installed_bindings
 from stable_ids import stabilize
 from dread_bindings import apply_dread_bindings
@@ -185,7 +185,9 @@ class Worker:
                     pack=stabilize(apply_dread_bindings(apply_layout_policy(apply_installed_bindings(json.loads(output.read_text(encoding='utf-8')),request),request),request),previous); receipt['generated']=True
                     pack['version']=int(request.get('requirements',{}).get('packVersion','1'))
                     atomic(self.root/(key+f'.candidate-{attempt}.json'),pack)
-                    try: validate_result(pack,request)
+                    try:
+                        validate_result(pack,request)
+                        check_generated_geometry(pack)
                     except Exception as error:
                         if attempt == 2: raise
                         prompt=initial_prompt+'\nREPAIR THIS CANDIDATE; keep identity and action IDs. Validation error: '+str(error)+'\n'+canonical(pack).decode()
