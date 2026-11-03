@@ -323,8 +323,10 @@ struct BCDPackInspector: View {
                     ForEach((pad ? p.pad : p.phone).controls, id: \.id) { c in Text("\(c.id): \(p.actions.first { $0.id == c.action }?.label ?? "Radial")").tag(c.id) }
                 }
                 if let c = (pad ? p.pad : p.phone).controls.first(where: { $0.id == selected }) {
-                    Text(p.actions.first { $0.id == c.action }?.output ?? "Radial")
+                    Text("Binding: " + (p.actions.first { $0.id == c.action }.map { BCDPackCatalog.outputLabel($0.output) } ?? "Radial"))
+                    Text("Button size").font(.caption)
                     Slider(value: Binding(get: { c.radius }, set: { v in changeControl { $0.radius = v; $0.hitRadius = v } }), in: 0.035...0.2)
+                    Text("Opacity").font(.caption)
                     Slider(value: Binding(get: { c.opacity }, set: { v in changeControl { $0.opacity = v } }), in: 0.1...1)
                     if p.actions.first(where: { $0.id == c.action })?.behavior == "hold", c.role != "move" {
                         Button(c.role == "fireAim" ? "Use press only" : "Allow hold-and-drag aim") { changeControl { $0.role = c.role == "fireAim" ? "button" : "fireAim" } }
@@ -480,6 +482,7 @@ struct BCDPackActionEditor: View {
         .onAppear { selected = preferredAction.isEmpty ? (store.pack?.actions.first?.id ?? "") : preferredAction; load() }
         .onChange(of: preferredAction) { _, value in if !value.isEmpty { selected = value; load() } }
         .onChange(of: selected) { _, _ in load() }
+        .onChange(of: store.pack?.actions) { _, _ in load() }
     }
     private func load() {
         guard let a = action else { return }

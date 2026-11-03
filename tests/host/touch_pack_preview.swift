@@ -111,6 +111,16 @@ import UIKit
         LibraryModel.shared.blocksGameplayTouch=true;store.activate(entry)
         assert(store.pack?.title==regenerated.title && store.pack?.phone.controls[index].x==movedX)
         assert(store.pack?.actions.contains { $0.label=="Player action fixture" && $0.output=="RB" } == true,"Binding edit lost on regeneration")
+        store.setAuthoringChoice(entry,key:"mode",value:"keyboardMouse");store.usePreset(entry)
+        store.activate(entry)
+        assert(store.pack?.inputMode=="controller","Selecting next-launch preset changed the current guest session")
+        store.setLaunchPreference(entry,generated:true);store.setAuthoringChoice(entry,key:"mode",value:"auto")
+        var incompatible=BCDPackAuthoring.preset(identity:req.identity,title:"Mode change fixture",genre:"strategy",mode:"keyboardMouse")
+        incompatible.title="Prepared different input mode"
+        try BCDPackStore.encoded(incompatible).write(to:cached,options:.atomic)
+        store.activate(entry)
+        assert(store.pack?.inputMode=="controller","Cached regeneration changed the running input mode")
+        try BCDPackStore.encoded(regenerated).write(to:cached,options:.atomic)
         var unknown=LibraryEntry();unknown.title="Unknown title fixture";unknown.launchRelativePath="unknown-title.exe";unknown.relativePath="unknown-title.exe"
         store.setAuthoringChoice(unknown,key:"genre",value:"racing");store.setAuthoringChoice(unknown,key:"mode",value:"keyboardMouse")
         store.usePreset(unknown)
