@@ -99,6 +99,7 @@ import UIKit
         try checkWindowRouting(original)
         try await checkPackInteractions(original)
         try await captureEditorFixtures()
+        try captureAuthoringFixtures()
         var moved=store.pack!;moved.phone.controls[index].x=movedX
         let editedAction=moved.actions.firstIndex { $0.output=="RT" }!
         moved.actions[editedAction].label="Player action fixture";moved.actions[editedAction].icon="shield";moved.actions[editedAction].output="RB"
@@ -308,6 +309,43 @@ import UIKit
         assert(focus.refresh())
         let folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
         try Data("PASS: actual BCDPackView event adapters acquire floating movement outside the old circle; base follows thumb landing; simultaneous movement/independent RT/look ownership; crossing controls stays look; zero keyboard/mouse emissions; actual main-window UIAlert owns touches and clears held input; first touch after dismissal works; native pack dialog keeps dismissal routing. Simulator UIKit with engine boundary spies, not a guest game.".utf8).write(to:folder.appendingPathComponent("pack-interaction-regression.txt"),options:.atomic)
+    }
+    @MainActor private func captureAuthoringFixtures() throws {
+        let folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
+        let identity=BCDControlPack.Identity(executable:"unknown-fixture.exe",storeID:"local",edition:"fixture",build:"unreported",bindingDigest:"fixture")
+        for (genre,_) in BCDPackCatalog.genres {
+            for mode in ["controller","keyboardMouse"] {
+                let original=BCDPackAuthoring.preset(identity:identity,title:"Unidentified game fixture",genre:genre,mode:mode)
+                for isPad in [false,true] {
+                    let size=isPad ? CGSize(width:1194,height:834) : CGSize(width:956,height:440)
+                    let insets=isPad ? UIEdgeInsets(top:24,left:0,bottom:20,right:0) : UIEdgeInsets(top:0,left:62,bottom:21,right:62)
+                    var p=original;if isPad {p.phone=p.pad}
+                    let view=BCDPackView();view.frame=CGRect(x:0,y:0,width:size.width-insets.left-insets.right,height:size.height-insets.top-insets.bottom)
+                    view.configure(p,context:"onFoot",debug:true,editing:false)
+                    let format=UIGraphicsImageRendererFormat();format.scale=2;format.opaque=true
+                    let image=UIGraphicsImageRenderer(size:size,format:format).image { context in
+                        UIColor.black.setFill();context.fill(CGRect(origin:.zero,size:size))
+                        context.cgContext.saveGState();context.cgContext.translateBy(x:insets.left,y:insets.top)
+                        view.draw(view.bounds);context.cgContext.restoreGState()
+                        let label="PRESET GEOMETRY FIXTURE / NO GAME / \(genre) / \(mode) / \(isPad ? "iPad geometry" : "phone geometry")"
+                        (label as NSString).draw(at:CGPoint(x:30,y:5),withAttributes:[.font:UIFont.systemFont(ofSize:10),.foregroundColor:UIColor.white])
+                    }
+                    try image.pngData()!.write(to:folder.appendingPathComponent("template-"+genre+"-"+mode+"-"+(isPad ? "pad" : "phone")+".png"))
+                }
+            }
+        }
+        let size=CGSize(width:956,height:700),format=UIGraphicsImageRendererFormat();format.scale=2;format.opaque=true
+        let catalog=UIGraphicsImageRenderer(size:size,format:format).image { context in
+            UIColor.black.setFill();context.fill(CGRect(origin:.zero,size:size))
+            ("LOCAL SF SYMBOL CATALOG FIXTURE / NOT CUSTOM ARTWORK / NO GAME" as NSString).draw(at:CGPoint(x:20,y:10),withAttributes:[.font:UIFont.boldSystemFont(ofSize:14),.foregroundColor:UIColor.white])
+            for (i,icon) in BCDPackCatalog.icons.enumerated() {
+                let x=CGFloat(i%6)*155+28,y=CGFloat(i/6)*82+52
+                UIImage(systemName:icon.id)!.withTintColor(.white,renderingMode:.alwaysOriginal).draw(in:CGRect(x:x+45,y:y,width:28,height:28))
+                (icon.label as NSString).draw(in:CGRect(x:x,y:y+35,width:150,height:40),withAttributes:[.font:UIFont.systemFont(ofSize:12),.foregroundColor:UIColor.white])
+            }
+        }
+        try catalog.pngData()!.write(to:folder.appendingPathComponent("authoring-icon-catalog-fixture.png"))
+        try Data("PASS: five genre presets in each input mode, phone and iPad geometry exported by production renderer; catalog symbols available. Simulator fixture, no actual iPad or game.".utf8).write(to:folder.appendingPathComponent("authoring-fixtures.txt"))
     }
     @MainActor private func captureEditorFixtures() async throws {
         let scene=UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first!
