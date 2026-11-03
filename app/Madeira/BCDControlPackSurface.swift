@@ -109,6 +109,9 @@ final class BCDPackView: UIView {
         var time: Double
         var selection: Int?
         var radialCenter: CGPoint?
+        var toggleWasOn = false
+        var slideArmed = false
+        var slideFired = false
     }
     private var pack: BCDControlPack?
     private var context = "onFoot"
@@ -116,6 +119,7 @@ final class BCDPackView: UIView {
     private var fingers: [AnyHashable: Finger] = [:]
     private var keyHolds: [UUID: [Int32]] = [:]
     private var mouseHolds: [UUID: String] = [:]
+    private var toggles: [String: UUID] = [:]
     private var previousSize = CGSize.zero
     private var epoch = UUID()
     private var pulses = Set<UUID>()
@@ -175,10 +179,14 @@ final class BCDPackView: UIView {
     /// Reserve the lower left area before look acquisition; buttons keep priority.
     var movementStartRegion: CGRect {
         guard movementControl != nil, let layout else { return .zero }
+        if let r = layout.movementRect {
+            return CGRect(x: bounds.minX + r.x * bounds.width, y: bounds.minY + r.y * bounds.height, width: r.width * bounds.width, height: r.height * bounds.height)
+        }
         return CGRect(x: safe.minX, y: safe.minY + safe.height * 0.4,
                       width: safe.width * min(0.4, layout.aimRect.x), height: safe.height * 0.6)
     }
     var activeTouchRoles: [String] { fingers.values.map(\.role).sorted() }
+    var toggledActionIDs: [String] { toggles.keys.sorted() }
     var movementVisual: (origin: CGPoint, thumb: CGPoint, radius: CGFloat)? {
         guard let finger = fingers.values.first(where: { $0.role == "move" }) else { return nil }
         let radius = max(CGFloat(1), unit * CGFloat(finger.control?.radius ?? 0.14))
@@ -207,7 +215,36 @@ final class BCDPackView: UIView {
         epoch = UUID()
         for f in fingers.values { release(f.owner) }
         for owner in pulses { release(owner) }; pulses.removeAll()
+        clearToggles()
         fingers.removeAll(); setNeedsDisplay()
+    }
+    private func clearToggles() {
+        let owners = Array(toggles.values); toggles.removeAll()
+        for owner in owners { release(owner) }
+        setNeedsDisplay()
+    }
+    private func setToggle(_ a: BCDControlPack.Action, enabled: Bool) {
+        if enabled, toggles[a.id] == nil {
+            let owner = UUID(); toggles[a.id] = owner; send(a, owner: owner)
+        } else if !enabled, let owner = toggles.removeValue(forKey: a.id) { release(owner) }
+        setNeedsDisplay()
+    }
+    private func hitsSlideTarget(_ c: BCDControlPack.Control, at point: CGPoint) -> Bool {
+        guard let target = c.slideToAction else { return false }
+        return layout?.controls.contains { candidate in
+            candidate.action == target && candidate.role == "button" && visible(candidate) &&
+                hypot(point.x - center(candidate).x, point.y - center(candidate).y) <= candidate.hitRadius * unit
+        } == true
+    }
+    private func updateSlide(_ finger: inout Finger, at point: CGPoint) {
+        guard !finger.slideFired, let c = finger.control, let source = action(c.action),
+              source.behavior == "toggle", let targetID = c.slideToAction, let target = action(targetID), target.behavior == "tap" else { return }
+        let hit = hitsSlideTarget(c, at: point)
+        if !hit { finger.slideArmed = true }
+        if hit && finger.slideArmed && hypot(point.x - finger.start.x, point.y - finger.start.y) >= 8 {
+            setToggle(source, enabled: true)
+            pulse(target); finger.slideFired = true
+        }
     }
     private func release(_ owner: UUID) {
         GamepadInput.shared.packTouch(owner: owner, value: nil)
@@ -221,6 +258,7 @@ final class BCDPackView: UIView {
     }
     private func send(_ a: BCDControlPack.Action, owner: UUID) {
         guard let p = pack else { return }
+        if a.output == "Menu" && a.behavior != "toggle" { clearToggles() }
         if p.inputMode == "controller" { GamepadInput.shared.packTouch(owner: owner, value: TouchPadAction.sample(a.output)); return }
         if let keys = BCDPackCatalog.keyCodes(a.output) {
             let held = Set(keyHolds.values.flatMap { $0 }); keyHolds[owner] = keys
@@ -259,7 +297,14 @@ final class BCDPackView: UIView {
             control = move
             role = fingers.values.contains(where: { $0.role == "move" }) ? "ignore" : "move"
         }
+        if !editing, role == "look", pack.lookMode == "none" { role = "ignore" }
+        if !editing, role == "button", let c = control, action(c.action)?.behavior == "toggle" { role = "toggle" }
         var finger = Finger(role: role, control: control, start: point, last: point, time: time)
+        if role == "toggle", let c = control, let binding = action(c.action) {
+            finger.toggleWasOn = toggles[binding.id] != nil
+            finger.slideArmed = !hitsSlideTarget(c, at: point)
+            setToggle(binding, enabled: true)
+        }
         if role == "radial" { finger.radialCenter = radialCenter(at: point) }
         if role == "look" || role == "fireAim" {
             GamepadInput.shared.packLook(owner: finger.owner, phase: 0, time: time, receivedAt: receivedAt)
@@ -293,6 +338,7 @@ final class BCDPackView: UIView {
                 HardwareInput.shared.postRelative(Int32(max(-30000, min(30000, Double(point.x - finger.last.x) * calibration.sensitivity * 2))),
                     Int32(max(-30000, min(30000, Double(point.y - finger.last.y) * calibration.sensitivity * calibration.vertical * 2 * (calibration.invertY ? -1 : 1)))))
             }
+        } else if finger.role == "toggle" { updateSlide(&finger, at: point)
         } else if finger.role == "move" {
             let radius = max(CGFloat(1), unit * CGFloat(finger.control?.radius ?? 0.14))
             GamepadInput.shared.packTouch(owner: finger.owner, value: TouchPadAction.sample("LS", x: Double((point.x - finger.start.x) / radius), y: Double((finger.start.y - point.y) / radius)))
@@ -320,10 +366,19 @@ final class BCDPackView: UIView {
         }
     }
     func endTouch(_ identity: AnyHashable, at point: CGPoint, cancelled: Bool) {
-            guard let f = fingers.removeValue(forKey: identity) else { return }
+            guard var f = fingers.removeValue(forKey: identity) else { return }
             release(f.owner)
             defer { setNeedsDisplay() }
-            guard !cancelled, !LibraryModel.shared.blocksGameplayTouch, BCDPackFocus.shared.refresh(), let pack else { return }
+            if cancelled {
+                if f.role == "toggle", let c = f.control, let a = action(c.action) { setToggle(a, enabled: false) }
+                return
+            }
+            guard !LibraryModel.shared.blocksGameplayTouch, BCDPackFocus.shared.refresh(), let pack else { clear(); return }
+            if f.role == "toggle", let c = f.control, let a = action(c.action) {
+                updateSlide(&f, at: point)
+                if f.toggleWasOn && !f.slideFired { setToggle(a, enabled: false) }
+                return
+            }
             if f.role == "radial", let index = f.selection, radialActions.indices.contains(index), radialActions[index].behavior != "hold" { pulse(radialActions[index]) }
             if f.role == "button" || f.role == "fireAim", let c = f.control, let a = action(c.action), a.behavior == "release" { pulse(a) }
             if f.role == "gesture" {
@@ -351,8 +406,10 @@ final class BCDPackView: UIView {
         guard let layout, let ctx = UIGraphicsGetCurrentContext() else { return }
         if debug {
             let a = layout.aimRect
-            ctx.setFillColor(UIColor.green.withAlphaComponent(0.1).cgColor)
-            ctx.fill(CGRect(x: safe.minX + a.x * safe.width, y: safe.minY + a.y * safe.height, width: a.width * safe.width, height: a.height * safe.height))
+            if pack?.lookMode != "none" {
+                ctx.setFillColor(UIColor.green.withAlphaComponent(0.1).cgColor)
+                ctx.fill(CGRect(x: safe.minX + a.x * safe.width, y: safe.minY + a.y * safe.height, width: a.width * safe.width, height: a.height * safe.height))
+            }
             if movementControl != nil {
                 ctx.saveGState(); ctx.setStrokeColor(UIColor.cyan.cgColor); ctx.setLineDash(phase: 0, lengths: [5, 4])
                 ctx.stroke(movementStartRegion); ctx.restoreGState()
@@ -372,27 +429,36 @@ final class BCDPackView: UIView {
                     let knob = stick.radius * 0.38
                     ctx.setFillColor(UIColor.white.withAlphaComponent(max(0.2, c.opacity * 0.7)).cgColor)
                     ctx.fillEllipse(in: CGRect(x: stick.thumb.x - knob, y: stick.thumb.y - knob, width: knob * 2, height: knob * 2))
-                } else {
-                    // An idle hint is not a fixed stick base or its hit region.
-                    UIImage(systemName: "l.joystick")?.withTintColor(.white.withAlphaComponent(c.opacity * 0.6), renderingMode: .alwaysOriginal)
-                        .draw(in: CGRect(x: p.x - 12, y: p.y - 12, width: 24, height: 24))
+                }
+                if debug {
+                    let h = c.hitRadius * unit
+                    ctx.setStrokeColor(UIColor.cyan.cgColor); ctx.strokeEllipse(in: CGRect(x:p.x-h,y:p.y-h,width:h*2,height:h*2))
                 }
                 continue
             }
             let circle = CGRect(x: p.x-r, y: p.y-r, width: r*2, height: r*2)
-            let pressed = fingers.values.contains { $0.control?.id == c.id }
-            if pressed { ctx.setFillColor(UIColor.white.withAlphaComponent(0.12).cgColor); ctx.fillEllipse(in: circle) }
-            ctx.setStrokeColor(UIColor.white.withAlphaComponent(pressed ? 0.9 : c.opacity * 0.65).cgColor)
-            ctx.setLineWidth(pressed ? 1.5 : 1); ctx.strokeEllipse(in: circle)
             let a = action(c.action)
+            let toggled = toggles[c.action] != nil
+            let tint = toggled ? UIColor(red:1,green:0.67,blue:0.18,alpha:1) : UIColor.white
+            let pressed = fingers.values.contains { $0.control?.id == c.id }
+            if pressed { ctx.setFillColor(tint.withAlphaComponent(0.08).cgColor); ctx.fillEllipse(in: circle) }
+            ctx.setStrokeColor(tint.withAlphaComponent(toggled || pressed ? 0.95 : c.opacity * ((pack?.version ?? 1) >= 3 ? 0.9 : 0.65)).cgColor)
+            ctx.setLineWidth(pressed ? 1.5 : 1); ctx.strokeEllipse(in: circle)
             let icon = c.role == "radial" ? "circle.grid.2x2" : (a?.icon ?? "hand.draw")
-            if let image = UIImage(systemName: icon)?.withTintColor(.white.withAlphaComponent(c.opacity), renderingMode: .alwaysOriginal) {
-                image.draw(in: CGRect(x: p.x-r*0.42, y: p.y-r*0.42, width: r*0.84, height: r*0.84))
+            let inside = c.labelPlacement == "inside"
+            if let image = BCDPackIcons.image(icon)?.withTintColor(tint.withAlphaComponent(c.opacity), renderingMode: .alwaysOriginal) {
+                image.draw(in: CGRect(x: p.x-r*0.42, y: p.y-r*(inside ? 0.65 : 0.42), width: r*0.84, height: r*0.84))
             } else {
                 ((a?.output ?? "…") as NSString).draw(at: CGPoint(x:p.x-r*0.5,y:p.y-8),withAttributes:[.font:UIFont.boldSystemFont(ofSize:14),.foregroundColor:UIColor.white])
             }
             let label = (c.role == "radial" ? "Actions" : (a?.label ?? c.role)) + (editing ? " [\(a?.output ?? "") ]" : "")
-            (label as NSString).draw(at: CGPoint(x: p.x-r, y: p.y+r+2), withAttributes: [.font:UIFont.systemFont(ofSize: 10), .foregroundColor:UIColor.white.withAlphaComponent(c.opacity)])
+            if inside && !editing {
+                let font = UIFont.systemFont(ofSize: min(18,max(10,r*0.34)))
+                let width = (label as NSString).size(withAttributes:[.font:font]).width
+                (label as NSString).draw(at:CGPoint(x:p.x-width/2,y:p.y+r*0.28),withAttributes:[.font:font,.foregroundColor:tint.withAlphaComponent(c.opacity)])
+            } else {
+                (label as NSString).draw(at: CGPoint(x: p.x-r, y: p.y+r+2), withAttributes: [.font:UIFont.systemFont(ofSize: 10), .foregroundColor:tint.withAlphaComponent(c.opacity)])
+            }
             if debug {
                 let h = c.hitRadius * unit
                 ctx.setStrokeColor(UIColor.cyan.cgColor); ctx.strokeEllipse(in: CGRect(x:p.x-h,y:p.y-h,width:h*2,height:h*2))

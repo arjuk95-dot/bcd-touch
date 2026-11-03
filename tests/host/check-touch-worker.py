@@ -34,6 +34,23 @@ v2['actions'][0].update(output='mouse:wheelUp',behavior='hold')
 try:w.validate(v2)
 except Exception:pass
 else:raise AssertionError('Holding a wheel action must be rejected')
+# V3 interactions are explicit and must not be reinterpreted by older clients.
+owner=json.loads((ROOT/'packs/personal/tenebris-somnia-owner-iphone.json').read_text(encoding='utf-8'))
+w.validate(owner,personal=True)
+assert owner['lookMode']=='none' and next(a for a in owner['actions'] if a['output']=='LT')['behavior']=='toggle'
+for mutate in [lambda p:p.update(version=2),lambda p:p['phone']['controls'][5].update(slideToAction='missing'),lambda p:p['actions'][1].update(output='RS'),lambda p:p['actions'][2].update(behavior='hold'),lambda p:p['actions'][2].update(icon='bcd.unknown')]:
+    bad=copy.deepcopy(owner);mutate(bad)
+    try:w.validate(bad,personal=True)
+    except Exception:pass
+    else:raise AssertionError('Malformed V3 interaction accepted')
+v3=copy.deepcopy(json.loads((ROOT/'packs/pilots/dread-delusion.json').read_text(encoding='utf-8')));v3['version']=3
+with tempfile.TemporaryDirectory() as temporary:
+    folder=Path(temporary);service=w.Worker(folder);key=w.key_for(v3['identity'])
+    w.atomic(folder/(key+'.pack.json'),v3)
+    req=dict(version=1,identity=v3['identity'],title=v3['title'],bindings={},requirements={'packVersion':'2'})
+    assert service.submit(key,req)[0]==409 and not list(folder.glob('*.request.json')), 'Old client must not regenerate or overwrite a newer cached pack'
+    req['requirements']['packVersion']='3';assert service.submit(key,req)[0]==200
+    service.pool.shutdown()
 # Personal exports can occupy the swipe rectangle, overlap and reach the display edge.
 free=copy.deepcopy(json.loads((ROOT/'packs/pilots/dread-delusion.json').read_text(encoding='utf-8')))
 free['version']=2

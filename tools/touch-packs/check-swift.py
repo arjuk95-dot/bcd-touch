@@ -12,7 +12,7 @@ with tempfile.TemporaryDirectory(prefix='bcd-touch-check-') as tmp:
     core=[ROOT/'app/Madeira/BCDMouseJoystick.swift',ROOT/'app/Madeira/BCDControlPack.swift',ROOT/'app/Madeira/BCDControlPackAuthoring.swift',state]
     exe=tmp/'checks'
     subprocess.run(['swiftc',*map(str,core),str(ROOT/'tests/host/touch_authoring_checks.swift'),str(ROOT/'tests/host/touch_pack_checks.swift'),'-o',str(exe)],check=True)
-    subprocess.run([str(exe),*map(str,(ROOT/'packs/pilots').glob('*.json'))],check=True)
+    subprocess.run([str(exe),*map(str,(ROOT/'packs/pilots').glob('*.json')),*['personal:'+str(p) for p in (ROOT/'packs/personal').glob('*.json')]],check=True)
     if os.uname().sysname=='Darwin':
         sdk=subprocess.check_output(['xcrun','--sdk','iphonesimulator','--show-sdk-path'],text=True).strip()
         arch=os.uname().machine

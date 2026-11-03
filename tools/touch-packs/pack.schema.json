@@ -5,7 +5,8 @@
       "type": "integer",
       "enum": [
         1,
-        2
+        2,
+        3
       ]
     },
     "id": {
@@ -169,7 +170,8 @@
             "enum": [
               "hold",
               "tap",
-              "release"
+              "release",
+              "toggle"
             ]
           },
           "evidence": {
@@ -298,6 +300,19 @@
                   "screen"
                 ],
                 "description": "Optional personal display anchor. Omission preserves existing safe-area anchors; generated packs use safe."
+              },
+              "slideToAction": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[^\\x00-\\x1f]+$"
+              },
+              "labelPlacement": {
+                "type": "string",
+                "enum": [
+                  "inside",
+                  "below"
+                ]
               }
             },
             "required": [
@@ -314,6 +329,38 @@
           },
           "minItems": 1,
           "maxItems": 48
+        },
+        "movementRect": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "y": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "width": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 1
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 1
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "width",
+            "height"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -416,6 +463,19 @@
                   "screen"
                 ],
                 "description": "Optional personal display anchor. Omission preserves existing safe-area anchors; generated packs use safe."
+              },
+              "slideToAction": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[^\\x00-\\x1f]+$"
+              },
+              "labelPlacement": {
+                "type": "string",
+                "enum": [
+                  "inside",
+                  "below"
+                ]
               }
             },
             "required": [
@@ -432,6 +492,38 @@
           },
           "minItems": 1,
           "maxItems": 48
+        },
+        "movementRect": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "y": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "width": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 1
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 1
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "width",
+            "height"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -535,6 +627,14 @@
       },
       "minItems": 0,
       "maxItems": 64
+    },
+    "lookMode": {
+      "type": "string",
+      "enum": [
+        "none",
+        "mouseJoystick",
+        "relativeMouse"
+      ]
     }
   },
   "required": [
@@ -592,6 +692,99 @@
               }
             }
           }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "version": {
+            "enum": [
+              1,
+              2
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "actions": {
+            "items": {
+              "properties": {
+                "behavior": {
+                  "enum": [
+                    "hold",
+                    "tap",
+                    "release"
+                  ]
+                },
+                "icon": {
+                  "not": {
+                    "pattern": "^bcd\\."
+                  }
+                }
+              }
+            }
+          },
+          "phone": {
+            "not": {
+              "required": [
+                "movementRect"
+              ]
+            },
+            "properties": {
+              "controls": {
+                "items": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": [
+                          "slideToAction"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "labelPlacement"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "pad": {
+            "not": {
+              "required": [
+                "movementRect"
+              ]
+            },
+            "properties": {
+              "controls": {
+                "items": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": [
+                          "slideToAction"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "labelPlacement"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "not": {
+          "required": [
+            "lookMode"
+          ]
         }
       }
     }

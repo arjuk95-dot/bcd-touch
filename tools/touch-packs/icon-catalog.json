@@ -174,5 +174,21 @@
   {
     "id": "y.circle",
     "label": "Y"
+  },
+  {
+    "id": "bcd.sword",
+    "label": "Sword outline"
+  },
+  {
+    "id": "bcd.interact",
+    "label": "Interact outline"
+  },
+  {
+    "id": "bcd.inventory",
+    "label": "Inventory outline"
+  },
+  {
+    "id": "bcd.run",
+    "label": "Run outline"
   }
 ]

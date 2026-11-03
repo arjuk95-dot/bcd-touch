@@ -23,6 +23,7 @@ struct LibraryEntry {
     private var holds:[UUID:GamepadSample]=[:]
     private(set) var lookOwner:UUID?
     private(set) var lookMoves=0
+    private(set) var touchEvents:[(owner:UUID,value:GamepadSample?)]=[]
     var sample:GamepadSample {
         holds.values.reduce(GamepadSample()) { GamepadSample.merge(physical:$0,touch:$1) }
     }
@@ -32,6 +33,7 @@ struct LibraryEntry {
     }
     func packFocusLost() { accepting=false;holds.removeAll();lookOwner=nil }
     func packTouch(owner:UUID,value:GamepadSample?) {
+        touchEvents.append((owner,value))
         if value==nil { holds[owner]=nil }
         else if accepting { holds[owner]=value }
     }

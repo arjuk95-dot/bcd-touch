@@ -30,11 +30,12 @@ import UIKit
     }
     @MainActor private func captureFixtures() {
         let folder = FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
-        for title in ["dread-delusion","chronicles-of-the-wolf","dread-delusion-installed-iphone"] {
-            guard let url=Bundle.main.url(forResource:title,withExtension:"json"), let data=try? Data(contentsOf:url), let original=try? BCDControlPack.decode(data) else { continue }
+        for title in ["dread-delusion","chronicles-of-the-wolf","dread-delusion-installed-iphone","tenebris-somnia-owner-iphone"] {
+            let ownerPack = title == "tenebris-somnia-owner-iphone"
+            guard let url=Bundle.main.url(forResource:title,withExtension:"json"), let data=try? Data(contentsOf:url), let original=try? BCDControlPack.decode(data,placement:ownerPack ? .personal : .generated) else { continue }
             let expected = ["steam:1574240":"b2c8962db5b66d02870857cbc88678f5bc0f7e2357445534b137f349aeada2c8", "steam:2371890":"e055f885bade4adf937e0229ee017112a040cebef41b3f6202d0039a49115a65"]
             let key = BCDPackStore.hash(BCDPackStore.encoded(original.identity))
-            let expectedKey = title == "dread-delusion-installed-iphone" ? "9a4ca6de6139b1c63ec99e71503f12ee4047f0853fbe4411576580a97dce4902" : expected[original.identity.storeID]
+            let expectedKey = ownerPack ? "79e1d4ec10ce90bb0eb83a5353ef5fa859b7b8fcb6eb2d54f24cf64e6bc93fde" : title == "dread-delusion-installed-iphone" ? "9a4ca6de6139b1c63ec99e71503f12ee4047f0853fbe4411576580a97dce4902" : expected[original.identity.storeID]
             assert(key == expectedKey, "Swift/worker identity hash mismatch")
             try? Data(key.utf8).write(to:folder.appendingPathComponent(title+"-swift-identity.txt"))
             for isPad in [false,true] {
@@ -43,12 +44,12 @@ import UIKit
                 var p=original
                 if isPad { p.phone=p.pad }
                 for debug in [false,true] {
-                    let view=BCDPackView();view.frame=CGRect(origin:.zero,size:CGSize(width:size.width-insets.left-insets.right,height:size.height-insets.top-insets.bottom))
+                    let view=BCDPackView();view.frame=CGRect(origin:.zero,size:ownerPack ? size : CGSize(width:size.width-insets.left-insets.right,height:size.height-insets.top-insets.bottom))
                     view.configure(p,context:p.contexts[0],debug:debug,editing:false)
                     let format=UIGraphicsImageRendererFormat();format.scale=isPad ? 2 : 3;format.opaque=true
                     let image=UIGraphicsImageRenderer(size:size,format:format).image { context in
                         UIColor(red:0.06,green:0.08,blue:0.09,alpha:1).setFill();context.fill(CGRect(origin:.zero,size:size))
-                        context.cgContext.saveGState();context.cgContext.translateBy(x:insets.left,y:insets.top)
+                        context.cgContext.saveGState();if !ownerPack { context.cgContext.translateBy(x:insets.left,y:insets.top) }
                         view.draw(view.bounds);context.cgContext.restoreGState()
                         let label="SIMULATOR RENDERER FIXTURE · \(isPad ? "iPad geometry" : "phone geometry") · NO GAME"
                         (label as NSString).draw(at:CGPoint(x:size.width*0.27,y:5),withAttributes:[.font:UIFont.systemFont(ofSize:10),.foregroundColor:UIColor.white])
@@ -101,6 +102,7 @@ import UIKit
         try await Task.sleep(nanoseconds:200_000_000)
         try checkWindowRouting(original)
         try await checkPackInteractions(original)
+        try await checkTenebrisInteractions()
         try await captureEditorFixtures()
         try captureAuthoringFixtures()
         var moved=store.pack!;moved.phone.controls[index].x=movedX
@@ -371,6 +373,107 @@ import UIKit
         let folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
         try Data("PASS: actual BCDPackView event adapters acquire floating movement outside the old circle; base follows thumb landing; simultaneous movement/independent RT/look ownership; crossing controls stays look; zero keyboard/mouse emissions; actual main-window UIAlert owns touches and clears held input; first touch after dismissal works; native pack dialog keeps dismissal routing. Simulator UIKit with engine boundary spies, not a guest game.".utf8).write(to:folder.appendingPathComponent("pack-interaction-regression.txt"),options:.atomic)
     }
+    @MainActor private func checkTenebrisInteractions() async throws {
+        let original = try BCDControlPack.decode(Data(contentsOf:Bundle.main.url(forResource:"tenebris-somnia-owner-iphone",withExtension:"json")!),placement:.personal)
+        let scene=UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first!
+        let library=LibraryModel.shared,focus=BCDPackFocus.shared,pad=GamepadInput.shared
+        let wasCurrent=library.current,wasBlocked=library.blocksGameplayTouch
+        let keyboardBefore=PackBoundarySpy.keyboardEvents,mouseBefore=PackBoundarySpy.mouseEvents
+        let overlay=UIWindow(windowScene:scene);overlay.frame=scene.coordinateSpace.bounds;overlay.windowLevel = .normal+104
+        let root=UIViewController();root.view=UIView(frame:overlay.bounds)
+        let view=BCDPackView();view.frame=overlay.bounds;root.view.addSubview(view)
+        overlay.rootViewController=root;overlay.isHidden=false;overlay.layoutIfNeeded()
+        library.current=NSObject();library.blocksGameplayTouch=false;focus.observe(overlay);focus.setMonitoring(true)
+        defer {view.clear();overlay.isHidden=true;library.current=wasCurrent;library.blocksGameplayTouch=wasBlocked;focus.setMonitoring(false)}
+        assert(focus.refresh())
+        var p=try BCDPackAuthoring.addButton(to:original,context:"onFoot",output:"RT")
+        let heldID=p.phone.controls.last!.id
+        p.phone.controls[p.phone.controls.count-1].coordinateSpace="screen"
+        p.phone.controls[p.phone.controls.count-1].x=0.6;p.phone.controls[p.phone.controls.count-1].y=0.9
+        view.configure(p,context:"onFoot",debug:false,editing:false);view.layoutIfNeeded()
+        let aim=p.phone.controls.first { $0.action=="raw-lt" }!,attack=p.phone.controls.first { $0.action=="raw-rt" }!
+        let aimPoint=view.controlCenter(aim),attackPoint=view.controlCenter(attack)
+        let zone=view.movementStartRegion
+        let start=CGPoint(x:zone.minX+zone.width*0.15,y:zone.minY+zone.height*0.55)
+        var t=ProcessInfo.processInfo.systemUptime
+        view.beginTouch("move",at:start,time:t);t+=0.02
+        view.moveTouch("move",to:CGPoint(x:start.x+40,y:start.y),time:t)
+        assert(view.movementVisual?.origin==start && pad.sample.lx>0)
+        view.beginTouch("aim-slide",at:aimPoint,time:t)
+        assert(pad.sample.lt==255 && view.toggledActionIDs==["raw-lt"])
+        let attacksBefore=pad.touchEvents.filter { $0.value?.rt==255 }.count
+        t+=0.02;view.moveTouch("aim-slide",to:attackPoint,time:t)
+        t+=0.02;view.moveTouch("aim-slide",to:aimPoint,time:t)
+        t+=0.02;view.moveTouch("aim-slide",to:attackPoint,time:t)
+        view.endTouch("aim-slide",at:attackPoint,cancelled:false)
+        assert(pad.touchEvents.filter { $0.value?.rt==255 }.count==attacksBefore+1,"A slide fired more than one attack")
+        assert(pad.sample.lt==255 && pad.sample.lx>0 && pad.lookOwner==nil)
+        try await Task.sleep(nanoseconds:110_000_000)
+        assert(pad.sample.rt==0 && pad.sample.lt==255,"Slide did not retain Aim after attack release")
+        view.beginTouch("aim-off",at:aimPoint,time:t+0.1);view.endTouch("aim-off",at:aimPoint,cancelled:false)
+        assert(pad.sample.lt==0 && pad.sample.lx>0)
+        // A fast slide can end in Attack before a separate move callback arrives.
+        view.beginTouch("fast-slide",at:aimPoint,time:t+0.2);view.endTouch("fast-slide",at:attackPoint,cancelled:false)
+        assert(pad.sample.lt==255 && pad.sample.rt==255)
+        try await Task.sleep(nanoseconds:110_000_000)
+        let held=p.phone.controls.first { $0.id==heldID }!
+        view.beginTouch("independent-fire",at:view.controlCenter(held),time:t+0.3)
+        view.beginTouch("already-on-slide",at:aimPoint,time:t+0.3)
+        view.moveTouch("already-on-slide",to:attackPoint,time:t+0.32)
+        view.endTouch("already-on-slide",at:attackPoint,cancelled:false)
+        try await Task.sleep(nanoseconds:110_000_000)
+        assert(pad.sample.lt==255 && pad.sample.rt==255 && pad.sample.lx>0,"Slide released another input owner")
+        view.beginTouch("cancel-aim",at:aimPoint,time:t+0.4);view.endTouch("cancel-aim",at:aimPoint,cancelled:true)
+        assert(pad.sample.lt==0 && pad.sample.rt==255 && pad.sample.lx>0)
+        view.endTouch("independent-fire",at:view.controlCenter(held),cancelled:true)
+        view.endTouch("move",at:start,cancelled:false)
+        assert(view.movementVisual==nil && pad.sample==GamepadSample())
+        let noLookBefore=pad.lookMoves
+        let empty=CGPoint(x:view.bounds.width*0.6,y:view.bounds.height*0.25)
+        view.beginTouch("empty",at:empty,time:t+0.5);view.moveTouch("empty",to:CGPoint(x:empty.x+20,y:empty.y),time:t+0.52)
+        view.endTouch("empty",at:empty,cancelled:false)
+        assert(pad.lookMoves==noLookBefore && pad.lookOwner==nil,"Fixed-camera pack emitted look input")
+        view.beginTouch("focus-aim",at:aimPoint,time:t+0.6);view.endTouch("focus-aim",at:aimPoint,cancelled:false)
+        assert(pad.sample.lt==255)
+        NotificationCenter.default.post(name:BCDPackFocus.didLoseFocus,object:nil)
+        assert(view.toggledActionIDs.isEmpty && pad.sample==GamepadSample())
+        view.beginTouch("menu-aim",at:aimPoint,time:t+0.7);view.endTouch("menu-aim",at:aimPoint,cancelled:false)
+        let menu=p.phone.controls.first { $0.action=="raw-menu" }!
+        view.beginTouch("pause",at:view.controlCenter(menu),time:t+0.8)
+        assert(view.toggledActionIDs.isEmpty && pad.sample.lt==0,"Pause left Aim latched")
+        view.clear()
+        view.beginTouch("context-aim",at:aimPoint,time:t+0.9);view.endTouch("context-aim",at:aimPoint,cancelled:false)
+        view.configure(p,context:"menu",debug:false,editing:false)
+        assert(view.toggledActionIDs.isEmpty && pad.sample.lt==0)
+        assert(PackBoundarySpy.keyboardEvents==keyboardBefore && PackBoundarySpy.mouseEvents==mouseBefore,"Controller toggle/slide emitted keyboard or mouse")
+        let folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
+        // Full-bounds offscreen geometry exports; iPad is not a separately booted device.
+        for isPad in [false,true] {
+            var drawing=original;if isPad {drawing.phone=drawing.pad}
+            let size=isPad ? CGSize(width:1194,height:834) : CGSize(width:956,height:440)
+            let canvas=BCDPackView();canvas.frame=CGRect(origin:.zero,size:size);canvas.configure(drawing,context:"onFoot",debug:false,editing:false);canvas.layoutIfNeeded()
+            let format=UIGraphicsImageRendererFormat();format.scale=2;format.opaque=false
+            let left=CGRect(x:0,y:size.height*0.2,width:size.width*0.45,height:size.height*0.8)
+            let idle=UIGraphicsImageRenderer(size:left.size,format:format).image { context in
+                context.cgContext.translateBy(x:-left.minX,y:-left.minY);canvas.draw(canvas.bounds)
+            }
+            assert((idle.cgImage!.dataProvider!.data! as Data).allSatisfy { $0==0 },"Idle stick or label remains visible in movement area")
+            let a=drawing.phone.controls.first { $0.action=="raw-lt" }!,at=canvas.controlCenter(a)
+            canvas.beginTouch("preview",at:at,time:ProcessInfo.processInfo.systemUptime);canvas.endTouch("preview",at:at,cancelled:false)
+            assert(canvas.toggledActionIDs==["raw-lt"])
+            for debug in [false,true] {
+                canvas.configure(drawing,context:"onFoot",debug:debug,editing:false)
+                let opaque=UIGraphicsImageRendererFormat();opaque.scale=2;opaque.opaque=true
+                let image=UIGraphicsImageRenderer(size:size,format:opaque).image { context in
+                    UIColor.black.setFill();context.fill(CGRect(origin:.zero,size:size));canvas.draw(canvas.bounds)
+                    ("OWNER PACK / ACTIVE AIM / SIMULATOR GEOMETRY / NO GAME" as NSString).draw(at:CGPoint(x:140,y:5),withAttributes:[.font:UIFont.systemFont(ofSize:10),.foregroundColor:UIColor.white])
+                }
+                try image.pngData()!.write(to:folder.appendingPathComponent("tenebris-owner-"+(isPad ? "pad" : "phone")+"-active-"+(debug ? "hits" : "hud")+".png"))
+            }
+            canvas.clear()
+        }
+        try Data("PASS: floating/hidden-idle movement, confirmed LT toggle, amber-state renderer exports, one RT per Aim-to-Attack slide including fast release, already-on latch, independent movement/fire, cancel/focus/pause/context clear, fixed-camera no-look and zero keyboard/mouse. Simulator engine-boundary spies, no guest or physical game test.".utf8).write(to:folder.appendingPathComponent("tenebris-interaction-regression.txt"))
+    }
     @MainActor private func captureAuthoringFixtures() throws {
         let folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
         let identity=BCDControlPack.Identity(executable:"unknown-fixture.exe",storeID:"local",edition:"fixture",build:"unreported",bindingDigest:"fixture")
@@ -401,7 +504,7 @@ import UIKit
             ("LOCAL SF SYMBOL CATALOG FIXTURE / NOT CUSTOM ARTWORK / NO GAME" as NSString).draw(at:CGPoint(x:20,y:10),withAttributes:[.font:UIFont.boldSystemFont(ofSize:14),.foregroundColor:UIColor.white])
             for (i,icon) in BCDPackCatalog.icons.enumerated() {
                 let x=CGFloat(i%6)*155+28,y=CGFloat(i/6)*82+52
-                UIImage(systemName:icon.id)!.withTintColor(.white,renderingMode:.alwaysOriginal).draw(in:CGRect(x:x+45,y:y,width:28,height:28))
+                BCDPackIcons.image(icon.id)!.withTintColor(.white,renderingMode:.alwaysOriginal).draw(in:CGRect(x:x+45,y:y,width:28,height:28))
                 (icon.label as NSString).draw(in:CGRect(x:x,y:y+35,width:150,height:40),withAttributes:[.font:UIFont.systemFont(ofSize:12),.foregroundColor:UIColor.white])
             }
         }
@@ -411,7 +514,7 @@ import UIKit
     @MainActor private func captureEditorFixtures() async throws {
         let scene=UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first!
         let folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
-        assert(BCDPackCatalog.icons.allSatisfy { UIImage(systemName:$0.id) != nil }, "Icon catalog contains an unavailable symbol")
+        assert(BCDPackCatalog.icons.allSatisfy { BCDPackIcons.image($0.id) != nil }, "Icon catalog contains an unavailable local icon")
         func canvas(in view:UIView) -> BCDPackView? {
             if let surface=view as? BCDPackView { return surface }
             for child in view.subviews { if let surface=canvas(in:child) { return surface } }

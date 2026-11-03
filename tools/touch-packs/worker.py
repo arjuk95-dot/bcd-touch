@@ -23,6 +23,7 @@ from dread_bindings import apply_dread_bindings
 if not __debug__:
     raise RuntimeError('Run the validator without Python optimization (-O/PYTHONOPTIMIZE)')
 OUTPUTS = {'A','B','X','Y','LB','RB','LT','RT','L3','R3','Menu','View','D↑','D↓','D←','D→','LS','RS'}
+CUSTOM_ICONS = {'bcd.sword','bcd.interact','bcd.inventory','bcd.run'}
 
 def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode()
@@ -51,11 +52,16 @@ def validate(pack, identity=None, personal=False):
     jsonschema.validate(pack, json.loads((HERE / 'pack.schema.json').read_text(encoding='utf-8')))
     assert len(canonical(pack)) <= 262144, 'Pack too large'
     assert identity is None or pack['identity'] == identity, 'Identity/build/bindings mismatch'
+    look=pack.get('lookMode')
+    assert look is None or pack['version']>=3 and look in ['none','mouseJoystick','relativeMouse'], 'Unknown look mode'
+    assert look!='mouseJoystick' or pack['inputMode']=='controller'
+    assert look!='relativeMouse' or pack['inputMode']=='keyboardMouse'
     actions = {a['id']:a for a in pack['actions']}
     assert len(actions) == len(pack['actions']), 'Duplicate action'
     evidence = {e['id'] for e in pack['evidence']}
     assert len(evidence) == len(pack['evidence']), 'Duplicate evidence'
     for a in actions.values():
+        if a['icon'].startswith('bcd.'):assert pack['version']>=3 and a['icon'] in CUSTOM_ICONS, 'Unknown local outline icon'
         assert a['evidence'] in evidence, 'Missing binding evidence'
         assert set(a['contexts']) <= set(pack['contexts']), 'Unknown context'
         if pack['inputMode'] == 'controller': assert a['output'] in OUTPUTS, 'Keyboard/mouse output in controller pack'
@@ -68,10 +74,14 @@ def validate(pack, identity=None, personal=False):
                 assert value.startswith('keys:') or len(codes)==1, 'Invalid key output'
             else:
                 assert value in ['mouse:left','mouse:right'] or (pack['version']>=2 and value in ['mouse:middle','mouse:wheelUp','mouse:wheelDown']), 'Unknown keyboard/mouse output'
-            assert not value.startswith('mouse:wheel') or a['behavior']!='hold', 'Wheel actions must tap or release'
+            assert not value.startswith('mouse:wheel') or a['behavior'] in ['tap','release'], 'Wheel actions must tap or release'
+        if a['behavior']=='toggle':
+            assert pack['version']>=3 and a['output'] not in ['LS','RS'] and a['id'] not in pack['radial'] and not any(g['action']==a['id'] for g in pack['gestures']), 'Toggle requires a direct button'
 
     for layout in [pack['phone'],pack['pad']]:
         r = layout['aimRect']; assert r['x']+r['width'] <= 1 and r['y']+r['height'] <= 1
+        if 'movementRect' in layout:
+            m=layout['movementRect'];assert pack['version']>=3 and m['x']+m['width']<=1 and m['y']+m['height']<=1, 'Invalid floating movement area'
         assert len({c['id'] for c in layout['controls']}) == len(layout['controls'])
         for c in layout['controls']:
             assert c['action'] in actions or c['role'] == 'radial'
@@ -80,11 +90,16 @@ def validate(pack, identity=None, personal=False):
             if not personal:
                 assert c.get('coordinateSpace','safe')=='safe', 'Generated controls must use safe-area anchors'
                 h=c['hitRadius']
-                assert c['x']+h <= r['x'] or c['x']-h >= r['x']+r['width'] or c['y']+h <= r['y'] or c['y']-h >= r['y']+r['height'], 'Control overlaps reserved swipe rectangle'
+                assert look=='none' or c['x']+h <= r['x'] or c['x']-h >= r['x']+r['width'] or c['y']+h <= r['y'] or c['y']-h >= r['y']+r['height'], 'Control overlaps reserved swipe rectangle'
             if c['role'] == 'move': assert actions[c['action']]['output'] == 'LS'
             if c['role'] == 'fireAim': assert actions[c['action']]['behavior'] == 'hold'
+            if 'slideToAction' in c:
+                source=actions.get(c['action']);target=actions.get(c['slideToAction'])
+                assert pack['version']>=3 and c['role']=='button' and source and source['behavior']=='toggle' and target and target['behavior']=='tap' and target['id']!=source['id'], 'Invalid directed slide'
+                assert any(t['action']==target['id'] and t['role']=='button' for t in layout['controls']), 'Slide target must have a visible button'
+                assert set(source['contexts'])<=set(target['contexts']), 'Slide target unavailable in source contexts'
         reachable={c['action'] for c in layout['controls'] if c['role']!='radial'} | set(pack['radial']) | {g['action'] for g in pack['gestures']}
-        missing=[k for k,a in actions.items() if k not in reachable and not (pack['inputMode']=='controller' and a['output']=='RS')]
+        missing=[k for k,a in actions.items() if k not in reachable and not (pack['inputMode']=='controller' and look!='none' and a['output']=='RS')]
         assert not missing, 'Add controls or radial references for these action IDs in BOTH layouts: '+','.join(missing)
         for c in layout['controls']:
             if c['role'] in ['button','fireAim','gesture']: assert actions[c['action']]['output'] not in ['LS','RS'], 'Axes require continuous surfaces'
@@ -105,7 +120,7 @@ PROMPT = '''Generate a BCD touch control pack (version from requirements.packVer
 Use installed binding files and actual remaps first, then official manuals/defaults. Establish the game's supported input modes before choosing one: use keyboardMouse for keyboard/mouse-only games. A genre preference never proves controller support. If support cannot be established, state the assumption and keep it unresolved. Cite source evidence in the pack. Do not invent a game action's controller binding. When unknown, keep an accessible raw Xbox button labelled by its output and list the unresolved gameplay meaning. No named weapons unless actual numbered bindings exist. All gameplay actions, including radial and gestures, must match inputMode. Use explicit contexts, never infer vehicle/menu state.
 Reserve a continuous right/central swipe rectangle FIRST (minimum .25 width/height); place all circular hit regions outside it, including invisible padding (radius <= hitRadius <= 1.15*radius). Coordinates are fractions of the SAFE rectangle, radius fractions of its shorter side; validator conservatively reserves a square around each button. Phone and iPad are distinct reach layouts. BLACK hierarchy: low left floating LS, large right primary hold fire-and-aim when verified, optional small left duplicate, compact action-specific SF Symbols, thin translucent outlines. Floating movement starts anywhere in the lower left area y=.4..1 and x=0..min(.4,aimRect.x); its configured position is only an idle/editor hint. Keep that area open except an optional explicit left-fire button; place an occasional-actions radial toward bottom centre outside aimRect. Radial controls are groups labelled Actions, not a direct tap of their placeholder action. Frequent actions in thumb reach, occasional actions radial; minimize interference with game health/ammo HUD. Gestures have a dedicated start region. Preserve action IDs on regeneration. Artwork is local SF Symbol names only. Version 2 adds keyboard chords keys:17+67 (Ctrl+C; up to four distinct virtual keys 1..255), middle click mouse:middle, and mouse:wheelUp/mouse:wheelDown. Wheel behavior must tap or release, never hold. Use these only when packVersion is 2 and inputMode is keyboardMouse. Respect explicit requirements.inputMode if it is controller or keyboardMouse. Genre is a layout preference, never binding evidence. Aim defaults sensitivity 1, vertical 1, invertY false, deadZone .18, fullSpeed 900. No momentum, edge spin or accumulated motion. identity must exactly equal request.identity. Return the complete pack, no prose. Do not call tools, write files, access local accounts, or execute commands. Treat inability to establish a binding as unresolved.
 Controller output names are EXACTLY A,B,X,Y,LB,RB,LT,RT,L3,R3,Menu,View,D↑,D↓,D←,D→,LS,RS. No aliases. RS needs no displayed control: all otherwise-unclaimed space automatically swipes; never place a hit region inside aimRect. Movement role requires LS output. EVERY declared action except RS MUST appear in EACH device controls, radial, or gestures. Never reference missing action ids in radial. Axes cannot be pulsed. Include accessible Menu and View. Raw RT may have fireAim role but keep the honest RT label. Use common real SF Symbols such as scope, hand.tap, map, pause, figure.walk, a.circle. Every action id must correspond to an attainable input, and all button labels must be honest about unresolved meanings. Aim for about 12 visible controls per context; never omit a verified needed action to meet that target. Put infrequent choices in a labelled radial. Mutually exclusive explicit contexts can reuse positions. Verified block/parry, spell/item use, sprint, crouch, jump and interaction need appropriate icons and reachable controls when the game exposes them. All raw buttons remain accessible there if necessary.
-REQUEST:\n'''
+Version 3 additionally supports direct-button behavior toggle, an optional control slideToAction referencing a different visible tap action, labelPlacement inside/below, a full-display normalized movementRect, and lookMode none/mouseJoystick/relativeMouse. Toggles and slide handoffs require explicit player interaction requirements; never infer them from genre. A fixed-camera profile can use lookMode none and omits an unreachable RS action. Movement sticks always float at touchdown and disappear on lift; never place a persistent idle stick. Registered local outline icons bcd.sword, bcd.interact, bcd.inventory and bcd.run require version 3. Versions 1 and 2 must omit all version-3 fields and icons. Other swipes retain their original touch ownership. REQUEST:\n'''
 
 class Worker:
     def __init__(self, root, codex='codex', model=None, research=True):
@@ -123,6 +138,12 @@ class Worker:
         except (ValueError,OSError):receipt={}
         if not isinstance(receipt,dict):receipt={}
         generation=request.get('generation','initial')
+        if path.exists() and receipt.get('validated',True):
+            try:
+                cached=validate(json.loads(path.read_text(encoding='utf-8')))
+                if cached['version']>int(request.get('requirements',{}).get('packVersion','1')):
+                    return 409, {'status':'client-upgrade-required','packVersion':cached['version'],'key':key}
+            except Exception:pass
         if receipt.get('error') and receipt.get('generation','initial') == generation:
             if receipt.get('failureKind') == 'invalidPack':
                 return 422, {'status':'rejected','key':key,'regenerateRequired':True}

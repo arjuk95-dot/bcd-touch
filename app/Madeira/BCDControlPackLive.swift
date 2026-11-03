@@ -141,7 +141,7 @@ import UniformTypeIdentifiers
         let wolf = entry.title.localizedCaseInsensitiveContains("Chronicles of the Wolf")
         let dread = entry.title.localizedCaseInsensitiveContains("Dread Delusion")
         let genre = authoringChoice(entry, key: "genre"), mode = authoringChoice(entry, key: "mode")
-        return Request(identity: identity, title: entry.title, bindings: bindings, requirements: ["phone":"iPhone 16 Pro Max landscape safe area", "pad":"iPad landscape independent reach", "hud":"BLACK thin outlines; reserve continuous swipe rectangle first", "ownership":"touch-down until release", "genre":genre == "auto" ? (wolf ? "side-scroller" : (dread ? "first-person" : "identify from game/bindings")) : genre, "packVersion":"2", "inputMode":mode, "mode":mode != "auto" ? mode : wolf && !bindings.isEmpty ? "keyboardMouse using actual named key bindings in config; numeric controller mapping unresolved. Direction hold buttons low left, frequent attack/jump right, occasional actions peripheral/radial. No LS, RS or fireAim outputs." : "prefer controller; unresolved meanings labelled by actual output"])
+        return Request(identity: identity, title: entry.title, bindings: bindings, requirements: ["phone":"iPhone 16 Pro Max landscape safe area", "pad":"iPad landscape independent reach", "hud":"BLACK thin outlines; reserve continuous swipe rectangle first", "ownership":"touch-down until release", "genre":genre == "auto" ? (wolf ? "side-scroller" : (dread ? "first-person" : "identify from game/bindings")) : genre, "packVersion":"3", "inputMode":mode, "mode":mode != "auto" ? mode : wolf && !bindings.isEmpty ? "keyboardMouse using actual named key bindings in config; numeric controller mapping unresolved. Direction hold buttons low left, frequent attack/jump right, occasional actions peripheral/radial. No LS, RS or fireAim outputs." : "prefer controller; unresolved meanings labelled by actual output"])
     }
     func prepare(_ entry: LibraryEntry, regenerate: Bool = false) {
         guard entry.desktop != true else { return }
@@ -364,6 +364,17 @@ struct BCDPackInspector: View {
                     Slider(value: Binding(get: { c.radius }, set: { v in changeControl { $0.radius = v; $0.hitRadius = v } }), in: 0.035...0.2)
                     Text("Opacity").font(.caption)
                     Slider(value: Binding(get: { c.opacity }, set: { v in changeControl { $0.opacity = v } }), in: 0.1...1)
+                    Toggle("Label inside button", isOn: Binding(get: { c.labelPlacement == "inside" }, set: { on in edit { value in
+                        value.version = max(value.version,3)
+                        if pad, let i = value.pad.controls.firstIndex(where: { $0.id == c.id }) { value.pad.controls[i].labelPlacement = on ? "inside" : "below" }
+                        if !pad, let i = value.phone.controls.firstIndex(where: { $0.id == c.id }) { value.phone.controls[i].labelPlacement = on ? "inside" : "below" }
+                    } }))
+                    if p.actions.first(where: { $0.id == c.action })?.behavior == "toggle" {
+                        Picker("Slide to tap", selection: Binding(get: { c.slideToAction ?? "" }, set: { target in changeControl { $0.slideToAction = target.isEmpty ? nil : target } })) {
+                            Text("None").tag("")
+                            ForEach(p.actions.filter { $0.behavior == "tap" && $0.id != c.action }, id: \.id) { a in Text(a.label).tag(a.id) }
+                        }
+                    }
                     if p.actions.first(where: { $0.id == c.action })?.behavior == "hold", c.role != "move" {
                         Button(c.role == "fireAim" ? "Use press only" : "Allow hold-and-drag aim") { changeControl { $0.role = c.role == "fireAim" ? "button" : "fireAim" } }
                         Button("Add/remove left duplicate") {
@@ -491,16 +502,22 @@ struct BCDPackActionEditor: View {
                 if !["LS", "RS"].contains(a.output) {
                     Picker("Press behavior", selection: $behavior) {
                         Text("Hold while touched").tag("hold"); Text("Tap on touch").tag("tap"); Text("Tap on release").tag("release")
+                        if !a.output.hasPrefix("mouse:wheel") { Text("Tap to toggle").tag("toggle") }
                     }
-                    Toggle("Also available on Actions radial", isOn: $onRadial)
+                    if behavior != "toggle" { Toggle("Also available on Actions radial", isOn: $onRadial) }
                 }
-                Button { showIcons.toggle() } label: { Label("Icon: " + (BCDPackCatalog.icons.first { $0.id == icon }?.label ?? icon), systemImage: icon) }
+                Button { showIcons.toggle() } label: {
+                    HStack {
+                        if let image = BCDPackIcons.image(icon) { Image(uiImage:image).resizable().scaledToFit().frame(width:22,height:22) }
+                        Text("Icon: " + (BCDPackCatalog.icons.first { $0.id == icon }?.label ?? icon))
+                    }
+                }
                 if showIcons {
                     TextField("Find icon", text: $iconSearch).textFieldStyle(.roundedBorder)
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 10) {
                         ForEach(BCDPackCatalog.icons.filter { iconSearch.isEmpty || $0.label.localizedCaseInsensitiveContains(iconSearch) }) { entry in
                             Button { icon = entry.id; showIcons = false } label: {
-                                VStack { Image(systemName: entry.id).font(.title3); Text(entry.label).font(.caption2) }.frame(maxWidth: .infinity, minHeight: 48)
+                                VStack { if let image = BCDPackIcons.image(entry.id) { Image(uiImage:image).resizable().scaledToFit().frame(width:24,height:24) }; Text(entry.label).font(.caption2) }.frame(maxWidth: .infinity, minHeight: 48)
                             }.accessibilityLabel(entry.label)
                         }
                     }
@@ -544,15 +561,19 @@ struct BCDPackActionEditor: View {
             binding = chord.count == 1 ? "key:\(key)" : "keys:" + chord.map(String.init).joined(separator: "+")
         }
         BCDPackAuthoring.ensurePlayerEvidence(&p)
-        p.version = 2
+        p.version = max(p.version, behavior == "toggle" || icon.hasPrefix("bcd.") ? 3 : 2)
         if binding != p.actions[i].output { p.actions[i].evidence = "player-binding" }
         p.actions[i].label = label; p.actions[i].icon = icon; p.actions[i].output = binding
         p.actions[i].behavior = behavior; p.actions[i].contexts = p.contexts.filter { contexts.contains($0) }
-        if onRadial, !p.radial.contains(selected) { p.radial.append(selected) }
-        if !onRadial { p.radial.removeAll { $0 == selected } }
+        if onRadial && behavior != "toggle", !p.radial.contains(selected) { p.radial.append(selected) }
+        if !onRadial || behavior == "toggle" { p.radial.removeAll { $0 == selected } }
         for pad in [false,true] {
             var layout = pad ? p.pad : p.phone
             for j in layout.controls.indices where layout.controls[j].action == selected && layout.controls[j].role == "fireAim" && behavior != "hold" { layout.controls[j].role = "button" }
+            for j in layout.controls.indices {
+                if layout.controls[j].action == selected && behavior != "toggle" { layout.controls[j].slideToAction = nil }
+                if layout.controls[j].slideToAction == selected && behavior != "tap" { layout.controls[j].slideToAction = nil }
+            }
             if pad { p.pad = layout } else { p.phone = layout }
         }
         _ = store.saveEdits(p)

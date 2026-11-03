@@ -3,8 +3,10 @@
 import Foundation
 
 enum BCDPackCatalog {
+    static let customIconNames: Set<String> = ["bcd.sword", "bcd.interact", "bcd.inventory", "bcd.run"]
     struct Icon: Identifiable { var id: String; var label: String }
     static let icons: [Icon] = [
+        ("bcd.sword", "Sword outline"), ("bcd.interact", "Interact outline"), ("bcd.inventory", "Inventory outline"), ("bcd.run", "Run outline"),
         ("scope", "Aim"), ("burst", "Shoot"), ("figure.fencing", "Sword / attack"), ("capsule.portrait", "Ammunition"), ("bolt", "Attack"), ("shield", "Block / parry"),
         ("hand.tap", "Use"), ("bag", "Inventory"), ("map", "Map"), ("pause", "Pause"),
         ("arrow.up", "Jump"), ("figure.walk", "Move"), ("figure.run", "Sprint"), ("figure.stand", "Stance"),
@@ -58,6 +60,58 @@ enum BCDPackCatalog {
         return ["mouse:left", "mouse:right"].contains(value) || (version >= 2 && ["mouse:middle", "mouse:wheelUp", "mouse:wheelDown"].contains(value))
     }
 }
+
+#if canImport(UIKit)
+import UIKit
+
+/// Local vector artwork and thin system symbols. No downloaded or executable artwork.
+@MainActor enum BCDPackIcons {
+    private static var images: [String: UIImage] = [:]
+    static func image(_ name: String) -> UIImage? {
+        if let image = images[name] { return image }
+        let image: UIImage?
+        if BCDPackCatalog.customIconNames.contains(name) {
+            let format = UIGraphicsImageRendererFormat(); format.scale = 3
+            image = UIGraphicsImageRenderer(size: CGSize(width:48,height:48),format:format).image { context in
+                let c = context.cgContext
+                c.setStrokeColor(UIColor.white.cgColor); c.setLineWidth(1.7)
+                c.setLineCap(.round); c.setLineJoin(.round)
+                func line(_ points: [CGPoint], close: Bool = false) {
+                    guard let first = points.first else { return }
+                    c.beginPath(); c.move(to:first)
+                    for point in points.dropFirst() { c.addLine(to:point) }
+                    if close { c.closePath() }; c.strokePath()
+                }
+                func points(_ values: [(CGFloat,CGFloat)]) -> [CGPoint] { values.map { CGPoint(x:$0.0,y:$0.1) } }
+                switch name {
+                case "bcd.sword":
+                    line(points([(15,29),(34,8),(41,6),(39,13),(20,34)]),close:true)
+                    line(points([(10,25),(25,40)])); line(points([(16,33),(8,41)]))
+                    c.strokeEllipse(in:CGRect(x:5,y:39,width:5,height:5))
+                case "bcd.interact":
+                    line(points([(15,38),(8,27),(8,24),(10,22),(12,23),(16,28),(16,11),(18,9),(20,11),(20,23),(21,23),(21,8),(23,6),(25,8),(25,23),(26,23),(26,10),(28,8),(30,10),(30,24),(31,24),(31,16),(33,14),(35,16),(35,30),(31,39),(29,43),(16,43)]),close:true)
+                case "bcd.inventory":
+                    c.addPath(UIBezierPath(roundedRect:CGRect(x:10,y:14,width:28,height:29),cornerRadius:6).cgPath); c.strokePath()
+                    c.addPath(UIBezierPath(roundedRect:CGRect(x:18,y:6,width:12,height:8),cornerRadius:4).cgPath); c.strokePath()
+                    c.addPath(UIBezierPath(roundedRect:CGRect(x:16,y:27,width:16,height:10),cornerRadius:2).cgPath); c.strokePath()
+                    line(points([(14,17),(14,23)])); line(points([(34,17),(34,23)]))
+                case "bcd.run":
+                    c.strokeEllipse(in:CGRect(x:28,y:6,width:7,height:7))
+                    line(points([(16,21),(24,17),(29,16),(35,21),(41,21)]))
+                    line(points([(29,16),(24,27),(16,29),(9,38)]))
+                    line(points([(24,27),(33,31),(29,41)]))
+                    line(points([(5,12),(18,12)])); line(points([(3,17),(13,17)])); line(points([(4,23),(10,23)]))
+                default: break
+                }
+            }.withRenderingMode(.alwaysTemplate)
+        } else {
+            image = UIImage(systemName:name,withConfiguration:UIImage.SymbolConfiguration(pointSize:48,weight:.ultraLight))?.withRenderingMode(.alwaysTemplate)
+        }
+        images[name] = image
+        return image
+    }
+}
+#endif
 
 enum BCDPackAuthoring {
     /// Templates expose real outputs with honest raw labels, never guessed gameplay meanings.
@@ -185,6 +239,7 @@ enum BCDPackAuthoring {
                 let deleted = Set(old.controls.map(\.id)).subtracting(edited.controls.map(\.id))
                 layout.controls.removeAll { deleted.contains($0.id) }
                 if edited.aimRect != old.aimRect { layout.aimRect = edited.aimRect }
+                if edited.movementRect != old.movementRect { layout.movementRect = edited.movementRect }
             }
             for c in edited.controls {
                 let before = old?.controls.first { $0.id == c.id }
@@ -196,6 +251,8 @@ enum BCDPackAuthoring {
                     if before == nil || c.radius != before!.radius { layout.controls[i].radius = c.radius }
                     if before == nil || c.hitRadius != before!.hitRadius { layout.controls[i].hitRadius = c.hitRadius }
                     if before == nil || c.opacity != before!.opacity { layout.controls[i].opacity = c.opacity }
+                    if before == nil || c.slideToAction != before!.slideToAction { layout.controls[i].slideToAction = c.slideToAction }
+                    if before == nil || c.labelPlacement != before!.labelPlacement { layout.controls[i].labelPlacement = c.labelPlacement }
                     if let before {
                         if c.action != before.action { layout.controls[i].action = c.action }
                         if c.role != before.role { layout.controls[i].role = c.role }
@@ -225,6 +282,7 @@ enum BCDPackAuthoring {
             if personal.radial != old.radial { p.radial = personal.radial }
             if personal.gestures != old.gestures { p.gestures = personal.gestures }
             if personal.contexts != old.contexts { p.contexts = personal.contexts }
+            if personal.lookMode != old.lookMode { p.lookMode = personal.lookMode }
             if personal.aim.sensitivity != old.aim.sensitivity { p.aim.sensitivity = personal.aim.sensitivity }
             if personal.aim.vertical != old.aim.vertical { p.aim.vertical = personal.aim.vertical }
             if personal.aim.invertY != old.aim.invertY { p.aim.invertY = personal.aim.invertY }

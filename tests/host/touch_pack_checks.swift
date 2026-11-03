@@ -133,7 +133,25 @@ import Foundation
             }
         }
         for path in CommandLine.arguments.dropFirst() {
-            let p = try BCDControlPack.decode(Data(contentsOf: URL(fileURLWithPath:path)))
+            let personal = path.hasPrefix("personal:")
+            let file = personal ? String(path.dropFirst(9)) : path
+            let policy: BCDControlPack.Placement = personal ? .personal : .generated
+            let p = try BCDControlPack.decode(Data(contentsOf: URL(fileURLWithPath:file)), placement:policy)
+            if personal, p.version == 3 {
+                assert(p.lookMode == "none" && p.actions.contains { $0.output == "LT" && $0.behavior == "toggle" })
+                assert(p.phone.controls.contains { $0.slideToAction == "raw-rt" } && p.pad.movementRect != nil)
+                let data = try JSONEncoder().encode(p)
+                let restored = try BCDControlPack.decode(data, for:p.identity, placement:.personal)
+                assert(restored == p)
+                let base = BCDPackAuthoring.preset(identity:p.identity,title:"Prior generic preset",genre:"first-person",mode:"controller")
+                let merged = try BCDPackAuthoring.merge(base:base,personal:p,baseline:base)
+                assert(merged.lookMode == "none" && merged.phone.controls == p.phone.controls && merged.actions.contains { $0.behavior == "toggle" })
+                var malformed=p;malformed.phone.controls.firstIndex { $0.slideToAction != nil }.map { malformed.phone.controls[$0].slideToAction = "missing" }
+                assert((try? malformed.validate(placement:.personal)) == nil)
+                malformed=p;malformed.version=2
+                assert((try? malformed.validate(placement:.personal)) == nil)
+                print("PASS: owner-confirmed V3 pack, toggle/slide/outline metadata, import round trip, merge and legacy rejection")
+            }
             var invalid = p; invalid.version = 999
             assert((try? invalid.validate()) == nil)
             invalid = p; invalid.phone.controls[0].hitRadius = 0.9
