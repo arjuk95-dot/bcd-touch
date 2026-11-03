@@ -26,7 +26,8 @@
     "actions": 33,
     "newModelGeneration": false
   },
-  "newBinaryPhysicalTest": "pending player report",
+  "newBinaryPhysicalTest": "Owner accepted Dread core swipe gameplay; prefers higher sensitivity. See phone-playtest.json for scope.",
   "guestTraceCaptured": false,
-  "liveHUDCapture": "not captured: phone disconnected; no developer-image or JIT changes attempted"
+  "liveHUDCapture": "not captured: phone disconnected; no developer-image or JIT changes attempted",
+  "physicalTestReceipt": "phone-playtest.json"
 }

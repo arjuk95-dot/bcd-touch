@@ -1,5 +1,5 @@
 {
-  "updatedUTC": "2026-11-03T07:08:08.996431+00:00",
+  "updatedUTC": "2026-11-03T07:38:15.994134+00:00",
   "localDate": "2026-11-03",
   "base": "adc9cc742f52601a42f52ac6b4fbcc701bdb16ad",
   "branch": "wo-bcd-touch-001",
@@ -12,8 +12,8 @@
   "localArchiveChecks": "passed",
   "stagedOnPhone": true,
   "installedOnPhone": true,
-  "physicallyTested": false,
-  "phoneConnection": "existing paired phone connected; identity verified",
+  "physicallyTested": true,
+  "phoneConnection": "last verified during installation; later disconnected from usbmux",
   "freshMetadataBackup": {
     "completed": true,
     "files": 13,
@@ -22,9 +22,9 @@
     "remoteModified": false
   },
   "lastPhoneBuild": "df25bb3f0bb7308b81a79adcd79f4242502e7ac4",
-  "lastPhoneResult": "new timing build installed; physical aim retest pending",
+  "lastPhoneResult": "Owner: works just fine; sensitivity slightly low. Existing per-game sensitivity slider instructions supplied.",
   "pending": [
-    "actual Dread camera settings and swipe feel",
+    "per-game sensitivity tuning and actual Dread camera settings",
     "dialog/editor escape and all binding acceptance",
     "guest LS/RT/RS and zero keyboard/mouse evidence",
     "physical stop latency, touch ownership and cancellation",
@@ -43,5 +43,7 @@
     "phoneEndpointUpdate": "updated and read back; credentials preserved"
   },
   "installedSourceReadbackVerified": true,
-  "liveHUDCapture": "pending; phone disconnected from usbmux after installation verification"
+  "liveHUDCapture": "pending; phone disconnected from usbmux after installation verification",
+  "physicalTestReceipt": "phone-playtest.json",
+  "physicalAcceptanceScope": "Owner accepted Dread core swipe gameplay; sensitivity preference and wider checks remain."
 }

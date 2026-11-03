@@ -1,0 +1,45 @@
+{
+  "recordedUTC": "2026-11-03T07:38:15.994134+00:00",
+  "localDate": "2026-11-03",
+  "appSource": "df25bb3f0bb7308b81a79adcd79f4242502e7ac4",
+  "game": "Dread Delusion",
+  "device": "owner iPhone 16 Pro Max",
+  "pack": "packs/pilots/dread-delusion-installed-iphone.json",
+  "evidenceType": "owner-reported physical gameplay; no instrumented camera or guest trace",
+  "promptedProtocol": "Generated controls, onFoot, loaded save; move and hold Attack while trying a tiny correction, long swipe, then rest aiming thumb on glass.",
+  "ownerReport": "That works just fine everything seems to be fine except I’d prefer if we had adjustable sensitivity it’s a little low for my taste and maybe that might vary per game",
+  "result": "Core swipe gameplay accepted by owner in response to the protocol; sensitivity feels low.",
+  "generated": true,
+  "validated": true,
+  "physicallyTested": true,
+  "physicalAcceptanceScope": "Dread core swipe gameplay only; no blanket acceptance of all bindings, soft-lock fixes, devices or regression checks.",
+  "lastVerifiedCalibration": {
+    "sensitivity": 1,
+    "vertical": 1.25,
+    "invertY": false,
+    "deadZone": 0.3,
+    "fullSpeed": 600
+  },
+  "calibrationChangedByAgent": false,
+  "sensitivityControl": {
+    "alreadyInInstalledBuild": true,
+    "path": "Blue hand icon > Edit pack > Aim sensitivity > Back to game",
+    "range": [
+      0.1,
+      8
+    ],
+    "suggestedFirstTrial": 1.5,
+    "automaticSave": true,
+    "scope": "Per-game personal override, keyed by executable/store ID/edition; restored after regeneration.",
+    "ownerUseAndPersistenceRetest": "pending"
+  },
+  "notEstablished": [
+    "Actual in-game camera sensitivity and active remaps",
+    "Measured physical neutral latency",
+    "Guest LS/RT/RS and zero keyboard/mouse trace",
+    "Separate confirmation of all bindings and dialog/editor fixes",
+    "Lift/reland, button crossing, left fire, drag fire, cancellation and focus regression",
+    "Physical controller/gyro and iPad playtests",
+    "Physical gameplay HUD and hit-region captures"
+  ]
+}

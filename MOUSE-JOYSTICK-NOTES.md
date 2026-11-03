@@ -1,6 +1,6 @@
 # Mouse Joystick implementation and current limits
 
-The player's phone test is authoritative: movement and Attack work after enabling Dread's existing WGI host bridge, but aim still makes tiny movements and misses swipes. Neither a passing fixture nor the revised dead-zone value establishes usable aim.
+The owner's 3 November phone retest accepts core Dread swipe gameplay on installed source `df25bb3`, following the movement/held-Attack/fine-correction/long-swipe/thumb-rest protocol. Sensitivity feels slightly low. The previous `033603f` aim failure remains recorded below. This qualitative physical acceptance is distinct from measured latency, guest traces and the wider regression matrix. [Physical receipt](receipts/touch/aim-delivery-20261102/phone-playtest.json).
 
 ## What Valve documents
 
@@ -28,7 +28,7 @@ Observed worst cases across the fixture's phases, measured **after the last deli
 
 The bounded installed-asset inspection found `Look` bound to a gamepad right stick with `StickDeadzone(min=0.2),ScaleVector2(x=50,y=40)`, and also to `<Pointer>/delta` in the keyboard/mouse binding set. Reviewed controller defaults and source offsets are in [the installed binding table](tools/touch-packs/references/steam-1574240-installed.json). Active remaps were not established. Unity documents that [control and binding processors can both apply](https://docs.unity3d.com/Packages/com.unity.inputsystem@1.4/manual/ActionBindings.html); the stacked-dead-zone fixture assumes standard control defaults, not confirmed custom game settings.
 
-The applied controller pack uses sensitivity 1, vertical 1.25, inversion off, compensation .30 and full-stick velocity 600 UIKit points/s. The player still rejected aim after this data update on `033603f`. The delivery-clock binary has not yet been physically tried.
+The applied controller pack uses sensitivity 1, vertical 1.25, inversion off, compensation .30 and full-stick velocity 600 UIKit points/s. The player still rejected aim after this data update on `033603f`. The delivery-clock binary `df25bb3` subsequently passed the owner's core swipe playtest. The installed editor already provides **blue hand → Edit pack → Aim sensitivity** (0.1–8), automatically saved per game and preserved through regeneration. A first trial of 1.5 is suggested; no calibration was changed remotely. Higher sensitivity reaches saturation sooner, within the game's own turn-rate limit. The owner's final calibration and in-game camera settings remain unrecorded.
 
 ## Native mouse-look alternative
 
