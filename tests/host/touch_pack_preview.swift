@@ -257,6 +257,18 @@ import UIKit
         }
         assert(PackBoundarySpy.keyboardEvents==0 && PackBoundarySpy.mouseEvents==0,"Controller surface emitted keyboard/mouse events")
         surface.clear()
+        let withLT = try BCDPackAuthoring.addButton(to: p, context:p.contexts[0], output:"LT")
+        let ltControl = withLT.phone.controls.last!
+        surface.configure(withLT,context:p.contexts[0],debug:true,editing:false)
+        surface.beginTouch("lt-move",at:start,time:t+0.01)
+        surface.moveTouch("lt-move",to:CGPoint(x:start.x+45,y:start.y),time:t+0.02)
+        surface.beginTouch("lt-fire",at:point(duplicate),time:t+0.02)
+        surface.beginTouch("new-lt",at:surface.controlCenter(ltControl),time:t+0.02)
+        assert(pad.sample.lt==255 && pad.sample.rt==255 && pad.sample.lx>0,"Added LT did not hold alongside movement and fire")
+        surface.endTouch("new-lt",at:surface.controlCenter(ltControl),cancelled:true)
+        assert(pad.sample.lt==0 && pad.sample.rt==255 && pad.sample.lx>0,"Added LT cancellation released another finger")
+        assert(PackBoundarySpy.keyboardEvents==0 && PackBoundarySpy.mouseEvents==0)
+        surface.clear()
         var overlapping = p; overlapping.version = 2
         let rtIndex = overlapping.phone.controls.firstIndex { $0.action == "rt" }!
         let aIndex = overlapping.phone.controls.firstIndex { $0.action == "a" }!

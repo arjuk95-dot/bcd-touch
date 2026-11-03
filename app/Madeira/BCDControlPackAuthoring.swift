@@ -23,6 +23,10 @@ enum BCDPackCatalog {
         ("strategy", "Strategy / adventure")
     ]
     static let buttons = ["A", "B", "X", "Y", "LB", "RB", "LT", "RT", "L3", "R3", "Menu", "View", "D↑", "D↓", "D←", "D→"]
+    static func addableOutputs(mode: String) -> [String] {
+        if mode == "controller" { return ["LT", "RT", "LB", "RB"] + buttons.filter { !["LT", "RT", "LB", "RB"].contains($0) } }
+        return ["mouse:left", "mouse:right", "mouse:middle", "mouse:wheelUp", "mouse:wheelDown"] + keys.map { "key:\($0.0)" }
+    }
     static let keys: [(Int, String)] = {
         var result: [(Int, String)] = [(8,"Backspace"),(9,"Tab"),(13,"Enter"),(16,"Shift"),(17,"Ctrl"),(18,"Alt"),(27,"Esc"),(32,"Space"),
             (33,"Page Up"),(34,"Page Down"),(35,"End"),(36,"Home"),(37,"Left"),(38,"Up"),(39,"Right"),(40,"Down"),(45,"Insert"),(46,"Delete")]
@@ -130,10 +134,16 @@ enum BCDPackAuthoring {
     }
 
     /// Pick a free acquisition region in both layouts; never conceal an oversized hit target.
-    static func addButton(to original: BCDControlPack, context: String) throws -> BCDControlPack {
+    static func addButton(to original: BCDControlPack, context: String, output: String? = nil) throws -> BCDControlPack {
         var p = original
+        let binding = output ?? (p.inputMode == "controller" ? "A" : "key:32")
+        guard BCDPackCatalog.validOutput(binding, mode: p.inputMode, version: 2), !["LS", "RS"].contains(binding) else {
+            throw BCDControlPack.Invalid.reason("Choose a button, key or mouse input available in this mode.")
+        }
+        if p.inputMode == "keyboardMouse" { p.version = max(p.version, 2) }
         let id = "personal-" + UUID().uuidString.lowercased()
-        p.actions.append(.init(id: id, label: p.inputMode == "controller" ? "A" : "Space", icon: "hand.tap", output: p.inputMode == "controller" ? "A" : "key:32", behavior: "tap", evidence: "player-binding", contexts: [context]))
+        let behavior = ["Menu", "View"].contains(binding) || binding.hasPrefix("mouse:wheel") ? "tap" : "hold"
+        p.actions.append(.init(id: id, label: BCDPackCatalog.outputLabel(binding), icon: "hand.tap", output: binding, behavior: behavior, evidence: "player-binding", contexts: [context]))
         ensurePlayerEvidence(&p)
         for pad in [false, true] {
             var layout = pad ? p.pad : p.phone

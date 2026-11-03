@@ -18,6 +18,17 @@ func checkTouchAuthoring() throws {
         }
     }
     let original = BCDPackAuthoring.preset(identity: identity, title: "Merge fixture", genre: "first-person", mode: "controller")
+    var noLT = original
+    BCDPackAuthoring.removeAction(noLT.actions.first { $0.output == "LT" }!.id, from: &noLT)
+    let addedLT = try BCDPackAuthoring.addButton(to: noLT, context: "onFoot", output: "LT")
+    let lt = addedLT.actions.last!
+    assert(lt.output == "LT" && lt.behavior == "hold" && lt.label == "LT")
+    assert(addedLT.phone.controls.contains { $0.action == lt.id } && addedLT.pad.controls.contains { $0.action == lt.id }, "New output must be placeable in both layouts without belonging to the defaults")
+    let addedMerge = try BCDPackAuthoring.merge(base: noLT, personal: addedLT, baseline: noLT)
+    assert(addedMerge.actions.contains { $0.id == lt.id && $0.output == "LT" })
+    assert(Set(BCDPackCatalog.addableOutputs(mode: "controller")) == Set(BCDPackCatalog.buttons))
+    do { _ = try BCDPackAuthoring.addButton(to: noLT, context: "onFoot", output: "mouse:left"); assertionFailure("Cross-mode addition accepted") } catch {}
+    do { _ = try BCDPackAuthoring.addButton(to: noLT, context: "onFoot", output: "RS"); assertionFailure("Pulsed stick addition accepted") } catch {}
     var personal = try BCDPackAuthoring.addButton(to: original, context: "onFoot")
     let a = personal.actions.firstIndex { $0.output == "A" }!
     personal.actions[a].label = "Player use"; personal.actions[a].icon = "hand.tap"; personal.actions[a].output = "X"

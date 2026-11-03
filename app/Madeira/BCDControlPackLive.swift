@@ -29,6 +29,7 @@ import UniformTypeIdentifiers
     @Published var debug = false
     @Published var editing = false
     @Published var placingControls = false
+    @Published var selectedControl = ""
     @Published var context = "onFoot"
     @Published var enabled = true
     private var jobs: [String: Job] = [:]
@@ -159,8 +160,9 @@ import UniformTypeIdentifiers
         return try? BCDControlPack.decode(d, for: identity)
     }
     func activate(_ entry: LibraryEntry?) {
-        guard let entry else { sessionID = nil; pack = nil; base = nil; personalKey = nil; gameKey = nil; undoHistory.removeAll(); return }
+        guard let entry else { sessionID = nil; pack = nil; base = nil; personalKey = nil; gameKey = nil; selectedControl = ""; undoHistory.removeAll(); return }
         let sameSession = sessionID == entry.id
+        if !sameSession { selectedControl = "" }
         if sessionID == entry.id && !LibraryModel.shared.blocksGameplayTouch { return }
         // Changing a running HID session into XInput requires a new guest enumeration.
         if sessionID == entry.id && GamepadInput.sessionHIDKind != nil {
@@ -308,7 +310,6 @@ struct BCDPackLayer: View {
 
 struct BCDPackInspector: View {
     @ObservedObject var store = BCDPackStore.shared
-    @State var selected = ""
     @State var pad = UIDevice.current.userInterfaceIdiom == .pad
     @State private var exporting = false
     @State private var importing = false
@@ -326,21 +327,31 @@ struct BCDPackInspector: View {
             VStack(spacing: 10) {
             Text(store.status).font(.caption)
             Button("Move buttons", systemImage: "hand.draw") { store.placingControls = true }
-            Text("Drag anywhere, including over other controls. The last control in the list receives overlapping taps.").font(.caption)
-            Toggle("iPad layout", isOn: $pad)
+            Text("Drag anywhere, including over other controls. Front buttons receive overlapping taps.").font(.caption)
+            Toggle("iPad layout", isOn: $pad).onChange(of: pad) { _, _ in store.selectedControl = "" }
             if let p = store.pack {
                 Text(p.inputMode == "controller" ? "Xbox controller controls" : "Keyboard and mouse controls").font(.subheadline)
-                Button("Add button", systemImage: "plus.circle") {
-                    do {
-                        let updated = try BCDPackAuthoring.addButton(to: p, context: store.context)
-                        if store.saveEdits(updated) { selected = updated.phone.controls.last?.id ?? "" }
-                    } catch { store.status = String(describing: error) }
-                }
-                Picker("Control", selection: $selected) {
+                Menu {
+                    Section(p.inputMode == "controller" ? "Choose Xbox input" : "Choose key or mouse input") {
+                        ForEach(BCDPackCatalog.addableOutputs(mode: p.inputMode), id: \.self) { output in
+                            Button(BCDPackCatalog.outputLabel(output)) {
+                                do {
+                                    let updated = try BCDPackAuthoring.addButton(to: p, context: store.context, output: output)
+                                    if store.saveEdits(updated) {
+                                        store.selectedControl = updated.phone.controls.last?.id ?? ""
+                                        store.placingControls = true
+                                    }
+                                } catch { store.status = String(describing: error) }
+                            }.accessibilityIdentifier("pack-add-" + output)
+                        }
+                    }
+                } label: { Label("Add button", systemImage: "plus.circle") }
+                    .accessibilityIdentifier("pack-add-button")
+                Picker("Control", selection: $store.selectedControl) {
                     Text("Choose").tag("")
-                    ForEach((pad ? p.pad : p.phone).controls, id: \.id) { c in Text("\(c.id): \(p.actions.first { $0.id == c.action }?.label ?? "Radial")").tag(c.id) }
+                    ForEach((pad ? p.pad : p.phone).controls, id: \.id) { c in Text(controlTitle(c, in: p)).tag(c.id) }
                 }
-                if let c = (pad ? p.pad : p.phone).controls.first(where: { $0.id == selected }) {
+                if let c = (pad ? p.pad : p.phone).controls.first(where: { $0.id == store.selectedControl }) {
                     Text("Binding: " + (p.actions.first { $0.id == c.action }.map { BCDPackCatalog.outputLabel($0.output) } ?? "Radial"))
                     Button("Bring to front", systemImage: "square.3.layers.3d.top.filled") {
                         edit { value in
@@ -365,7 +376,7 @@ struct BCDPackInspector: View {
                         }
                     }
                 }
-                BCDPackActionEditor(preferredAction: (pad ? p.pad : p.phone).controls.first { $0.id == selected }?.action ?? "")
+                BCDPackActionEditor(preferredAction: (pad ? p.pad : p.phone).controls.first { $0.id == store.selectedControl }?.action ?? "")
                 Text(p.inputMode == "controller" ? "Swipe response \(p.aim.sensitivity, specifier: "%.2f")×" : "Mouse sensitivity \(p.aim.sensitivity, specifier: "%.2f")×")
                 Slider(value: Binding(get: { p.aim.sensitivity }, set: { v in edit { $0.aim.sensitivity = v } }), in: 0.1...8)
                 if p.inputMode == "controller" {
@@ -401,9 +412,16 @@ struct BCDPackInspector: View {
     }
     func changeControl(_ f: (inout BCDControlPack.Control) -> Void) {
         edit { p in
-            if pad, let i = p.pad.controls.firstIndex(where: { $0.id == selected }) { f(&p.pad.controls[i]) }
-            if !pad, let i = p.phone.controls.firstIndex(where: { $0.id == selected }) { f(&p.phone.controls[i]) }
+            if pad, let i = p.pad.controls.firstIndex(where: { $0.id == store.selectedControl }) { f(&p.pad.controls[i]) }
+            if !pad, let i = p.phone.controls.firstIndex(where: { $0.id == store.selectedControl }) { f(&p.phone.controls[i]) }
         }
+    }
+    private func controlTitle(_ c: BCDControlPack.Control, in p: BCDControlPack) -> String {
+        let controls = pad ? p.pad.controls : p.phone.controls
+        let number = (controls.firstIndex { $0.id == c.id } ?? 0) + 1
+        guard let a = p.actions.first(where: { $0.id == c.action }) else { return "\(number). Actions radial" }
+        let binding = BCDPackCatalog.outputLabel(a.output)
+        return "\(number). " + (a.label == binding ? a.label : "\(a.label) (\(binding))")
     }
 }
 
