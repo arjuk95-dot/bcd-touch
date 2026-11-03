@@ -135,6 +135,7 @@ import UniformTypeIdentifiers
                 BCDGameSetting(id: "pack.genre", title: "Genre preset", kind: .choice([BCDGameChoice(value: "auto", label: "Identify from game")] + BCDPackCatalog.genres.map { BCDGameChoice(value: $0.0, label: $0.1) }), value: BCDPackStore.shared.authoringChoice(entry, key: "genre"), defaultValue: "auto"),
                 BCDGameSetting(id: "pack.mode", title: "Pack input mode", kind: .choice([BCDGameChoice(value: "auto", label: "Identify from bindings"), BCDGameChoice(value: "controller", label: "Xbox controller"), BCDGameChoice(value: "keyboardMouse", label: "Keyboard and mouse")]), value: BCDPackStore.shared.authoringChoice(entry, key: "mode"), defaultValue: "auto", note: "Applies to new preparation or regeneration. Offline presets use known binding hints, otherwise raw Xbox inputs; verify them in the game."),
                 BCDGameSetting(id: "pack.preset", title: "Start customizable offline preset", kind: .action, note: "Selects this genre and input mode for next launch. Raw output labels need checking against the game's controls. Researched packs and their edits are kept."),
+                BCDGameSetting(id: "pack.wgi", title: "Touch controller compatibility", kind: .toggle, value: profile.get("env.MADEIRA_WGI_HOST_PADS") == "1" ? "1" : "0", defaultValue: "0", note: "For games whose controller buttons do not respond. Exposes the same Xbox slot through Windows.Gaming.Input. Restart after changing; turn off if the game lists duplicate pads."),
                 BCDGameSetting(id: "pack.regenerate", title: "Regenerate (keep personal edits)", kind: .action),
                 BCDGameSetting(id: "pack.generated", title: "Use generated controls next launch", kind: .action),
                 BCDGameSetting(id: "pack.stock", title: "Use stock input profile next launch", kind: .action, note: "Keeps the stock profile's relative-mouse aim choice")
@@ -913,6 +914,9 @@ import UniformTypeIdentifiers
     }
 
     func set(_ setting: String, to value: String, for game: BCDGame) {
+        if setting == "pack.wgi" {
+            setLine(game, "env.MADEIRA_WGI_HOST_PADS", value == "1" ? "1" : "0"); onChange?(); return
+        }
         if ["pack.genre", "pack.mode"].contains(setting), let entry = entry(for: game) {
             BCDPackStore.shared.setAuthoringChoice(entry, key: setting == "pack.genre" ? "genre" : "mode", value: value); onChange?(); return
         }

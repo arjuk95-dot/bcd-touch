@@ -17,6 +17,8 @@ Controls retain move, size, opacity, left-duplicate and drag-aim editing. The ra
 
 **Export controls** writes data-only JSON through Files. **Import controls for this game** validates the version, exact game/build/binding identity, current input mode, references, hit regions and size before applying anything. Exported packs contain binding evidence, not worker credentials. A different game's pack must not be imported as if its bindings matched.
 
+If a controller pack is visible but its buttons do not respond, **Touch controller compatibility** exposes the same Xbox slot through Windows.Gaming.Input. This is the existing per-game bridge that restored Dread's input. Restart after changing it; turn it off if the game lists duplicate pads. Presets do not enable it globally or alter other games' configuration.
+
 ## Personal edits
 
 Versioned personal edits are written atomically to `TouchPacks/personal-edits-v2.json`, with the base used for the edit. On regeneration, a three-way merge preserves fields the player changed while taking updated generated defaults for untouched fields. Personal action additions, removals, labels, icons, bindings, contexts, radial choices and aim calibration participate. If the merged result is invalid, the validated base remains active and the stored edit is retained for review.
