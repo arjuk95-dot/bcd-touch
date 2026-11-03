@@ -203,7 +203,10 @@ import UniformTypeIdentifiers
                 guard let http = response as? HTTPURLResponse else { throw BCDControlPack.Invalid.reason("No response") }
                 if http.statusCode == 202 { throw BCDControlPack.Invalid.reason("Generation queued") }
                 guard http.statusCode == 200 else { throw BCDControlPack.Invalid.reason("Worker HTTP \(http.statusCode)") }
-                _ = try BCDControlPack.decode(data, for: j.request.identity)
+                let returned = try BCDControlPack.decode(data, for: j.request.identity)
+                if let selectedMode = j.request.requirements["inputMode"], ["controller", "keyboardMouse"].contains(selectedMode), returned.inputMode != selectedMode {
+                    throw BCDControlPack.Invalid.reason("Worker pack does not match selected input mode")
+                }
                 try data.write(to: folder.appendingPathComponent(key + ".json"), options: .atomic)
                 jobs[key]?.state = "validated"; status = "Generated and validated · next menu/launch activates"
             } catch {
@@ -282,7 +285,8 @@ struct BCDPackInspector: View {
     @ObservedObject var store = BCDPackStore.shared
     @State var selected = ""
     @State var pad = UIDevice.current.userInterfaceIdiom == .pad
-    @State private var exporting = false, importing = false
+    @State private var exporting = false
+    @State private var importing = false
     func edit(_ f: (inout BCDControlPack) -> Void) { if var p = store.pack { f(&p); store.saveEdits(p) } }
     var body: some View {
         VStack(spacing: 8) {
@@ -386,10 +390,15 @@ struct BCDPackActionEditor: View {
     @ObservedObject private var store = BCDPackStore.shared
     var preferredAction: String
     @State private var selected = ""
-    @State private var label = "", icon = "hand.tap", output = "A", behavior = "tap"
+    @State private var label = ""
+    @State private var icon = "hand.tap"
+    @State private var output = "A"
+    @State private var behavior = "tap"
     @State private var contexts = Set<String>()
     @State private var modifiers = Set<Int32>()
-    @State private var showIcons = false, iconSearch = "", onRadial = false
+    @State private var showIcons = false
+    @State private var iconSearch = ""
+    @State private var onRadial = false
     private var action: BCDControlPack.Action? { store.pack?.actions.first { $0.id == selected } }
     private var outputs: [String] {
         guard let p = store.pack else { return [] }

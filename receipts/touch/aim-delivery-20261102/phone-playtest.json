@@ -31,7 +31,7 @@
     "suggestedFirstTrial": 1.5,
     "automaticSave": true,
     "scope": "Per-game personal override, keyed by executable/store ID/edition; restored after regeneration.",
-    "ownerUseAndPersistenceRetest": "pending"
+    "ownerUseAndPersistenceRetest": "Owner reports no useful effect from editor slider; in-game sensitivity solved speed. Code demonstrates pre-saturation scaling, not a higher turn-rate ceiling; UI relabel and tests included in authoring phase."
   },
   "notEstablished": [
     "Actual in-game camera sensitivity and active remaps",
@@ -41,5 +41,6 @@
     "Lift/reland, button crossing, left fire, drag fire, cancellation and focus regression",
     "Physical controller/gyro and iPad playtests",
     "Physical gameplay HUD and hit-region captures"
-  ]
+  ],
+  "sensitivityFollowup": "Changing in-game look sensitivity seems to have done the trick but not the editor one"
 }

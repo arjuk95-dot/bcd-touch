@@ -32,6 +32,19 @@ v2['actions'][0].update(output='mouse:wheelUp',behavior='hold')
 try:w.validate(v2)
 except Exception:pass
 else:raise AssertionError('Holding a wheel action must be rejected')
+# Store-neutral request construction reads only explicitly selected bounded binding files.
+request_spec=importlib.util.spec_from_file_location('request_game',ROOT/'tools/touch-packs/request-game.py')
+request_module=importlib.util.module_from_spec(request_spec);request_spec.loader.exec_module(request_module)
+with tempfile.TemporaryDirectory() as temporary:
+    binding=Path(temporary)/'controls.ini';binding.write_text('jump=Space',encoding='utf-8')
+    generic=request_module.make_request('Unidentified fixture','Games/Unknown.exe',bindings=[binding],mode='keyboardMouse')
+    assert generic['identity']['executable']=='games/unknown.exe' and list(generic['bindings'])==['player/controls.ini']
+    assert generic['identity']['bindingDigest']==w.hashlib.sha256(w.canonical(generic['bindings'])).hexdigest()
+    binding.write_bytes(b'x'*32769)
+    try:request_module.make_request('Fixture','fixture.exe',bindings=[binding])
+    except ValueError:pass
+    else:raise AssertionError('Oversized binding file accepted')
+
 from dread_bindings import apply_dread_bindings
 from inspect_unity_bindings import extract
 import struct

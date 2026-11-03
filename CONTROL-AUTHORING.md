@@ -32,7 +32,7 @@ python tools/touch-packs/request-game.py --title "Game title" --store-id steam:1
 python tools/touch-packs/worker.py generate touch-evidence/game-request.json --state C:/Users/arjun/.codex/game-pack-generation
 ```
 
-Use the actual store ID or `local`, actual executable and known edition/build. Add `--bindings PATH` for each selected text input configuration (32 KiB per file, 48 KiB total). This tool reads those files without editing them. It sends file names and contents, not account/registry directories. Request identity includes their digest. To apply through the app, use the app's own install request identity; a manually guessed executable/build may not match it.
+Use `--regenerate` on the worker command to replace an existing cached result after changing preparation preferences. Use the actual store ID or `local`, actual executable and known edition/build. Add `--bindings PATH` for each selected text input configuration (32 KiB per file, 48 KiB total). This tool reads those files without editing them. It sends file names and contents, not account/registry directories. Request identity includes their digest. To apply through the app, use the app's own install request identity; a manually guessed executable/build may not match it.
 
 The LAN worker command and pairing configuration are in [the worker README](tools/touch-packs/README.md). Credentials remain on the desktop. Generation, validation and physical testing remain separate statuses. Controller packs reject keyboard/mouse output, including gestures and radial selections. Pack version 2 adds key chords, middle click and wheel actions; existing version 1 packs remain supported. Older clients reject version 2 and keep their fallback.
 
