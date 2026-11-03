@@ -1,0 +1,37 @@
+{
+  "mode": "existing",
+  "ipa": "BCD-Touch-update-existing-unsigned.ipa",
+  "bytes": 185774208,
+  "sha256": "0ea62cab60aba01f4e99425fdf32c98692ff2d16e7aba4a19d052b16b10e5acd",
+  "sourceIPA": "7dfefe1e9914ffecefa7145ee1ef41d4dda765fc52eed3ca0da000fc57951d90",
+  "appSource": "b78e96073e65e6d1431376f5134ae08ea60dc037",
+  "bundleID": "com.thebcd69.bcd",
+  "displayName": "BCD Touch Lab",
+  "helpers": [
+    "com.thebcd69.bcd.JITHelper",
+    "com.thebcd69.bcd.MemoryHost"
+  ],
+  "callbacks": [
+    "bcd",
+    "bcdtouchlab"
+  ],
+  "requestedEntitlements": {
+    "com.apple.developer.kernel.extended-virtual-addressing": true,
+    "com.apple.developer.kernel.increased-memory-limit": true,
+    "get-task-allow": true
+  },
+  "instructionHashes": {
+    "Madeira": "b163bacf8f20027c33748cab09f2d5b5fbb3c4b6eec7e58bb04473a0bf00dc9e",
+    "PlugIns/MadeiraJITHelper.appex/MadeiraJITHelper": "e5e21f890cb0a1e3fb6009f2ebaa1c0a832569436597b746d52a0d8cc2e75e91",
+    "PlugIns/MadeiraMemoryHost.appex/MadeiraMemoryHost": "b96703e7fba1ba6a63dfbd0511100a90bfb5778dff9c2c2101292d83eefb5166"
+  },
+  "instructionsUnchanged": true,
+  "adHocSigned": true,
+  "personalSigningStillRequired": true,
+  "installed": false,
+  "dataPreservationVerified": false,
+  "physicallyTested": false,
+  "localIPA": "BCD-Touch-Tenebris-b78e960.ipa",
+  "localCRCVerified": true,
+  "packageRun": "https://github.com/arjunkl/bcd-touch/actions/runs/41704803346"
+}

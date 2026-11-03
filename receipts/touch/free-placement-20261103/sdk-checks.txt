@@ -1,5 +1,391 @@
-touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T15:35:39.5148010Z PASS: ten presets; personal overlap/full-screen anchors, export/import and regeneration order; generated spacing remains strict; malformed bindings/geometry rejected (host fixtures)
-touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T15:35:39.5574820Z PASS: simultaneous LS/RT/RS, duplicate fire release, reversals, saturation, stale expiry, reset, pause, physical arbitration and invalid packs
-touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T15:36:29.6654810Z PASS: production pack views, window routing and legacy attachment typechecked against iOS SDK (engine/view boundaries stubbed)
-touch	Stock touch and physical controller regression	2026-11-03T15:36:32.4081160Z PASS: touch mappings, independent holds, lifecycle clearing, analogue ranges, physical merge and session slot
-touch	Worker and invalid-pack checks	2026-11-03T15:36:56.2843980Z PASS: pilot validation, identity/mode/hit rejection, cache/restart/overrides, corrupt-cache recovery, bounded failed-generation retries and duplicate-server startup (host fixtures)
+touch	Set up job	﻿2026-11-03T18:14:42.7901400Z Current runner version: '2.338.2'
+touch	Set up job	2026-11-03T18:14:42.7971100Z ##[group]Runner Image Provisioner
+touch	Set up job	2026-11-03T18:14:42.7973440Z Hosted Compute Agent
+touch	Set up job	2026-11-03T18:14:42.7975010Z Version: 20260819.586
+touch	Set up job	2026-11-03T18:14:42.7976590Z Commit: 3cc4a88dfa507ef76119ad1bb3eccc6378bb2b76
+touch	Set up job	2026-11-03T18:14:42.7978830Z Build Date: 2026-08-18T23:20:18Z
+touch	Set up job	2026-11-03T18:14:42.7980590Z Worker ID: {143543f3-a2b1-47bb-bd76-63df4c1129ed}
+touch	Set up job	2026-11-03T18:14:42.7982860Z Azure Region: westus
+touch	Set up job	2026-11-03T18:14:42.7984520Z ##[endgroup]
+touch	Set up job	2026-11-03T18:14:42.7990190Z ##[group]Operating System
+touch	Set up job	2026-11-03T18:14:42.7991970Z macOS
+touch	Set up job	2026-11-03T18:14:42.7993380Z 15.7.9
+touch	Set up job	2026-11-03T18:14:42.7994790Z 24G830
+touch	Set up job	2026-11-03T18:14:42.7996090Z ##[endgroup]
+touch	Set up job	2026-11-03T18:14:42.7997420Z ##[group]Runner Image
+touch	Set up job	2026-11-03T18:14:42.7999130Z Image: macos-15
+touch	Set up job	2026-11-03T18:14:42.8149860Z Version: 20260824.0482.1
+touch	Set up job	2026-11-03T18:14:42.8153640Z Included Software: https://github.com/actions/runner-images/blob/macos-15/20260824.0482/images/macos/macos-15-Readme.md
+touch	Set up job	2026-11-03T18:14:42.8159230Z Image Release: https://github.com/actions/runner-images/releases/tag/macos-15%2F20260824.0482
+touch	Set up job	2026-11-03T18:14:42.8162150Z ##[endgroup]
+touch	Set up job	2026-11-03T18:14:42.8165510Z ##[group]GITHUB_TOKEN Permissions
+touch	Set up job	2026-11-03T18:14:42.8185110Z Contents: read
+touch	Set up job	2026-11-03T18:14:42.8186990Z Metadata: read
+touch	Set up job	2026-11-03T18:14:42.8188400Z Packages: read
+touch	Set up job	2026-11-03T18:14:42.8189740Z ##[endgroup]
+touch	Set up job	2026-11-03T18:14:42.8252280Z Secret source: Actions
+touch	Set up job	2026-11-03T18:14:42.8255150Z Cache mode: write
+touch	Set up job	2026-11-03T18:14:42.8258940Z Prepare workflow directory
+touch	Set up job	2026-11-03T18:14:42.9432650Z Prepare all required actions
+touch	Set up job	2026-11-03T18:14:42.9566880Z Getting action download info
+touch	Set up job	2026-11-03T18:14:43.3324560Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+touch	Set up job	2026-11-03T18:14:43.9445690Z Complete job name: touch
+touch	Run actions/checkout@v4	﻿2026-11-03T18:14:44.2412900Z ##[group]Run actions/checkout@v4
+touch	Run actions/checkout@v4	2026-11-03T18:14:44.2415920Z with:
+touch	Run actions/checkout@v4	2026-11-03T18:14:44.2417570Z   repository: arjunkl/bcd-touch
+touch	Run actions/checkout@v4	2026-11-03T18:14:44.2434260Z   token: ***
+touch	Run actions/checkout@v4	2026-11-03T18:14:44.2435790Z   ssh-strict: true
+touch	Run actions/checkout@v4	2026-11-03T18:14:44.2437180Z   ssh-user: git
+touch	Run actions/checkout@v4	2026-11-03T18:14:44.2438550Z   persist-credentials: true
+touch	Run actions/checkout@v4	2026-11-03T18:14:44.2440000Z   clean: true
+touch	Run actions/checkout@v4	2026-11-03T18:14:44.2441370Z   sparse-checkout-cone-mode: true
+touch	Run actions/checkout@v4	2026-11-03T18:14:44.2442590Z   fetch-depth: 1
+touch	Run actions/checkout@v4	2026-11-03T18:14:44.2443850Z   fetch-tags: false
+touch	Run actions/checkout@v4	2026-11-03T18:14:44.2444990Z   show-progress: true
+touch	Run actions/checkout@v4	2026-11-03T18:14:44.2446360Z   lfs: false
+touch	Run actions/checkout@v4	2026-11-03T18:14:44.2447760Z   submodules: false
+touch	Run actions/checkout@v4	2026-11-03T18:14:44.2449410Z   set-safe-directory: true
+touch	Run actions/checkout@v4	2026-11-03T18:14:44.2451120Z   allow-unsafe-pr-checkout: false
+touch	Run actions/checkout@v4	2026-11-03T18:14:44.2454610Z ##[endgroup]
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.0204170Z Syncing repository: arjunkl/bcd-touch
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.0211660Z ##[group]Getting Git version info
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.0214950Z Working directory is '/Users/runner/work/bcd-touch/bcd-touch'
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.0219890Z [command]/usr/local/bin/git version
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.0222520Z git version 2.55.0
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.0230420Z ##[endgroup]
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.0245270Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/ef67fdb7-43de-4e78-be27-e2044878398c/.gitconfig'
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.0253660Z Temporarily overriding HOME='/Users/runner/work/_temp/ef67fdb7-43de-4e78-be27-e2044878398c' before making global git config changes
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.0258870Z Adding repository directory to the temporary git global config as a safe directory
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.0263340Z [command]/usr/local/bin/git config --global --add safe.directory /Users/runner/work/bcd-touch/bcd-touch
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.0270830Z Deleting the contents of '/Users/runner/work/bcd-touch/bcd-touch'
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.0274730Z ##[group]Initializing the repository
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.0277780Z [command]/usr/local/bin/git init /Users/runner/work/bcd-touch/bcd-touch
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.0440530Z hint: Using 'master' as the name for the initial branch. This default branch name
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.0581420Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.0759000Z hint: to use in all of your new repositories, which will suppress this warning,
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.0762530Z hint: call:
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.0850350Z hint:
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.0905810Z hint: 	git config --global init.defaultBranch <name>
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.1024840Z hint:
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.1152860Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.1311780Z hint: 'development'. The just-created branch can be renamed via this command:
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.1365800Z hint:
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.1439080Z hint: 	git branch -m <name>
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.1794180Z hint:
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.2016230Z hint: Disable this message with "git config set advice.defaultBranchName false"
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.2108980Z Initialized empty Git repository in /Users/runner/work/bcd-touch/bcd-touch/.git/
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.2515490Z [command]/usr/local/bin/git remote add origin https://github.com/arjunkl/bcd-touch
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.2882500Z ##[endgroup]
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.2942680Z ##[group]Disabling automatic garbage collection
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.3013790Z [command]/usr/local/bin/git config --local gc.auto 0
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.3376120Z ##[endgroup]
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.3458990Z ##[group]Setting up auth
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.3585390Z [command]/usr/local/bin/git config --local --name-only --get-regexp core\.sshCommand
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.3807170Z [command]/usr/local/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.4721430Z [command]/usr/local/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.4898780Z [command]/usr/local/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+touch	Run actions/checkout@v4	2026-11-03T18:14:45.9383790Z [command]/usr/local/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+touch	Run actions/checkout@v4	2026-11-03T18:14:46.1659910Z [command]/usr/local/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+touch	Run actions/checkout@v4	2026-11-03T18:14:46.3913600Z [command]/usr/local/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+touch	Run actions/checkout@v4	2026-11-03T18:14:46.4066980Z ##[endgroup]
+touch	Run actions/checkout@v4	2026-11-03T18:14:46.4110650Z ##[group]Fetching the repository
+touch	Run actions/checkout@v4	2026-11-03T18:14:46.4180680Z [command]/usr/local/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +b78e96073e65e6d1431376f5134ae08ea60dc037:refs/remotes/origin/wo-bcd-touch-001
+touch	Run actions/checkout@v4	2026-11-03T18:15:46.1057320Z From https://github.com/arjunkl/bcd-touch
+touch	Run actions/checkout@v4	2026-11-03T18:15:46.1148030Z  * [new ref]         b78e96073e65e6d1431376f5134ae08ea60dc037 -> origin/wo-bcd-touch-001
+touch	Run actions/checkout@v4	2026-11-03T18:15:46.1416010Z ##[endgroup]
+touch	Run actions/checkout@v4	2026-11-03T18:15:46.1472550Z ##[group]Determining the checkout info
+touch	Run actions/checkout@v4	2026-11-03T18:15:46.1506180Z ##[endgroup]
+touch	Run actions/checkout@v4	2026-11-03T18:15:46.1547770Z [command]/usr/local/bin/git sparse-checkout disable
+touch	Run actions/checkout@v4	2026-11-03T18:15:46.1642000Z [command]/usr/local/bin/git config --local --unset-all extensions.worktreeConfig
+touch	Run actions/checkout@v4	2026-11-03T18:15:46.1864560Z ##[group]Checking out the ref
+touch	Run actions/checkout@v4	2026-11-03T18:15:46.1958970Z [command]/usr/local/bin/git checkout --progress --force -B wo-bcd-touch-001 refs/remotes/origin/wo-bcd-touch-001
+touch	Run actions/checkout@v4	2026-11-03T18:15:47.3020350Z Updating files:  14% (480/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:47.5026850Z Updating files:  15% (481/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:47.7029180Z Updating files:  16% (513/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:47.9463530Z Updating files:  17% (546/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:48.2182010Z Updating files:  18% (578/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:48.2233060Z Updating files:  19% (610/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:48.3409640Z Updating files:  19% (622/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:48.9101120Z Updating files:  20% (642/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:49.1272290Z Updating files:  21% (674/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:49.1806890Z Updating files:  22% (706/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:49.3082340Z Updating files:  23% (738/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:49.3096450Z Updating files:  23% (762/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:49.3121900Z Updating files:  24% (770/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:49.3552400Z Updating files:  25% (802/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:49.3742070Z Updating files:  26% (834/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:49.4953770Z Updating files:  27% (866/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:49.5781140Z Updating files:  28% (898/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:49.5910780Z Updating files:  29% (930/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:49.5987570Z Updating files:  30% (962/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:49.6364500Z Updating files:  31% (994/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:49.6830270Z Updating files:  32% (1026/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:49.8608230Z Updating files:  33% (1058/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:49.9477630Z Updating files:  34% (1091/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:49.9516110Z Updating files:  35% (1123/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:49.9517940Z Updating files:  36% (1155/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:49.9520370Z Updating files:  37% (1187/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.0209660Z Updating files:  38% (1219/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.0472040Z Updating files:  39% (1251/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.1089110Z Updating files:  40% (1283/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.1093140Z Updating files:  41% (1315/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.2130430Z Updating files:  42% (1347/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.2530570Z Updating files:  43% (1379/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.2648350Z Updating files:  44% (1411/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.2852500Z Updating files:  45% (1443/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.2926800Z Updating files:  46% (1475/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.2976520Z Updating files:  47% (1507/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.3652990Z Updating files:  47% (1508/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.3740310Z Updating files:  48% (1539/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.3779570Z Updating files:  49% (1571/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.3826820Z Updating files:  50% (1603/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.3883090Z Updating files:  51% (1636/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.3963850Z Updating files:  52% (1668/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.4073200Z Updating files:  53% (1700/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.4134720Z Updating files:  54% (1732/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.4169070Z Updating files:  55% (1764/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.4216630Z Updating files:  56% (1796/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.4310280Z Updating files:  57% (1828/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.4499580Z Updating files:  58% (1860/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.4987890Z Updating files:  59% (1892/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.7191070Z Updating files:  60% (1924/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.7384270Z Updating files:  61% (1956/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.7550690Z Updating files:  62% (1988/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.7703580Z Updating files:  63% (2020/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.7885810Z Updating files:  64% (2052/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.8052650Z Updating files:  65% (2084/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.8238630Z Updating files:  66% (2116/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.8391490Z Updating files:  67% (2149/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.8530700Z Updating files:  68% (2181/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.8682660Z Updating files:  69% (2213/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.8841890Z Updating files:  70% (2245/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.8995870Z Updating files:  71% (2277/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.9161510Z Updating files:  72% (2309/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.9474690Z Updating files:  73% (2341/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.9526000Z Updating files:  74% (2373/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.9692500Z Updating files:  75% (2405/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:50.9866450Z Updating files:  76% (2437/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.0030550Z Updating files:  77% (2469/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.0219710Z Updating files:  78% (2501/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.0388660Z Updating files:  79% (2533/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.0548100Z Updating files:  80% (2565/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.0708400Z Updating files:  81% (2597/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.0876170Z Updating files:  82% (2629/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.1058190Z Updating files:  83% (2661/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.1229340Z Updating files:  84% (2694/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.1404920Z Updating files:  85% (2726/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.1570730Z Updating files:  86% (2758/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.1760890Z Updating files:  87% (2790/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.1961420Z Updating files:  88% (2822/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.2000970Z Updating files:  88% (2850/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.2197890Z Updating files:  89% (2854/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.2376380Z Updating files:  90% (2886/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.2529500Z Updating files:  91% (2918/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.2695020Z Updating files:  92% (2950/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.2980800Z Updating files:  93% (2982/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.3407790Z Updating files:  94% (3014/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.4413240Z Updating files:  95% (3046/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.5199170Z Updating files:  96% (3078/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.5515630Z Updating files:  97% (3110/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.5550420Z Updating files:  98% (3142/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.5553100Z Updating files:  99% (3174/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.5555590Z Updating files: 100% (3206/3206)
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.5558030Z Updating files: 100% (3206/3206), done.
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.5562070Z Switched to a new branch 'wo-bcd-touch-001'
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.5565750Z branch 'wo-bcd-touch-001' set up to track 'origin/wo-bcd-touch-001'.
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.5578360Z ##[endgroup]
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.5602410Z [command]/usr/local/bin/git log -1 --format=%H
+touch	Run actions/checkout@v4	2026-11-03T18:15:51.5605250Z b78e96073e65e6d1431376f5134ae08ea60dc037
+touch	Select the iOS 18 simulator SDK used by the preview checks	﻿2026-11-03T18:15:51.6032910Z ##[group]Run if [ -d /Applications/Xcode_16.4.app ]; then sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer; fi
+touch	Select the iOS 18 simulator SDK used by the preview checks	2026-11-03T18:15:51.6036720Z ^[[36;1mif [ -d /Applications/Xcode_16.4.app ]; then sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer; fi^[[0m
+touch	Select the iOS 18 simulator SDK used by the preview checks	2026-11-03T18:15:51.6038960Z ^[[36;1mxcodebuild -version^[[0m
+touch	Select the iOS 18 simulator SDK used by the preview checks	2026-11-03T18:15:51.6188220Z shell: /bin/bash -e {0}
+touch	Select the iOS 18 simulator SDK used by the preview checks	2026-11-03T18:15:51.6189130Z ##[endgroup]
+touch	Select the iOS 18 simulator SDK used by the preview checks	2026-11-03T18:15:52.0157140Z Xcode 16.4
+touch	Select the iOS 18 simulator SDK used by the preview checks	2026-11-03T18:15:52.0175510Z Build version 16F6
+touch	Production Swift timing, state, schema and UIKit checks	﻿2026-11-03T18:15:52.0374790Z ##[group]Run python3 tools/touch-packs/check-swift.py
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:15:52.0376550Z ^[[36;1mpython3 tools/touch-packs/check-swift.py^[[0m
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:15:52.0507260Z shell: /bin/bash -e {0}
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:15:52.0508280Z ##[endgroup]
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.0599360Z PASS: ten presets; personal overlap/full-screen anchors, export/import and regeneration order; generated spacing remains strict; malformed bindings/geometry rejected (host fixtures)
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.0949490Z PASS: owner-confirmed V3 pack, toggle/slide/outline metadata, import round trip, merge and legacy rejection
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.1805120Z {
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.1873580Z   "delayedDelivery" : [
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.1942040Z     {
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.2005050Z       "alignedNeutralMs" : 44,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.2090660Z       "deliveryDelayMs" : 40,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.2129360Z       "deliveryHz" : 30,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.2756050Z       "gameFPS" : 30,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.2784800Z       "sourceHz" : 60,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.2816730Z       "worstFrameNeutralMs" : 75.000000000002842,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.2822500Z       "worstPublishedNeutralMs" : 45.333333333338999
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.2839200Z     },
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.2865680Z     {
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.2878930Z       "alignedNeutralMs" : 44,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.2922340Z       "deliveryDelayMs" : 40,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.2928950Z       "deliveryHz" : 30,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.2975630Z       "gameFPS" : 60,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.3249110Z       "sourceHz" : 60,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.3393480Z       "worstFrameNeutralMs" : 58.333333333337123,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.3438530Z       "worstPublishedNeutralMs" : 45.333333333338999
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.4376800Z     },
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.4532370Z     {
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.4634670Z       "alignedNeutralMs" : 28,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.4772640Z       "deliveryDelayMs" : 40,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.4805050Z       "deliveryHz" : 60,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.5823790Z       "gameFPS" : 30,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.6739700Z       "sourceHz" : 60,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.7420580Z       "worstFrameNeutralMs" : 58.333333333330017,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.8118770Z       "worstPublishedNeutralMs" : 27.666666666661399
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.8365550Z     },
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.8686610Z     {
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.9134660Z       "alignedNeutralMs" : 28,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.9262750Z       "deliveryDelayMs" : 40,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:41.9804990Z       "deliveryHz" : 60,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:42.0503700Z       "gameFPS" : 60,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:42.0905360Z       "sourceHz" : 60,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:42.1991280Z       "worstFrameNeutralMs" : 41.666666666664298,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:42.3010190Z       "worstPublishedNeutralMs" : 27.666666666661399
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:42.3619350Z     },
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:42.4235520Z     {
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:42.4299150Z       "alignedNeutralMs" : 44,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:42.4502680Z       "deliveryDelayMs" : 40,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:42.4572620Z       "deliveryHz" : 30,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:42.4631750Z       "gameFPS" : 30,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:42.4662040Z       "sourceHz" : 120,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:42.4718400Z       "worstFrameNeutralMs" : 75.000000000002842,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:42.4779580Z       "worstPublishedNeutralMs" : 45.333333333338999
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:42.4853420Z     },
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:42.4881030Z     {
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:42.5886920Z       "alignedNeutralMs" : 44,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:42.6890480Z       "deliveryDelayMs" : 40,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:42.7901290Z       "deliveryHz" : 30,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:42.8918100Z       "gameFPS" : 60,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:42.9866850Z       "sourceHz" : 120,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.0678010Z       "worstFrameNeutralMs" : 58.333333333337123,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.0811840Z       "worstPublishedNeutralMs" : 45.333333333338999
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.1016960Z     },
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.2022100Z     {
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.3024330Z       "alignedNeutralMs" : 28,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.4013000Z       "deliveryDelayMs" : 40,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.4558480Z       "deliveryHz" : 60,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.4716440Z       "gameFPS" : 30,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.4804490Z       "sourceHz" : 120,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.5808870Z       "worstFrameNeutralMs" : 58.333333333330017,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.6814400Z       "worstPublishedNeutralMs" : 27.666666666661399
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.7816840Z     },
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.7931860Z     {
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.7964640Z       "alignedNeutralMs" : 28,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.8024400Z       "deliveryDelayMs" : 40,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.8111580Z       "deliveryHz" : 60,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.8262100Z       "gameFPS" : 60,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.8319510Z       "sourceHz" : 120,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.8375400Z       "worstFrameNeutralMs" : 41.666666666664298,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.8434600Z       "worstPublishedNeutralMs" : 27.666666666661399
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.8491320Z     },
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.8546190Z     {
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.8593510Z       "alignedNeutralMs" : 16,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.8655780Z       "deliveryDelayMs" : 40,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.8839630Z       "deliveryHz" : 120,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.8871740Z       "gameFPS" : 30,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.8900520Z       "sourceHz" : 120,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.8928200Z       "worstFrameNeutralMs" : 50.000000000004263,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.8947210Z       "worstPublishedNeutralMs" : 18.33333333333087
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.8988270Z     },
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9021760Z     {
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9035990Z       "alignedNeutralMs" : 16,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9050720Z       "deliveryDelayMs" : 40,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9083860Z       "deliveryHz" : 120,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9088610Z       "gameFPS" : 60,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9092120Z       "sourceHz" : 120,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9095580Z       "worstFrameNeutralMs" : 33.333333333338544,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9098260Z       "worstPublishedNeutralMs" : 18.33333333333087
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9160350Z     }
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9189850Z   ],
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9198120Z   "kind" : "host fixture, production Swift arithmetic\/state",
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9227620Z   "timing" : [
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9229980Z     {
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9241580Z       "gameFPS" : 30,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9260210Z       "gameObservationUpperBoundMs" : 61.333333333333336,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9269060Z       "inputHz" : 60,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9280650Z       "samplingNeutralMs" : 28
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9373500Z     },
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9415110Z     {
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9444020Z       "gameFPS" : 60,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9496370Z       "gameObservationUpperBoundMs" : 44.666666666666671,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9553100Z       "inputHz" : 60,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9562980Z       "samplingNeutralMs" : 28
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9565900Z     },
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9576760Z     {
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9579230Z       "gameFPS" : 30,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9590460Z       "gameObservationUpperBoundMs" : 49.333333333333336,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9608620Z       "inputHz" : 120,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9613710Z       "samplingNeutralMs" : 16
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9617430Z     },
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9620460Z     {
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9622490Z       "gameFPS" : 60,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9630820Z       "gameObservationUpperBoundMs" : 32.666666666666671,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9633350Z       "inputHz" : 120,
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9751160Z       "samplingNeutralMs" : 16
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9772350Z     }
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9823280Z   ]
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9833490Z }
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:16:43.9846840Z PASS: simultaneous LS/RT/RS, duplicate fire release, reversals, saturation, stale expiry, reset, pause, physical arbitration and invalid packs
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:17:34.0246670Z /var/folders/20/jp1_0n3n7kndh6rnbqb5344m0000gn/T/bcd-touch-check-1osfuv4a/LegacyHooks.swift:10:13: warning: initialization of immutable value 'packAvailable' was never used; consider replacing with assignment to '_' or removing it
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:17:34.0281710Z  8 |             return
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:17:34.0315580Z  9 |         }
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:17:34.0333880Z 10 |         let packAvailable = MainActor.assumeIsolated {
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:17:34.0353640Z    |             `- warning: initialization of immutable value 'packAvailable' was never used; consider replacing with assignment to '_' or removing it
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:17:34.0372830Z 11 |             BCDPackStore.shared.applyLaunchPreference(entry)
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:17:34.0382330Z 12 |             BCDPackStore.shared.activate(entry)
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T18:17:34.7992130Z PASS: production pack views, window routing and legacy attachment typechecked against iOS SDK (engine/view boundaries stubbed)
+touch	Stock touch and physical controller regression	﻿2026-11-03T18:17:34.9008030Z ##[group]Run python3 tests/host/check-touch-gamepad.py
+touch	Stock touch and physical controller regression	2026-11-03T18:17:34.9009340Z ^[[36;1mpython3 tests/host/check-touch-gamepad.py^[[0m
+touch	Stock touch and physical controller regression	2026-11-03T18:17:34.9122370Z shell: /bin/bash -e {0}
+touch	Stock touch and physical controller regression	2026-11-03T18:17:34.9123290Z ##[endgroup]
+touch	Stock touch and physical controller regression	2026-11-03T18:17:37.2426370Z PASS: touch mappings, independent holds, lifecycle clearing, analogue ranges, physical merge and session slot
+touch	Worker and invalid-pack checks	﻿2026-11-03T18:17:37.2722910Z ##[group]Run python3 -m venv /tmp/touch-venv
+touch	Worker and invalid-pack checks	2026-11-03T18:17:37.2724410Z ^[[36;1mpython3 -m venv /tmp/touch-venv^[[0m
+touch	Worker and invalid-pack checks	2026-11-03T18:17:37.2725890Z ^[[36;1m/tmp/touch-venv/bin/pip install jsonschema^[[0m
+touch	Worker and invalid-pack checks	2026-11-03T18:17:37.2727580Z ^[[36;1m/tmp/touch-venv/bin/python tests/host/check-touch-worker.py^[[0m
+touch	Worker and invalid-pack checks	2026-11-03T18:17:37.2845760Z shell: /bin/bash -e {0}
+touch	Worker and invalid-pack checks	2026-11-03T18:17:37.2846650Z ##[endgroup]
+touch	Worker and invalid-pack checks	2026-11-03T18:17:47.3718030Z Collecting jsonschema
+touch	Worker and invalid-pack checks	2026-11-03T18:17:47.4746900Z   Downloading jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+touch	Worker and invalid-pack checks	2026-11-03T18:17:47.5386660Z Collecting attrs>=22.2.0 (from jsonschema)
+touch	Worker and invalid-pack checks	2026-11-03T18:17:47.5576950Z   Downloading attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+touch	Worker and invalid-pack checks	2026-11-03T18:17:47.6103950Z Collecting jsonschema-specifications>=2023.03.6 (from jsonschema)
+touch	Worker and invalid-pack checks	2026-11-03T18:17:47.6295620Z   Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+touch	Worker and invalid-pack checks	2026-11-03T18:17:47.6920370Z Collecting referencing>=0.28.4 (from jsonschema)
+touch	Worker and invalid-pack checks	2026-11-03T18:17:47.7113890Z   Downloading referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+touch	Worker and invalid-pack checks	2026-11-03T18:17:48.5399400Z Collecting rpds-py>=0.25.0 (from jsonschema)
+touch	Worker and invalid-pack checks	2026-11-03T18:17:48.5621200Z   Downloading rpds_py-2026.9.1-cp314-cp314-macosx_10_12_x86_64.whl.metadata (4.1 kB)
+touch	Worker and invalid-pack checks	2026-11-03T18:17:48.7046640Z Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)
+touch	Worker and invalid-pack checks	2026-11-03T18:17:48.7584780Z Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+touch	Worker and invalid-pack checks	2026-11-03T18:17:48.7922650Z Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+touch	Worker and invalid-pack checks	2026-11-03T18:17:48.8242050Z Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+touch	Worker and invalid-pack checks	2026-11-03T18:17:48.8595630Z Downloading rpds_py-2026.9.1-cp314-cp314-macosx_10_12_x86_64.whl (347 kB)
+touch	Worker and invalid-pack checks	2026-11-03T18:17:48.9603230Z Installing collected packages: rpds-py, attrs, referencing, jsonschema-specifications, jsonschema
+touch	Worker and invalid-pack checks	2026-11-03T18:17:49.6743160Z
+touch	Worker and invalid-pack checks	2026-11-03T18:17:49.6743270Z
+touch	Worker and invalid-pack checks	2026-11-03T18:17:49.7614240Z [notice] A new release of pip is available: 26.2.1 -> 26.3
+touch	Worker and invalid-pack checks	2026-11-03T18:17:49.7616700Z Successfully installed attrs-26.1.0 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 referencing-0.37.0 rpds-py-2026.9.1
+touch	Worker and invalid-pack checks	2026-11-03T18:17:49.8055140Z [notice] To update, run: /private/tmp/touch-venv/bin/python3.14 -m pip install --upgrade pip
+touch	Worker and invalid-pack checks	2026-11-03T18:18:05.4270780Z PASS: pilot validation, identity/mode/hit rejection, cache/restart/overrides, corrupt-cache recovery, bounded failed-generation retries and duplicate-server startup (host fixtures)
+touch	Post Run actions/checkout@v4	﻿2026-11-03T18:18:05.5327290Z Post job cleanup.
+touch	Post Run actions/checkout@v4	2026-11-03T18:18:06.2250370Z [command]/usr/local/bin/git version
+touch	Post Run actions/checkout@v4	2026-11-03T18:18:06.2587600Z git version 2.55.0
+touch	Post Run actions/checkout@v4	2026-11-03T18:18:06.2659780Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/925f2c6e-415f-418c-9875-d15afd7333c0/.gitconfig'
+touch	Post Run actions/checkout@v4	2026-11-03T18:18:06.2694100Z Temporarily overriding HOME='/Users/runner/work/_temp/925f2c6e-415f-418c-9875-d15afd7333c0' before making global git config changes
+touch	Post Run actions/checkout@v4	2026-11-03T18:18:06.2700520Z Adding repository directory to the temporary git global config as a safe directory
+touch	Post Run actions/checkout@v4	2026-11-03T18:18:06.2715130Z [command]/usr/local/bin/git config --global --add safe.directory /Users/runner/work/bcd-touch/bcd-touch
+touch	Post Run actions/checkout@v4	2026-11-03T18:18:06.3012220Z [command]/usr/local/bin/git config --local --name-only --get-regexp core\.sshCommand
+touch	Post Run actions/checkout@v4	2026-11-03T18:18:06.3222700Z [command]/usr/local/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+touch	Post Run actions/checkout@v4	2026-11-03T18:18:06.6044600Z [command]/usr/local/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+touch	Post Run actions/checkout@v4	2026-11-03T18:18:06.6250880Z http.https://github.com/.extraheader
+touch	Post Run actions/checkout@v4	2026-11-03T18:18:06.6282010Z [command]/usr/local/bin/git config --local --unset-all http.https://github.com/.extraheader
+touch	Post Run actions/checkout@v4	2026-11-03T18:18:06.6512290Z [command]/usr/local/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+touch	Post Run actions/checkout@v4	2026-11-03T18:18:07.0252550Z [command]/usr/local/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+touch	Post Run actions/checkout@v4	2026-11-03T18:18:07.0357460Z [command]/usr/local/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+touch	Complete job	﻿2026-11-03T18:18:07.3593790Z Cleaning up orphan processes
+touch	Complete job	2026-11-03T18:18:08.0335510Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

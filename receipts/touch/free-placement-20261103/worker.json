@@ -1,6 +1,8 @@
 {
-  "pid": 13864,
-  "source": "35ee829899eb7ce29ae264f9f211001badeca86a",
+  "pid": 21188,
+  "source": "63f7ac7",
+  "appSource": "b78e96073e65e6d1431376f5134ae08ea60dc037",
+  "packProtocol": 3,
   "host": "192.168.1.5",
   "port": 8939,
   "cachedHTTP": 200,
@@ -10,8 +12,7 @@
   "original8937WorkerUntouched": true,
   "preflightValidatedCaches": 6,
   "pendingJobs": 0,
-  "phoneHostUpdatePending": false,
   "phoneHostUSBReadbackVerified": true,
-  "phoneWorkerURLOnlyChanged": true,
-  "gamesAndControlPacksWritten": false
+  "gamesAndControlPacksWritten": false,
+  "cachesByteForByteUnchanged": true
 }

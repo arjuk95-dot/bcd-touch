@@ -1,5 +1,5 @@
 {
-  "run": "https://github.com/arjunkl/bcd-touch/actions/runs/41668260084",
+  "run": "https://github.com/arjunkl/bcd-touch/actions/runs/41693381721",
   "checks": [
     {
       "name": "Build xtajit64.dll (FEX fixes, AVX opt-in)",

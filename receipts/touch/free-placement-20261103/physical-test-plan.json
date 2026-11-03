@@ -1,0 +1,23 @@
+{
+  "status": "pending",
+  "pack": "tenebris-owner-mockup-v3",
+  "device": "Owner iPhone 16 Pro Max; real iPad not yet tested",
+  "prerequisites": [
+    "Install the existing-slot update and verify its source",
+    "Close BCD before selecting the backed-up local preset",
+    "Enable JIT using the existing setup and launch the matching game"
+  ],
+  "checks": [
+    "In onFoot gameplay, touch different points in the left movement area: the stick appears under the thumb, moves, and disappears immediately on lift.",
+    "Tap Aim: LT remains held and the outline turns amber. Tap again: Aim turns off.",
+    "Slide from Aim to Attack: exactly one RT attack, Aim stays on after release. Repeat while Aim was already on; wiggle into Attack several times during one touch and verify no repeats.",
+    "Move while Run is held, and independently use Aim/Attack. Releasing one finger must not stop another held input.",
+    "Check Interact, Inventory and Menu against the confirmed selected preset. Use the explicit menu context where required; no automatic context detection is claimed.",
+    "Open Edit controls, choose Move buttons, drag a control across the whole display and deliberately overlap another. Bring to front controls new-touch priority. Undo and Back to game must remain usable.",
+    "Use Add button to place an LT or other input absent from the base preset; verify label/icon/binding editing and saved position.",
+    "Background/resume and Menu must clear the Aim latch. Restart with normal JIT setup and confirm the correct preset and personal changes return.",
+    "Capture actual landscape HUD plus actual hit regions; compare with the owner mockup. Repeat on a real iPad.",
+    "Retest accepted Dread movement/held Attack/swipe aim plus physical controller and gyro. Original guest traces and measured physical neutral latency are still pending."
+  ],
+  "fixtureEvidence": "SDK and simulator spies passed; this plan does not mark any physical check complete"
+}

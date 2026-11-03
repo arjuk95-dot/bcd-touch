@@ -2,7 +2,7 @@
 
 Base: BCD **v0.1.626**, `adc9cc742f52601a42f52ac6b4fbcc701bdb16ad`. The earlier local v0.1.623 checkout was clean and had no touch branch. Work continued in a separate checkout and the branch `wo-bcd-touch-001` at https://github.com/arjunkl/bcd-touch.
 
-**Free-placement / Tenebris extension:** app source `b78e96073e65e6d1431376f5134ae08ea60dc037` passes SDK and 45 simulator/store/restart checks. Full [build 41693381721](https://github.com/arjunkl/bcd-touch/actions/runs/41693381721) is active. It adds unrestricted personal placement, a compact editor, all-input Add button and the confirmed owner mockup with amber Aim toggle and one Attack per slide. See [current receipt](receipts/touch/free-placement-20261103/delivery.json); physical testing is pending.
+**Free-placement / Tenebris extension:** app source `b78e96073e65e6d1431376f5134ae08ea60dc037` passes SDK and 45 simulator/store/restart checks. Full [build 41693381721](https://github.com/arjunkl/bcd-touch/actions/runs/41693381721) and [native packaging 41704803346](https://github.com/arjunkl/bcd-touch/actions/runs/41704803346) passed. The verified existing-slot update is `BCD-Touch-Tenebris-b78e960.ipa`, 185,774,208 bytes, SHA-256 `0ea62cab60aba01f4e99425fdf32c98692ff2d16e7aba4a19d052b16b10e5acd`; personal signing and the new physical playtest are pending. It adds unrestricted personal placement, a compact editor, all-input Add button and the confirmed owner mockup with amber Aim toggle and one Attack per slide. See [current receipt](receipts/touch/free-placement-20261103/delivery.json); physical testing is pending.
 
 **Earlier installed shared authoring IPA:** `BCD-Touch-controls-6c27cf8.ipa`, 185,690,749 bytes, SHA-256 `ade1826a5de6273982ac21d429690b5987b42a8f2c30312a3eab97e39a569bfa`. App source `6c27cf87eab5a3094c5f078b0a8bf6e91e3ad7f3`; [full build](https://github.com/arjunkl/bcd-touch/actions/runs/41604861178) and [native packages](https://github.com/arjunkl/bcd-touch/actions/runs/41614413524) passed. Exact-source SDK, 35-image simulator/store/restart tests and a genuine desktop version-2 Chronicles round trip passed. Five genre presets, the shared 44-icon/binding editor, version-2 keyboard/mouse inputs and durable personal edits are implemented. The updated worker runs separately on port 8939; USB verifies the installed source after the Wi-Fi download. The phone worker endpoint is now configured and read back at port 8939, with settings and token preserved. Increased-memory/debugging rights were reported; extended virtual addressing was not reported. Physical editor tests remain pending. [Authoring workflow](CONTROL-AUTHORING.md), [delivery receipt](receipts/touch/authoring-20261103/delivery.json).
 
@@ -99,3 +99,9 @@ gh workflow run touch-sideload-packages.yml --repo arjunkl/bcd-touch --ref wo-bc
 ```
 
 The fast SDK check also compiles the actual ControlsWindow and legacy TouchControlsHost attachment method, covering the integration gap exposed by the first revised archive. On macOS 26, ASan host checks use the installed current LLVM runtime; non-ASan checks and all iOS app/runtime compilation retain the selected Xcode toolchain. Test assertions and sanitizers remain enabled.
+
+To reproduce the verified Tenebris/free-placement update while the source artifact is retained:
+
+```powershell
+gh workflow run touch-sideload-packages.yml -R arjunkl/bcd-touch --ref wo-bcd-touch-001 -f source_run=41693381721 -f source_commit=b78e96073e65e6d1431376f5134ae08ea60dc037 -f source_sha256=7dfefe1e9914ffecefa7145ee1ef41d4dda765fc52eed3ca0da000fc57951d90
+```

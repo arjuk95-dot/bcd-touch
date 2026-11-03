@@ -6,7 +6,7 @@
   "sdk": "passed",
   "preview45": "passed",
   "compactHitRouting": "passed",
-  "archive": "running",
+  "archive": "passed",
   "buildRun": "https://github.com/arjunkl/bcd-touch/actions/runs/41693381721",
   "phoneAppUpdated": false,
   "physicallyTested": false,
@@ -23,11 +23,28 @@
     "physicallyTested": false
   },
   "pending": [
-    "Full app archive and existing-slot package",
-    "Direct-PC bounded HTTP delivery",
-    "Install-source verification and backed-up owner preset selection",
+    "Personal signing and existing-slot install-source verification",
+    "Backed-up selection of the confirmed owner local preset",
     "Physical Tenebris toggle/slide/placement test and real iPad testing",
-    "Guest and physical-controller/gyro checks from the original work order"
+    "Guest traces and the original hardware-controller/gyro checks"
   ],
-  "phoneWriteScope": "Worker URL only earlier in this phase; no new app/control-pack/game/save writes"
+  "phoneWriteScope": "Worker URL correction earlier; verified IPA staged in a new SideStore folder. No new BCD control-pack/game/save writes.",
+  "nativePackage": "passed",
+  "packageRun": "https://github.com/arjunkl/bcd-touch/actions/runs/41704803346",
+  "ipa": "BCD-Touch-Tenebris-b78e960.ipa",
+  "bytes": 185774208,
+  "sha256": "0ea62cab60aba01f4e99425fdf32c98692ff2d16e7aba4a19d052b16b10e5acd",
+  "bundleID": "com.thebcd69.bcd",
+  "personalSigningRequired": true,
+  "phoneMetadataBackup": {
+    "files": 16,
+    "bytes": 136047,
+    "remoteModified": false,
+    "gamesCopied": false,
+    "date": "2026-11-04"
+  },
+  "preparedUTC": "2026-11-03T19:42:53.028818+00:00",
+  "ipaStagedInSideStore": true,
+  "phoneStagedReadbackSHA256Verified": true,
+  "ownerInstallAndClosedReplyPending": true
 }
