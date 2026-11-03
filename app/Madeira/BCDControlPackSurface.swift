@@ -114,7 +114,7 @@ final class BCDPackView: UIView {
     private var context = "onFoot"
     private var debug = false, editing = false
     private var fingers: [AnyHashable: Finger] = [:]
-    private var keyHolds: [UUID: Int32] = [:]
+    private var keyHolds: [UUID: [Int32]] = [:]
     private var mouseHolds: [UUID: String] = [:]
     private var previousSize = CGSize.zero
     private var epoch = UUID()
@@ -192,18 +192,24 @@ final class BCDPackView: UIView {
     private func release(_ owner: UUID) {
         GamepadInput.shared.packTouch(owner: owner, value: nil)
         GamepadInput.shared.packLook(owner: owner, phase: 2, time: ProcessInfo.processInfo.systemUptime)
-        if let key = keyHolds.removeValue(forKey: owner), !keyHolds.values.contains(key) { winios_post_key(key, 0) }
-        if let mouse = mouseHolds.removeValue(forKey: owner), !mouseHolds.values.contains(mouse) { winios_pointer(0, 0, mouse == "mouse:left" ? 4 : 16, 0) }
+        if let keys = keyHolds.removeValue(forKey: owner) {
+            for key in keys.reversed() where !keyHolds.values.contains(where: { $0.contains(key) }) { winios_post_key(key, 0) }
+        }
+        if let mouse = mouseHolds.removeValue(forKey: owner), !mouseHolds.values.contains(mouse) {
+            winios_pointer(0, 0, mouse == "mouse:left" ? 4 : (mouse == "mouse:right" ? 16 : 64), 0)
+        }
     }
     private func send(_ a: BCDControlPack.Action, owner: UUID) {
         guard let p = pack else { return }
         if p.inputMode == "controller" { GamepadInput.shared.packTouch(owner: owner, value: TouchPadAction.sample(a.output)); return }
-        if a.output.hasPrefix("key:"), let key = Int32(a.output.dropFirst(4)) {
-            let already = keyHolds.values.contains(key); keyHolds[owner] = key
-            if !already { winios_post_key(key, 1) }
-        } else if ["mouse:left", "mouse:right"].contains(a.output) {
+        if let keys = BCDPackCatalog.keyCodes(a.output) {
+            let held = Set(keyHolds.values.flatMap { $0 }); keyHolds[owner] = keys
+            for key in keys where !held.contains(key) { winios_post_key(key, 1) }
+        } else if ["mouse:left", "mouse:right", "mouse:middle"].contains(a.output) {
             let already = mouseHolds.values.contains(a.output); mouseHolds[owner] = a.output
-            if !already { winios_pointer(0, 0, a.output == "mouse:left" ? 2 : 8, 0) }
+            if !already { winios_pointer(0, 0, a.output == "mouse:left" ? 2 : (a.output == "mouse:right" ? 8 : 32), 0) }
+        } else if a.output.hasPrefix("mouse:wheel") {
+            winios_pointer(0, 0, 0x800, UInt32(bitPattern: a.output == "mouse:wheelUp" ? Int32(120) : Int32(-120)))
         } else { GamepadInput.shared.packTouch(owner: owner, value: TouchPadAction.sample(a.output)) }
     }
     private func pulse(_ a: BCDControlPack.Action) {

@@ -3,7 +3,10 @@
   "properties": {
     "version": {
       "type": "integer",
-      "const": 1
+      "enum": [
+        1,
+        2
+      ]
     },
     "id": {
       "type": "string",
@@ -149,12 +152,15 @@
                   "LS",
                   "RS",
                   "mouse:left",
-                  "mouse:right"
+                  "mouse:right",
+                  "mouse:middle",
+                  "mouse:wheelUp",
+                  "mouse:wheelDown"
                 ]
               },
               {
                 "type": "string",
-                "pattern": "^key:[0-9]{1,3}$"
+                "pattern": "^(key:[0-9]{1,3}|keys:[0-9]{1,3}(\\+[0-9]{1,3}){1,3})$"
               }
             ]
           },

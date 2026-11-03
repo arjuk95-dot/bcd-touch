@@ -8,6 +8,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+        BCD000000000000000000A05 /* BCDControlPackAuthoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD000000000000000000B05; };
 		BCD000000000000000000A03 /* BCDControlPackSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD000000000000000000B03; };
 		BCD000000000000000000A02 /* BCDControlPackLive.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD000000000000000000B02; };
 		BCD000000000000000000A01 /* BCDControlPack.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD000000000000000000B01; };
@@ -417,6 +418,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+        BCD000000000000000000B05 /* BCDControlPackAuthoring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDControlPackAuthoring.swift; sourceTree = "<group>"; };
 		BCD000000000000000000B03 /* BCDControlPackSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDControlPackSurface.swift; sourceTree = "<group>"; };
 		BCD000000000000000000B02 /* BCDControlPackLive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDControlPackLive.swift; sourceTree = "<group>"; };
 		BCD000000000000000000B01 /* BCDControlPack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDControlPack.swift; sourceTree = "<group>"; };
@@ -1058,7 +1060,8 @@
 				A2000203 /* HardwareInput.swift */,
 				A2000281 /* WiniosCursor.c */,
 				A2000243 /* GamepadInput.swift */,
-				BCD000000000000000000B03 /* BCDControlPackSurface.swift */,
+				BCD000000000000000000B05 /* BCDControlPackAuthoring.swift */,
+                BCD000000000000000000B03 /* BCDControlPackSurface.swift */,
 				BCD000000000000000000B02 /* BCDControlPackLive.swift */,
 				BCD000000000000000000B01 /* BCDControlPack.swift */,
 				BCD000000000000000000B00 /* BCDMouseJoystick.swift */,
@@ -1649,7 +1652,8 @@
 				A1000203 /* HardwareInput.swift in Sources */,
 				A1000281 /* WiniosCursor.c in Sources */,
 				A1000243 /* GamepadInput.swift in Sources */,
-				BCD000000000000000000A03 /* BCDControlPackSurface.swift in Sources */,
+				BCD000000000000000000A05 /* BCDControlPackAuthoring.swift in Sources */,
+                BCD000000000000000000A03 /* BCDControlPackSurface.swift in Sources */,
 				BCD000000000000000000A02 /* BCDControlPackLive.swift in Sources */,
 				BCD000000000000000000A01 /* BCDControlPack.swift in Sources */,
 				BCD000000000000000000A00 /* BCDMouseJoystick.swift in Sources */,

@@ -12,6 +12,26 @@ sys.path.insert(0,str(ROOT/'tools/touch-packs'))
 spec=importlib.util.spec_from_file_location('worker',ROOT/'tools/touch-packs/worker.py');w=importlib.util.module_from_spec(spec);spec.loader.exec_module(w)
 packs=list((ROOT/'packs/pilots').glob('*.json'))
 assert packs, 'Pilot packs missing'
+# New output vocabulary is versioned, mode-checked and never permits arbitrary key codes.
+v2=copy.deepcopy(json.loads(packs[0].read_text(encoding='utf-8')))
+v2['version']=2;v2['inputMode']='keyboardMouse'
+reachable=set(v2['radial']) | {g['action'] for g in v2['gestures']}
+for device in ['phone','pad']:reachable.update(c['action'] for c in v2[device]['controls'])
+v2['actions']=[a for a in v2['actions'] if a['id'] in reachable]
+for a in v2['actions']:a['output']='key:65'
+for device in ['phone','pad']:
+    for c in v2[device]['controls']:c['role']='button'
+for output in ['keys:17+67','keys:17+16+65','mouse:middle','mouse:wheelUp','mouse:wheelDown']:
+    v2['actions'][0].update(output=output,behavior='tap');w.validate(v2)
+for output in ['key:0','key:256','key:+65','keys:17','keys:17+17','keys:17+65+66+67+68']:
+    v2['actions'][0]['output']=output
+    try:w.validate(v2)
+    except Exception:pass
+    else:raise AssertionError('Invalid extended binding accepted '+output)
+v2['actions'][0].update(output='mouse:wheelUp',behavior='hold')
+try:w.validate(v2)
+except Exception:pass
+else:raise AssertionError('Holding a wheel action must be rejected')
 from dread_bindings import apply_dread_bindings
 from inspect_unity_bindings import extract
 import struct
@@ -61,7 +81,7 @@ for path in packs:
     for g in regenerated['gestures']:g['action']=remap[g['action']]
     stabilized=stabilize(regenerated,p);w.validate(stabilized)
     assert [a['id'] for a in stabilized['actions']]==[a['id'] for a in p['actions']]
-    for mutate in [lambda v:v.update(version=2),lambda v:(v.update(inputMode='controller'),v['actions'][0].update(output='mouse:left')),lambda v:v['phone']['controls'][0].update(hitRadius=.9),lambda v:v['identity'].update(build='wrong')]:
+    for mutate in [lambda v:v.update(version=999),lambda v:(v.update(inputMode='controller'),v['actions'][0].update(output='mouse:left')),lambda v:v['phone']['controls'][0].update(hitRadius=.9),lambda v:v['identity'].update(build='wrong')]:
         bad=copy.deepcopy(p);mutate(bad)
         try:w.validate(bad,p['identity'])
         except Exception:pass

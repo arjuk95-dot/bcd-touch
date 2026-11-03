@@ -9,9 +9,9 @@ with tempfile.TemporaryDirectory(prefix='bcd-touch-check-') as tmp:
     pure=source.split('struct GamepadSample',1)[1].split('// MARK: - UIKit touch lifetime',1)[0]
     pure='import Foundation\nstruct GamepadSample'+pure
     state=tmp/'State.swift';state.write_text(pure)
-    core=[ROOT/'app/Madeira/BCDMouseJoystick.swift',ROOT/'app/Madeira/BCDControlPack.swift',state]
+    core=[ROOT/'app/Madeira/BCDMouseJoystick.swift',ROOT/'app/Madeira/BCDControlPack.swift',ROOT/'app/Madeira/BCDControlPackAuthoring.swift',ROOT/'app/Madeira/BCDControlPackAuthoring.swift',state]
     exe=tmp/'checks'
-    subprocess.run(['swiftc',*map(str,core),str(ROOT/'tests/host/touch_pack_checks.swift'),'-o',str(exe)],check=True)
+    subprocess.run(['swiftc',*map(str,core),str(ROOT/'tests/host/touch_authoring_checks.swift'),str(ROOT/'tests/host/touch_pack_checks.swift'),'-o',str(exe)],check=True)
     subprocess.run([str(exe),*map(str,(ROOT/'packs/pilots').glob('*.json'))],check=True)
     if os.uname().sysname=='Darwin':
         sdk=subprocess.check_output(['xcrun','--sdk','iphonesimulator','--show-sdk-path'],text=True).strip()

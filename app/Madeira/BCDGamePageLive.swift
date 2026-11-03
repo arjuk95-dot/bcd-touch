@@ -131,8 +131,11 @@ import UniformTypeIdentifiers
             d.groups = [display(entry, profile), direct3D(entry, profile), compatibility(entry), controls(entry, profile), gyro(entry)]
             // Modified for WO-BCD-TOUCH-001: existing installs can prepare/regenerate too.
             if !desktop { d.groups.append(BCDGameSettingGroup(id: "touch-pack", title: "Game touch pack", symbol: "hand.draw", settings: [
-                BCDGameSetting(id: "pack.prepare", title: "Prepare controls", kind: .action, note: BCDPackStore.shared.status),
-                BCDGameSetting(id: "pack.regenerate", title: "Regenerate (keep personal layout)", kind: .action),
+                BCDGameSetting(id: "pack.prepare", title: "Prepare researched controls", kind: .action, note: BCDPackStore.shared.summary(entry)),
+                BCDGameSetting(id: "pack.genre", title: "Genre preset", kind: .choice([BCDGameChoice(value: "auto", label: "Identify from game")] + BCDPackCatalog.genres.map { BCDGameChoice(value: $0.0, label: $0.1) }), value: BCDPackStore.shared.authoringChoice(entry, key: "genre"), defaultValue: "auto"),
+                BCDGameSetting(id: "pack.mode", title: "Pack input mode", kind: .choice([BCDGameChoice(value: "auto", label: "Identify from bindings"), BCDGameChoice(value: "controller", label: "Xbox controller"), BCDGameChoice(value: "keyboardMouse", label: "Keyboard and mouse")]), value: BCDPackStore.shared.authoringChoice(entry, key: "mode"), defaultValue: "auto", note: "Applies to new preparation or regeneration. Offline presets use Xbox unless keyboard and mouse is selected."),
+                BCDGameSetting(id: "pack.preset", title: "Start customizable offline preset", kind: .action, note: "Selects this genre and input mode for next launch. Raw output labels need checking against the game's controls. Researched packs and their edits are kept."),
+                BCDGameSetting(id: "pack.regenerate", title: "Regenerate (keep personal edits)", kind: .action),
                 BCDGameSetting(id: "pack.generated", title: "Use generated controls next launch", kind: .action),
                 BCDGameSetting(id: "pack.stock", title: "Use stock input profile next launch", kind: .action, note: "Keeps the stock profile's relative-mouse aim choice")
             ])) }
@@ -910,6 +913,12 @@ import UniformTypeIdentifiers
     }
 
     func set(_ setting: String, to value: String, for game: BCDGame) {
+        if ["pack.genre", "pack.mode"].contains(setting), let entry = entry(for: game) {
+            BCDPackStore.shared.setAuthoringChoice(entry, key: setting == "pack.genre" ? "genre" : "mode", value: value); onChange?(); return
+        }
+        if setting == "pack.preset", let entry = entry(for: game) {
+            BCDPackStore.shared.usePreset(entry); onChange?(); return
+        }
         if setting == "pack.generated" || setting == "pack.stock", let entry = entry(for:game) {
             BCDPackStore.shared.setLaunchPreference(entry,generated:setting == "pack.generated");onChange?();return
         }

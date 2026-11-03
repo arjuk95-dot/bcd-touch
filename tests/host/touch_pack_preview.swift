@@ -84,6 +84,7 @@ import UIKit
             assert(!store.enabled, "Per-game stock input preference lost after restart")
             store.activate(entry)
             assert(store.pack?.phone.controls[index].x==movedX, "Personal edit lost after process restart")
+            assert(store.pack?.actions.contains { $0.label == "Player action fixture" && $0.icon == "shield" && $0.output == "RB" } == true, "Personal binding/icon/label lost after process restart")
             assert(store.pack?.title==original.title+" fixture regeneration", "Wrong cached pack after restart")
             store.setLaunchPreference(entry,generated:true);store.applyLaunchPreference(entry)
             assert(store.enabled)
@@ -98,12 +99,27 @@ import UIKit
         try checkWindowRouting(original)
         try await checkPackInteractions(original)
         try await captureEditorFixtures()
-        var moved=store.pack!;moved.phone.controls[index].x=movedX;store.saveEdits(moved)
+        var moved=store.pack!;moved.phone.controls[index].x=movedX
+        let editedAction=moved.actions.firstIndex { $0.output=="RT" }!
+        moved.actions[editedAction].label="Player action fixture";moved.actions[editedAction].icon="shield";moved.actions[editedAction].output="RB"
+        assert(store.saveEdits(moved))
+        var temporary=moved;temporary.aim.sensitivity=3;assert(store.saveEdits(temporary));store.undoEdit()
+        assert(store.pack?.aim==moved.aim,"Undo failed")
         var regenerated=original;regenerated.title += " fixture regeneration"
         try BCDPackStore.encoded(regenerated).write(to:cached,options:.atomic)
         store.setLaunchPreference(entry,generated:false)
         LibraryModel.shared.blocksGameplayTouch=true;store.activate(entry)
         assert(store.pack?.title==regenerated.title && store.pack?.phone.controls[index].x==movedX)
+        assert(store.pack?.actions.contains { $0.label=="Player action fixture" && $0.output=="RB" } == true,"Binding edit lost on regeneration")
+        var unknown=LibraryEntry();unknown.title="Unknown title fixture";unknown.launchRelativePath="unknown-title.exe";unknown.relativePath="unknown-title.exe"
+        store.setAuthoringChoice(unknown,key:"genre",value:"racing");store.setAuthoringChoice(unknown,key:"mode",value:"keyboardMouse")
+        store.usePreset(unknown);store.activate(unknown)
+        assert(store.pack?.inputMode=="keyboardMouse" && store.pack?.identity==store.request(unknown).identity)
+        var manual=store.pack!;manual.actions[0].label="Personal accelerator";assert(store.saveEdits(manual))
+        store.activate(entry);store.activate(unknown)
+        assert(store.pack?.actions[0].label=="Personal accelerator","Manual preset edits lost on reactivation")
+        store.activate(entry)
+        assert(store.pack?.actions.contains { $0.label=="Player action fixture" } == true,"Preset overwrote researched edits")
         LibraryModel.shared.blocksGameplayTouch=false
         var invalid=original;invalid.version=999
         try BCDPackStore.encoded(invalid).write(to:cached,options:.atomic)
@@ -215,6 +231,42 @@ import UIKit
             surface.endTouch("radial",at:point(radial),cancelled:true)
         }
         assert(PackBoundarySpy.keyboardEvents==0 && PackBoundarySpy.mouseEvents==0,"Controller surface emitted keyboard/mouse events")
+        surface.clear()
+        var keyboard=BCDPackAuthoring.preset(identity:p.identity,title:"Keyboard fixture",genre:"first-person",mode:"keyboardMouse")
+        let one=keyboard.actions.firstIndex { $0.output=="key:87" }!,two=keyboard.actions.firstIndex { $0.output=="key:83" }!
+        keyboard.actions[one].output="keys:17+87";keyboard.actions[two].output="keys:17+83"
+        surface.configure(keyboard,context:"onFoot",debug:false,editing:false)
+        func keyPoint(_ id:String)->CGPoint {
+            let c=keyboard.phone.controls.first { $0.action==id }!
+            return CGPoint(x:safe.minX+c.x*safe.width,y:safe.minY+c.y*safe.height)
+        }
+        PackBoundarySpy.keys=[];PackBoundarySpy.mouse=[]
+        surface.beginTouch("chord-one",at:keyPoint(keyboard.actions[one].id),time:t+0.1)
+        surface.beginTouch("chord-two",at:keyPoint(keyboard.actions[two].id),time:t+0.1)
+        assert(PackBoundarySpy.keys.filter { $0.0==17 && $0.1==1 }.count==1,"Shared modifier pressed twice")
+        surface.endTouch("chord-one",at:keyPoint(keyboard.actions[one].id),cancelled:false)
+        assert(!PackBoundarySpy.keys.contains { $0.0==17 && $0.1==0 },"First chord released another owner's modifier")
+        surface.endTouch("chord-two",at:keyPoint(keyboard.actions[two].id),cancelled:true)
+        assert(PackBoundarySpy.keys.filter { $0.0==17 && $0.1==0 }.count==1,"Cancellation left modifier held")
+        let click=keyboard.actions.firstIndex { $0.output=="mouse:left" }!
+        keyboard.actions[click].output="mouse:middle"
+        surface.configure(keyboard,context:"onFoot",debug:false,editing:false)
+        surface.beginTouch("middle",at:keyPoint(keyboard.actions[click].id),time:t+0.2)
+        surface.endTouch("middle",at:keyPoint(keyboard.actions[click].id),cancelled:true)
+        assert(PackBoundarySpy.mouse.contains { $0.0==32 } && PackBoundarySpy.mouse.contains { $0.0==64 },"Middle click not balanced")
+        keyboard.actions[click].output="mouse:wheelDown";keyboard.actions[click].behavior="tap"
+        for device in [false,true] {
+            var layout=device ? keyboard.pad : keyboard.phone
+            for i in layout.controls.indices where layout.controls[i].action==keyboard.actions[click].id {layout.controls[i].role="button"}
+            if device {keyboard.pad=layout}else{keyboard.phone=layout}
+        }
+        surface.configure(keyboard,context:"onFoot",debug:false,editing:false)
+        surface.beginTouch("wheel",at:keyPoint(keyboard.actions[click].id),time:t+0.3)
+        surface.endTouch("wheel",at:keyPoint(keyboard.actions[click].id),cancelled:false)
+        assert(PackBoundarySpy.mouse.filter { $0.0==0x800 && Int32(bitPattern:$0.1)==(-120) }.count==1,"Wheel tap repeated or used wrong sign")
+        surface.clear();surface.configure(p,context:p.contexts[0],debug:true,editing:false)
+        surface.beginTouch("held-for-dialog",at:point(duplicate),time:t+0.4)
+
         // The exact failure on the phone: main-window alert below the full-screen controls window.
         let alert=UIAlertController(title:"Fixture notification",message:"Must own its buttons",preferredStyle:.alert)
         alert.addAction(UIAlertAction(title:"OK",style:.default))
@@ -247,6 +299,7 @@ import UIKit
     @MainActor private func captureEditorFixtures() async throws {
         let scene=UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first!
         let folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
+        assert(BCDPackCatalog.icons.allSatisfy { UIImage(systemName:$0.id) != nil }, "Icon catalog contains an unavailable symbol")
         for height in [320,440] {
             let size=CGSize(width:956,height:CGFloat(height))
             let window=UIWindow(windowScene:scene);window.frame=CGRect(origin:.zero,size:size);window.windowLevel = .normal+102

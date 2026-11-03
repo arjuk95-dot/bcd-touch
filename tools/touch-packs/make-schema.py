@@ -8,11 +8,11 @@ def num(lo,hi): return dict(type='number',minimum=lo,maximum=hi)
 def enum(*values): return dict(type='string',enum=list(values))
 text=dict(type='string',minLength=1,maxLength=256,pattern=r'^[^\x00-\x1f]+$')
 identity=obj({k:text for k in ['executable','storeID','edition','build','bindingDigest']})
-output={'anyOf':[enum('A','B','X','Y','LB','RB','LT','RT','L3','R3','Menu','View','D↑','D↓','D←','D→','LS','RS','mouse:left','mouse:right'),dict(type='string',pattern=r'^key:[0-9]{1,3}$')]}
+output={'anyOf':[enum('A','B','X','Y','LB','RB','LT','RT','L3','R3','Menu','View','D↑','D↓','D←','D→','LS','RS','mouse:left','mouse:right','mouse:middle','mouse:wheelUp','mouse:wheelDown'),dict(type='string',pattern=r'^(key:[0-9]{1,3}|keys:[0-9]{1,3}(\+[0-9]{1,3}){1,3})$')]}
 action=obj(dict(id=text,label=text,icon=dict(type='string',pattern=r'^[A-Za-z0-9.-]+$',maxLength=256),output=output,behavior=enum('hold','tap','release'),evidence=text,contexts=arr(text,1,8)))
 control=obj(dict(id=text,action=text,role=enum('button','move','fireAim','radial','gesture'),x=num(0,1),y=num(0,1),radius=num(.035,.2),hitRadius=num(.035,.23),opacity=num(.1,1)))
 layout=obj(dict(aimRect=obj(dict(x=num(0,1),y=num(0,1),width=num(.25,1),height=num(.25,1))),controls=arr(control,1,48)))
-schema=obj(dict(version=dict(type='integer',const=1),id=text,title=text,identity=identity,inputMode=enum('controller','keyboardMouse'),
+schema=obj(dict(version=dict(type='integer',enum=[1,2]),id=text,title=text,identity=identity,inputMode=enum('controller','keyboardMouse'),
     aim=obj(dict(sensitivity=num(.1,8),vertical=num(.25,2),invertY=dict(type='boolean'),deadZone=num(0,.4),fullSpeed=num(200,3000))),
     actions=arr(action,1,64),phone=layout,pad=layout,gestures=arr(obj(dict(kind=enum('swipeUp','swipeDown','swipeLeft','swipeRight'),action=text)),0,4),
     radial=arr(text,0,8),contexts=arr(text,1,8),evidence=arr(obj(dict(id=text,source=text,detail=dict(type='string',minLength=1,maxLength=4096))),1,128),unresolved=arr(text)))

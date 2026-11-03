@@ -66,6 +66,9 @@ final class TouchControlsModel {
 enum MadeiraConfig { static func gameValue(_ name:String)->String? { nil };static func get(_ name:String)->String? { nil } }
 @MainActor final class LogStore { static let shared=LogStore();func log(_ message:String) {} }
 @MainActor final class BCDInputLive { static let shared = BCDInputLive(); func refresh() {} }
-@MainActor enum PackBoundarySpy { static var keyboardEvents=0;static var mouseEvents=0 }
-@MainActor func winios_post_key(_ key:Int32,_ down:Int32) { PackBoundarySpy.keyboardEvents += 1 }
-@MainActor func winios_pointer(_ x:Int32,_ y:Int32,_ flags:UInt32,_ wheel:Int32) { PackBoundarySpy.mouseEvents += 1 }
+@MainActor enum PackBoundarySpy {
+    static var keyboardEvents=0;static var mouseEvents=0
+    static var keys:[(Int32,Int32)]=[];static var mouse:[(UInt32,UInt32)]=[]
+}
+@MainActor func winios_post_key(_ key:Int32,_ down:Int32) { PackBoundarySpy.keyboardEvents += 1; PackBoundarySpy.keys.append((key,down)) }
+@MainActor func winios_pointer(_ x:Int32,_ y:Int32,_ flags:UInt32,_ wheel:UInt32) { PackBoundarySpy.mouseEvents += 1; PackBoundarySpy.mouse.append((flags,wheel)) }

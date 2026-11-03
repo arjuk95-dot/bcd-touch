@@ -49,7 +49,7 @@ struct BCDControlPack: Codable, Equatable {
     func validate(for expected: Identity? = nil) throws {
         func require(_ ok: Bool, _ reason: String) throws { if !ok { throw Invalid.reason(reason) } }
         func text(_ s: String) -> Bool { !s.isEmpty && s.utf8.count <= 256 && !s.unicodeScalars.contains { $0.value < 32 } }
-        try require(version == 1, "Unsupported pack version")
+        try require([1, 2].contains(version), "Unsupported pack version")
         try require(text(id) && text(title), "Missing name")
         try require(expected == nil || identity == expected, "Game/build/bindings mismatch")
         for s in [identity.executable, identity.storeID, identity.edition, identity.build, identity.bindingDigest] { try require(text(s), "Incomplete identity") }
@@ -62,10 +62,10 @@ struct BCDControlPack: Codable, Equatable {
         for a in actions {
             try require(text(a.id) && text(a.label) && text(a.icon), "Missing action metadata")
             try require(a.icon.allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "." || $0 == "-") }, "Icons must be SF Symbol names")
-            let outputOK = inputMode == "controller" ? Self.padOutputs.contains(a.output) :
-                (a.output.range(of: "^key:[0-9]{1,3}$", options: .regularExpression) != nil || ["mouse:left", "mouse:right"].contains(a.output))
+            let outputOK = BCDPackCatalog.validOutput(a.output, mode: inputMode, version: version)
             try require(outputOK, "Output unavailable in selected input mode")
             try require(["hold", "tap", "release"].contains(a.behavior), "Unknown action behavior")
+            try require(!a.output.hasPrefix("mouse:wheel") || a.behavior != "hold", "Wheel actions must tap or release")
             try require(!a.contexts.isEmpty && Set(a.contexts).isSubset(of: Set(contexts)), "Unknown action context")
             try require(evidence.contains { $0.id == a.evidence }, "Binding has no evidence")
         }

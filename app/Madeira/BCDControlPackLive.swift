@@ -5,6 +5,7 @@ import CryptoKit
 import Foundation
 import SwiftUI
 import UIKit
+import UniformTypeIdentifiers
 
 @MainActor final class BCDPackStore: ObservableObject {
     static let shared = BCDPackStore()
@@ -34,17 +35,23 @@ import UIKit
     private var selectedKey: String?
     private var personalKey: String?
     private var sessionID: UUID?
-    private var overrides: [String: BCDControlPack] = [:]
+    struct PersonalEdit: Codable { var pack: BCDControlPack; var baseline: BCDControlPack? }
+    private var overrides: [String: PersonalEdit] = [:]
+    private var undoHistory: [BCDControlPack] = []
+    private var gameKey: String?
     private var base: BCDControlPack?
     let folder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("TouchPacks", isDirectory: true)
     private init() {
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         if let d = try? Data(contentsOf: folder.appendingPathComponent("jobs.json")), let j = try? JSONDecoder().decode([String: Job].self, from: d) { jobs = j }
-        if let d = try? Data(contentsOf: folder.appendingPathComponent("overrides.json")), let o = try? JSONDecoder().decode([String: BCDControlPack].self, from: d) { overrides = o }
+        if let d = try? Data(contentsOf: folder.appendingPathComponent("personal-edits-v2.json")), let o = try? JSONDecoder().decode([String: PersonalEdit].self, from: d) { overrides = o }
+        else if let d = try? Data(contentsOf: folder.appendingPathComponent("overrides.json")), let old = try? JSONDecoder().decode([String: BCDControlPack].self, from: d) {
+            overrides = old.mapValues { PersonalEdit(pack: $0, baseline: nil) }
+        }
         for k in jobs.keys where jobs[k]?.state == "requesting" { jobs[k]?.state = "queued" }
     }
-    static func hash(_ data: Data) -> String { SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined() }
-    static func encoded<T: Encodable>(_ value: T) -> Data {
+    nonisolated static func hash(_ data: Data) -> String { SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined() }
+    nonisolated static func encoded<T: Encodable>(_ value: T) -> Data {
         let e = JSONEncoder(); e.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         return (try? e.encode(value)) ?? Data()
     }
@@ -58,12 +65,46 @@ import UIKit
     }
     func setLaunchPreference(_ entry: LibraryEntry, generated: Bool) {
         UserDefaults.standard.set(generated,forKey:preferenceKey(entry))
+        if generated { UserDefaults.standard.set(false, forKey: "TouchPackLocal." + identityKey(entry)) }
         status="Input mode saved · next launch"
     }
     func preferStockNextLaunch() {
-        guard let personalKey else { return }
-        UserDefaults.standard.set(false,forKey:"TouchPackGenerated."+personalKey)
+        guard let gameKey else { return }
+        UserDefaults.standard.set(false,forKey:"TouchPackGenerated."+gameKey)
         status="Stock input profile saved · next launch"
+    }
+    private func identityKey(_ entry: LibraryEntry) -> String {
+        let i = request(entry).identity
+        return Self.hash(Self.encoded([i.executable, i.storeID, i.edition]))
+    }
+    func authoringChoice(_ entry: LibraryEntry, key: String) -> String {
+        UserDefaults.standard.string(forKey: "TouchPack." + key + "." + entry.launchRelativePath.lowercased()) ?? "auto"
+    }
+    func setAuthoringChoice(_ entry: LibraryEntry, key: String, value: String) {
+        UserDefaults.standard.set(value, forKey: "TouchPack." + key + "." + entry.launchRelativePath.lowercased())
+        status = "Preparation preference saved"
+    }
+    func usePreset(_ entry: LibraryEntry) {
+        let req = request(entry)
+        let proposed = req.requirements["genre"] ?? "first-person"
+        let genre = BCDPackCatalog.genres.contains { $0.0 == proposed } ? proposed : "third-person"
+        let mode = authoringChoice(entry, key: "mode") == "keyboardMouse" ? "keyboardMouse" : "controller"
+        let preset = BCDPackAuthoring.preset(identity: req.identity, title: entry.title, genre: genre, mode: mode)
+        do {
+            try preset.validate(for: req.identity)
+            let key = identityKey(entry)
+            try Self.encoded(preset).write(to: folder.appendingPathComponent("local-" + key + ".json"), options: .atomic)
+            UserDefaults.standard.set(true, forKey: "TouchPackLocal." + key)
+            UserDefaults.standard.set(true, forKey: preferenceKey(entry))
+            status = "Customizable preset ready · next launch. Verify its raw bindings in the game."
+        } catch { status = "Preset could not be saved: \(error)" }
+    }
+    func summary(_ entry: LibraryEntry) -> String {
+        let req = request(entry), key = Self.hash(Self.encoded(req.identity))
+        if UserDefaults.standard.bool(forKey: "TouchPackLocal." + identityKey(entry)) { return "Personal preset selected · edit in game" }
+        if let p = cached(key, identity: req.identity) { return "Validated · \(p.actions.count) actions · physical test required" }
+        if let job = jobs[key] { return "Preparation \(job.state) · stock controls remain available" }
+        return "Prepare researched controls or start from an offline preset"
     }
     private static func bindingText(_ url: URL) -> String? {
         guard let handle = try? FileHandle(forReadingFrom:url) else { return nil }
@@ -95,7 +136,8 @@ import UIKit
             edition: "installed", build: entry.steamMetadataInstall ?? "unreported", bindingDigest: Self.hash(Self.encoded(bindings)))
         let wolf = entry.title.localizedCaseInsensitiveContains("Chronicles of the Wolf")
         let dread = entry.title.localizedCaseInsensitiveContains("Dread Delusion")
-        return Request(identity: identity, title: entry.title, bindings: bindings, requirements: ["phone":"iPhone 16 Pro Max landscape safe area", "pad":"iPad landscape independent reach", "hud":"BLACK thin outlines; reserve continuous swipe rectangle first", "ownership":"touch-down until release", "genre":wolf ? "side-scroller" : (dread ? "first-person" : "identify from game/bindings"), "mode":wolf && !bindings.isEmpty ? "keyboardMouse using actual named key bindings in config; numeric controller mapping unresolved. Direction hold buttons low left, frequent attack/jump right, occasional actions peripheral/radial. No LS, RS or fireAim outputs." : "prefer controller; unresolved meanings labelled by actual output"])
+        let genre = authoringChoice(entry, key: "genre"), mode = authoringChoice(entry, key: "mode")
+        return Request(identity: identity, title: entry.title, bindings: bindings, requirements: ["phone":"iPhone 16 Pro Max landscape safe area", "pad":"iPad landscape independent reach", "hud":"BLACK thin outlines; reserve continuous swipe rectangle first", "ownership":"touch-down until release", "genre":genre == "auto" ? (wolf ? "side-scroller" : (dread ? "first-person" : "identify from game/bindings")) : genre, "packVersion":"2", "inputMode":mode, "mode":mode != "auto" ? mode : wolf && !bindings.isEmpty ? "keyboardMouse using actual named key bindings in config; numeric controller mapping unresolved. Direction hold buttons low left, frequent attack/jump right, occasional actions peripheral/radial. No LS, RS or fireAim outputs." : "prefer controller; unresolved meanings labelled by actual output"])
     }
     func prepare(_ entry: LibraryEntry, regenerate: Bool = false) {
         guard entry.desktop != true else { return }
@@ -114,7 +156,7 @@ import UIKit
         return try? BCDControlPack.decode(d, for: identity)
     }
     func activate(_ entry: LibraryEntry?) {
-        guard let entry else { sessionID = nil; pack = nil; base = nil; return }
+        guard let entry else { sessionID = nil; pack = nil; base = nil; personalKey = nil; gameKey = nil; undoHistory.removeAll(); return }
         if sessionID == entry.id && !LibraryModel.shared.blocksGameplayTouch { return }
         // Changing a running HID session into XInput requires a new guest enumeration.
         if sessionID == entry.id && GamepadInput.sessionHIDKind != nil {
@@ -126,29 +168,24 @@ import UIKit
         }
         sessionID = entry.id
         let req = request(entry), key = Self.hash(Self.encoded(req.identity)); selectedKey = key
-        base = cached(key, identity: req.identity); pack = base
-        let editKey = Self.hash(Self.encoded([req.identity.executable, req.identity.storeID, req.identity.edition]))
-        personalKey = editKey
-        if let b = base, let personal = overrides[editKey] {
-            var merged = b
-            for device in [false, true] {
-                var layout = device ? merged.pad : merged.phone
-                let old = device ? personal.pad : personal.phone
-                for i in layout.controls.indices {
-                    if let c = old.controls.first(where: { $0.id == layout.controls[i].id }) {
-                        layout.controls[i].x = c.x; layout.controls[i].y = c.y
-                        layout.controls[i].radius = c.radius; layout.controls[i].hitRadius = c.hitRadius; layout.controls[i].opacity = c.opacity
-                        if ["button", "fireAim"].contains(c.role) && ["button", "fireAim"].contains(layout.controls[i].role) { layout.controls[i].role = c.role }
-                    }
-                }
-                if let duplicate = old.controls.first(where: { $0.id == "left-duplicate" }), b.actions.contains(where: { $0.id == duplicate.action }) { layout.controls.append(duplicate) }
-                if device { merged.pad = layout } else { merged.phone = layout }
-            }
-            merged.aim = personal.aim
-            if (try? merged.validate(for: b.identity)) != nil { pack = merged }
+        gameKey = Self.hash(Self.encoded([req.identity.executable, req.identity.storeID, req.identity.edition]))
+        let localSelected = UserDefaults.standard.bool(forKey: "TouchPackLocal." + gameKey!)
+        var local: BCDControlPack?
+        if localSelected, let data = try? Data(contentsOf: folder.appendingPathComponent("local-" + gameKey! + ".json")), var candidate = try? BCDControlPack.decode(data) {
+            candidate.identity = req.identity // A player-selected template follows this installation; generated caches never bypass identity matching.
+            if (try? candidate.validate(for: req.identity)) != nil { local = candidate }
+        }
+        base = local ?? cached(key, identity: req.identity); pack = base
+        personalKey = local.map { gameKey! + "." + $0.id } ?? gameKey
+        undoHistory.removeAll()
+        var editFailure: String?
+        if let b = base, let personal = overrides[personalKey!] {
+            do { pack = try BCDPackAuthoring.merge(base: b, personal: personal.pack, baseline: personal.baseline) }
+            catch { editFailure = "Personal edits need review · validated base active: \(error)" }
         }
         if let p = pack { if !p.contexts.contains(context) { context = p.contexts[0] }; status = "Validated · playtest required" }
         else { status = "Stock fallback · pack pending"; prepare(entry) }
+        if let editFailure { status = editFailure }
         for k in jobs.keys where jobs[k]?.state != "validated" { resume(k) }
     }
     private func resume(_ key: String) {
@@ -182,16 +219,33 @@ import UIKit
             }
         }
     }
-    func saveEdits(_ value: BCDControlPack) {
-        guard let key = personalKey, (try? value.validate()) != nil else { status = "Edit would cover reserved aim area"; return }
-        pack = value; overrides[key] = value
-        try? Self.encoded(overrides).write(to: folder.appendingPathComponent("overrides.json"), options: .atomic)
+    @discardableResult func saveEdits(_ value: BCDControlPack, recordUndo: Bool = true) -> Bool {
+        guard let key = personalKey, let base else { return false }
+        do {
+            try value.validate(for: base.identity)
+            guard value.inputMode == base.inputMode else { throw BCDControlPack.Invalid.reason("Changing input mode requires a preset and a new launch.") }
+            var updated = overrides
+            updated[key] = PersonalEdit(pack: value, baseline: base)
+            try Self.encoded(updated).write(to: folder.appendingPathComponent("personal-edits-v2.json"), options: .atomic)
+            if recordUndo, let current = pack { undoHistory.append(current); if undoHistory.count > 20 { undoHistory.removeFirst() } }
+            overrides = updated; pack = value; status = "Personal controls saved · this game"
+            return true
+        } catch { status = "Edit not saved: \(error)"; return false }
+    }
+    func undoEdit() {
+        guard let previous = undoHistory.last else { return }
+        if saveEdits(previous, recordUndo: false) { undoHistory.removeLast() }
     }
     func reset() {
         guard let key = personalKey else { return }
-        overrides[key] = nil; pack = base
-        try? Self.encoded(overrides).write(to: folder.appendingPathComponent("overrides.json"), options: .atomic)
+        do {
+            var updated = overrides; updated[key] = nil
+            try Self.encoded(updated).write(to: folder.appendingPathComponent("personal-edits-v2.json"), options: .atomic)
+            if let current = pack { undoHistory.append(current) }
+            overrides = updated; pack = base; status = "Preset restored · personal edits can be undone"
+        } catch { status = "Reset not saved: \(error)" }
     }
+
 }
 
 struct BCDPackLayer: View {
@@ -228,12 +282,14 @@ struct BCDPackInspector: View {
     @ObservedObject var store = BCDPackStore.shared
     @State var selected = ""
     @State var pad = UIDevice.current.userInterfaceIdiom == .pad
+    @State private var exporting = false, importing = false
     func edit(_ f: (inout BCDControlPack) -> Void) { if var p = store.pack { f(&p); store.saveEdits(p) } }
     var body: some View {
         VStack(spacing: 8) {
             HStack {
                 Text("Edit controls").font(.headline)
                 Spacer()
+                Button("Undo", systemImage: "arrow.uturn.backward") { store.undoEdit() }
                 Button("Back to game", systemImage: "xmark") { store.editing = false }
                     .frame(minHeight: 44).accessibilityIdentifier("pack-editor-close")
             }
@@ -242,6 +298,13 @@ struct BCDPackInspector: View {
             Text(store.status).font(.caption)
             Toggle("iPad layout", isOn: $pad)
             if let p = store.pack {
+                Text(p.inputMode == "controller" ? "Xbox controller controls" : "Keyboard and mouse controls").font(.subheadline)
+                Button("Add button", systemImage: "plus.circle") {
+                    do {
+                        let updated = try BCDPackAuthoring.addButton(to: p, context: store.context)
+                        if store.saveEdits(updated) { selected = updated.phone.controls.last?.id ?? "" }
+                    } catch { store.status = String(describing: error) }
+                }
                 Picker("Control", selection: $selected) {
                     Text("Choose").tag("")
                     ForEach((pad ? p.pad : p.phone).controls, id: \.id) { c in Text("\(c.id): \(p.actions.first { $0.id == c.action }?.label ?? "Radial")").tag(c.id) }
@@ -262,8 +325,12 @@ struct BCDPackInspector: View {
                         }
                     }
                 }
-                Text("Aim sensitivity \(p.aim.sensitivity, specifier: "%.2f")")
+                BCDPackActionEditor(preferredAction: (pad ? p.pad : p.phone).controls.first { $0.id == selected }?.action ?? "")
+                Text(p.inputMode == "controller" ? "Swipe response \(p.aim.sensitivity, specifier: "%.2f")×" : "Mouse sensitivity \(p.aim.sensitivity, specifier: "%.2f")×")
                 Slider(value: Binding(get: { p.aim.sensitivity }, set: { v in edit { $0.aim.sensitivity = v } }), in: 0.1...8)
+                if p.inputMode == "controller" {
+                    Text("Controls how quickly a swipe reaches full stick. Set maximum camera speed in the game's look-sensitivity settings.").font(.caption)
+                }
                 Text("Vertical scale")
                 Slider(value: Binding(get: { p.aim.vertical }, set: { v in edit { $0.aim.vertical = v } }), in: 0.25...2)
                 Toggle("Invert vertical", isOn: Binding(get: { p.aim.invertY }, set: { v in edit { $0.aim.invertY = v } }))
@@ -271,16 +338,160 @@ struct BCDPackInspector: View {
                 Slider(value: Binding(get: { p.aim.deadZone }, set: { v in edit { $0.aim.deadZone = v } }), in: 0...0.4)
             }
             Toggle("Show actual hit regions", isOn: $store.debug)
+            Button("Export controls", systemImage: "square.and.arrow.up") { exporting = true }
+            Button("Import controls for this game", systemImage: "square.and.arrow.down") { importing = true }
             HStack { Button("Reset") { store.reset() }; Button("Done") { store.editing = false } }
             }
             }
         }.padding(12).background(.ultraThinMaterial).clipShape(RoundedRectangle(cornerRadius: 14))
+        .fileExporter(isPresented: $exporting, document: BCDPackDocument(pack: store.pack), contentType: .json, defaultFilename: "game-touch-controls") { result in
+            if case .failure(let error) = result { store.status = "Export failed: \(error.localizedDescription)" }
+        }
+        .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
+            do {
+                let url = try result.get(), access = url.startAccessingSecurityScopedResource()
+                defer { if access { url.stopAccessingSecurityScopedResource() } }
+                let handle = try FileHandle(forReadingFrom: url); defer { try? handle.close() }
+                let data = try handle.read(upToCount: 262145) ?? Data()
+                let value = try BCDControlPack.decode(data, for: store.pack?.identity)
+                guard value.inputMode == store.pack?.inputMode else { throw BCDControlPack.Invalid.reason("Choose a preset with the imported input mode before launching the game.") }
+                _ = store.saveEdits(value)
+            } catch { store.status = "Import not applied: \(error)" }
+        }
     }
     func changeControl(_ f: (inout BCDControlPack.Control) -> Void) {
         edit { p in
             if pad, let i = p.pad.controls.firstIndex(where: { $0.id == selected }) { f(&p.pad.controls[i]) }
             if !pad, let i = p.phone.controls.firstIndex(where: { $0.id == selected }) { f(&p.phone.controls[i]) }
         }
+    }
+}
+
+struct BCDPackDocument: FileDocument {
+    static var readableContentTypes: [UTType] { [.json] }
+    var pack: BCDControlPack?
+    init(pack: BCDControlPack?) { self.pack = pack }
+    init(configuration: ReadConfiguration) throws {
+        pack = try BCDControlPack.decode(configuration.file.regularFileContents ?? Data())
+    }
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        guard let pack else { throw BCDControlPack.Invalid.reason("No controls to export") }
+        try pack.validate()
+        return FileWrapper(regularFileWithContents: BCDPackStore.encoded(pack))
+    }
+}
+
+/// The same action editor serves generated packs and offline templates.
+struct BCDPackActionEditor: View {
+    @ObservedObject private var store = BCDPackStore.shared
+    var preferredAction: String
+    @State private var selected = ""
+    @State private var label = "", icon = "hand.tap", output = "A", behavior = "tap"
+    @State private var contexts = Set<String>()
+    @State private var modifiers = Set<Int32>()
+    @State private var showIcons = false, iconSearch = "", onRadial = false
+    private var action: BCDControlPack.Action? { store.pack?.actions.first { $0.id == selected } }
+    private var outputs: [String] {
+        guard let p = store.pack else { return [] }
+        if p.inputMode == "controller" {
+            if action?.output == "LS" || action?.output == "RS" { return [action!.output] }
+            return BCDPackCatalog.buttons
+        }
+        var choices = BCDPackCatalog.keys.map { "key:\($0.0)" } + ["mouse:left", "mouse:right", "mouse:middle", "mouse:wheelUp", "mouse:wheelDown"]
+        if !choices.contains(output) { choices.append(output) }
+        return choices
+    }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Divider()
+            Picker("Action", selection: $selected) {
+                Text("Choose action").tag("")
+                ForEach(store.pack?.actions ?? [], id: \.id) { a in Text(a.label).tag(a.id) }
+            }.accessibilityIdentifier("pack-action-picker")
+            if let a = action, let p = store.pack {
+                TextField("Button label", text: $label).textFieldStyle(.roundedBorder)
+                Picker("Sends", selection: $output) {
+                    ForEach(outputs, id: \.self) { value in Text(BCDPackCatalog.outputLabel(value)).tag(value) }
+                }
+                if p.inputMode == "keyboardMouse", output.hasPrefix("key:") {
+                    HStack {
+                        ForEach([Int32(17),16,18], id: \.self) { key in
+                            Toggle(BCDPackCatalog.outputLabel("key:\(key)"), isOn: Binding(get: { modifiers.contains(key) }, set: { on in
+                                if on { modifiers.insert(key) } else { modifiers.remove(key) }
+                            })).toggleStyle(.button)
+                        }
+                    }
+                }
+                if p.inputMode == "keyboardMouse" {
+                    TextField("Advanced binding, e.g. keys:17+67", text: $output).textInputAutocapitalization(.never).autocorrectionDisabled().textFieldStyle(.roundedBorder)
+                }
+                if !["LS", "RS"].contains(a.output) {
+                    Picker("Press behavior", selection: $behavior) {
+                        Text("Hold while touched").tag("hold"); Text("Tap on touch").tag("tap"); Text("Tap on release").tag("release")
+                    }
+                    Toggle("Also available on Actions radial", isOn: $onRadial)
+                }
+                Button { showIcons.toggle() } label: { Label("Icon: " + (BCDPackCatalog.icons.first { $0.id == icon }?.label ?? icon), systemImage: icon) }
+                if showIcons {
+                    TextField("Find icon", text: $iconSearch).textFieldStyle(.roundedBorder)
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 10) {
+                        ForEach(BCDPackCatalog.icons.filter { iconSearch.isEmpty || $0.label.localizedCaseInsensitiveContains(iconSearch) }) { entry in
+                            Button { icon = entry.id; showIcons = false } label: {
+                                VStack { Image(systemName: entry.id).font(.title3); Text(entry.label).font(.caption2) }.frame(maxWidth: .infinity, minHeight: 48)
+                            }.accessibilityLabel(entry.label)
+                        }
+                    }
+                }
+                Text("Show in contexts").font(.caption)
+                ForEach(p.contexts, id: \.self) { c in
+                    Toggle(c, isOn: Binding(get: { contexts.contains(c) }, set: { on in
+                        if on { contexts.insert(c) } else { contexts.remove(c) }
+                    }))
+                }
+                Text("Current binding: " + BCDPackCatalog.outputLabel(a.output)).font(.caption)
+                Button("Save action", systemImage: "checkmark") { save() }.accessibilityIdentifier("pack-action-save")
+                if !["LS", "RS"].contains(a.output) {
+                    Button("Remove action", role: .destructive) {
+                        var changed = p; BCDPackAuthoring.removeAction(a.id, from: &changed)
+                        if store.saveEdits(changed) { selected = "" }
+                    }
+                }
+            }
+            Divider()
+        }
+        .onAppear { selected = preferredAction.isEmpty ? (store.pack?.actions.first?.id ?? "") : preferredAction; load() }
+        .onChange(of: preferredAction) { _, value in if !value.isEmpty { selected = value; load() } }
+        .onChange(of: selected) { _, _ in load() }
+    }
+    private func load() {
+        guard let a = action else { return }
+        label = a.label; icon = a.icon; behavior = a.behavior; contexts = Set(a.contexts)
+        modifiers = []
+        if let keys = BCDPackCatalog.keyCodes(a.output), keys.count > 1, keys.dropLast().allSatisfy({ [17,16,18].contains($0) }) {
+            output = "key:\(keys.last!)"; modifiers = Set(keys.dropLast())
+        } else { output = a.output }
+        onRadial = store.pack?.radial.contains(a.id) == true
+    }
+    private func save() {
+        guard var p = store.pack, let i = p.actions.firstIndex(where: { $0.id == selected }) else { return }
+        var binding = output
+        if p.inputMode == "keyboardMouse", output.hasPrefix("key:"), let key = BCDPackCatalog.keyCodes(output)?.first {
+            let chord = [Int32(17),16,18].filter { modifiers.contains($0) && $0 != key } + [key]
+            binding = chord.count == 1 ? "key:\(key)" : "keys:" + chord.map(String.init).joined(separator: "+")
+        }
+        BCDPackAuthoring.ensurePlayerEvidence(&p)
+        p.version = 2
+        if binding != p.actions[i].output { p.actions[i].evidence = "player-binding" }
+        p.actions[i].label = label; p.actions[i].icon = icon; p.actions[i].output = binding
+        p.actions[i].behavior = behavior; p.actions[i].contexts = p.contexts.filter { contexts.contains($0) }
+        if onRadial, !p.radial.contains(selected) { p.radial.append(selected) }
+        if !onRadial { p.radial.removeAll { $0 == selected } }
+        for pad in [false,true] {
+            var layout = pad ? p.pad : p.phone
+            for j in layout.controls.indices where layout.controls[j].action == selected && layout.controls[j].role == "fireAim" && behavior != "hold" { layout.controls[j].role = "button" }
+            if pad { p.pad = layout } else { p.phone = layout }
+        }
+        _ = store.saveEdits(p)
     }
 }
 

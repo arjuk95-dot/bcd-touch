@@ -2,6 +2,7 @@ import Foundation
 
 @main struct TouchPackChecks {
     static func main() throws {
+        try checkTouchAuthoring()
         var records: [[String:Double]] = []
         let calibration = BCDMouseJoystick.Calibration()
         for hz in [60.0, 120.0] {
@@ -133,7 +134,7 @@ import Foundation
         }
         for path in CommandLine.arguments.dropFirst() {
             let p = try BCDControlPack.decode(Data(contentsOf: URL(fileURLWithPath:path)))
-            var invalid = p; invalid.version = 2
+            var invalid = p; invalid.version = 999
             assert((try? invalid.validate()) == nil)
             invalid = p; invalid.phone.controls[0].hitRadius = 0.9
             assert((try? invalid.validate()) == nil)
