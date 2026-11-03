@@ -23,11 +23,14 @@ enum BCDPackCatalog {
         ("strategy", "Strategy / adventure")
     ]
     static let buttons = ["A", "B", "X", "Y", "LB", "RB", "LT", "RT", "L3", "R3", "Menu", "View", "D↑", "D↓", "D←", "D→"]
-    static let keys: [(Int, String)] = [(8,"Backspace"),(9,"Tab"),(13,"Enter"),(16,"Shift"),(17,"Ctrl"),(18,"Alt"),(27,"Esc"),(32,"Space"),
-        (33,"Page Up"),(34,"Page Down"),(35,"End"),(36,"Home"),(37,"Left"),(38,"Up"),(39,"Right"),(40,"Down"),(45,"Insert"),(46,"Delete")]
-        + (48...57).map { ($0, String(UnicodeScalar($0)!)) }
-        + (65...90).map { ($0, String(UnicodeScalar($0)!)) }
-        + (112...135).map { ($0, "F\($0 - 111)") }
+    static let keys: [(Int, String)] = {
+        var result: [(Int, String)] = [(8,"Backspace"),(9,"Tab"),(13,"Enter"),(16,"Shift"),(17,"Ctrl"),(18,"Alt"),(27,"Esc"),(32,"Space"),
+            (33,"Page Up"),(34,"Page Down"),(35,"End"),(36,"Home"),(37,"Left"),(38,"Up"),(39,"Right"),(40,"Down"),(45,"Insert"),(46,"Delete")]
+        for code in 48...57 { result.append((code, String(UnicodeScalar(code)!))) }
+        for code in 65...90 { result.append((code, String(UnicodeScalar(code)!))) }
+        for code in 112...135 { result.append((code, "F\(code - 111)")) }
+        return result
+    }()
     static func keyCodes(_ output: String) -> [Int32]? {
         let values: [Substring]
         if output.hasPrefix("key:") { values = [output.dropFirst(4)] }
