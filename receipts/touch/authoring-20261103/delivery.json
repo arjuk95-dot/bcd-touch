@@ -3,19 +3,27 @@
   "branch": "wo-bcd-touch-001",
   "appSource": "6c27cf87eab5a3094c5f078b0a8bf6e91e3ad7f3",
   "buildRun": "https://github.com/arjunkl/bcd-touch/actions/runs/41604861178",
-  "build": "in progress",
-  "nativePackaging": "not started",
+  "build": "passed",
+  "nativePackaging": "passed",
   "installedOnPhone": false,
   "physicallyTested": false,
   "currentInstalledAppSource": "df25bb3f0bb7308b81a79adcd79f4242502e7ac4",
   "sourceChecks": "Exact-source production SDK/stock/worker checks and 35-image simulator/store/restart suite passed; selected layouts visually reviewed",
   "pending": [
-    "Full archive and native existing-slot IPA packaging",
-    "New phone installation and physical editor/input-mode tests",
-    "Phone worker endpoint switch to the updated isolated worker after source verification",
-    "Original outstanding guest/hardware/iPad matrix"
+    "USB connection/unlock for fresh metadata backup and verified SideStore staging",
+    "Personal signing/update in existing BCD slot and installed-source/rights readback",
+    "Phone worker endpoint switch to updated port 8939 after source verification",
+    "Physical editor/new input-mode tests and original outstanding guest/controller/iPad matrix"
   ],
   "workerPort": 8939,
   "workerCachedHTTP200": true,
-  "phoneWorkerEndpointUpdated": false
+  "phoneWorkerEndpointUpdated": false,
+  "localIPA": "BCD-Touch-controls-6c27cf8.ipa",
+  "bytes": 185690749,
+  "sha256": "ade1826a5de6273982ac21d429690b5987b42a8f2c30312a3eab97e39a569bfa",
+  "packageRun": "https://github.com/arjunkl/bcd-touch/actions/runs/41614413524",
+  "localArchiveAndCRCChecks": "passed",
+  "stagedOnPhone": false,
+  "freshBackup": "Not completed: paired phone absent from usbmux; no phone writes performed",
+  "workerSource": "e8126bad10c3e4cd4d6b3eeec6be77bc4fc050f9"
 }

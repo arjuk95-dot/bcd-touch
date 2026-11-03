@@ -1,6 +1,6 @@
 # Controls for another game
 
-This phase shares one editor between researched game packs and offline genre presets. Exact-source SDK checks and the simulator/store/restart fixtures pass; the full archive is running. This authoring phase is not installed on the owner's phone yet. The accepted Dread timing build remains `df25bb3`; raising Dread's own look sensitivity improved camera speed. The editor's renamed **Swipe response** scales how fast finger motion reaches full right-stick output. It cannot raise the game's maximum turn rate.
+This phase shares one editor between researched game packs and offline genre presets. Exact-source SDK checks, simulator/store/restart fixtures, the full archive and native sideload packaging pass. The verified existing-slot IPA is `BCD-Touch-controls-6c27cf8.ipa` (185,690,749 bytes, SHA-256 `ade1826a5de6273982ac21d429690b5987b42a8f2c30312a3eab97e39a569bfa`). This authoring phase is not installed on the owner's phone yet. The accepted Dread timing build remains `df25bb3`; raising Dread's own look sensitivity improved camera speed. The editor's renamed **Swipe response** scales how fast finger motion reaches full right-stick output. It cannot raise the game's maximum turn rate.
 
 ## On the phone
 
@@ -38,7 +38,13 @@ python tools/touch-packs/worker.py generate touch-evidence/game-request.json --s
 
 Use `--regenerate` on the worker command to replace an existing cached result after changing preparation preferences. Use the actual store ID or `local`, actual executable and known edition/build. Add `--bindings PATH` for each selected text input configuration (32 KiB per file, 48 KiB total). This tool reads those files without editing them. It sends file names and contents, not account/registry directories. Request identity includes their digest. To apply through the app, use the app's own install request identity; a manually guessed executable/build may not match it.
 
-The LAN worker command and pairing configuration are in [the worker README](tools/touch-packs/README.md). On this PC, the updated worker is already running on port 8939 with a separate validated cache, using the existing private pairing token. The original port-8937 service is retained. The phone endpoint will switch only after the new build is verified; the current phone configuration is unchanged. Credentials remain on the desktop. Generation, validation and physical testing remain separate statuses. Controller packs reject keyboard/mouse output, including gestures and radial selections. Pack version 2 adds key chords, middle click and wheel actions; existing version 1 packs remain supported. Older clients reject version 2 and keep their fallback.
+The LAN worker command and pairing configuration are in [the worker README](tools/touch-packs/README.md). On this PC, the updated worker is already running on port 8939 with a separate validated cache, using the existing private pairing token. The original port-8937 service is retained. The phone endpoint will switch after installation and source verification; the current phone configuration is unchanged. Credentials remain on the desktop. Generation, validation and physical testing remain separate statuses. Controller packs reject keyboard/mouse output, including gestures and radial selections. Pack version 2 adds key chords, middle click and wheel actions; existing version 1 packs remain supported. Older clients reject version 2 and keep their fallback.
+
+After restarting this PC, the matching worker command is below. It is already running during this session; do not start a duplicate listener.
+
+```powershell
+python tools/touch-packs/worker.py serve --host 0.0.0.0 --port 8939 --state C:/Users/arjun/.codex/bcd-touch-worker-v2-state --token-file C:/Users/arjun/.codex/bcd-touch-worker-token.txt
+```
 
 ## Verification scope
 

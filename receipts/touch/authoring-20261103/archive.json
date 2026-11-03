@@ -1,14 +1,14 @@
 {
-  "conclusion": "",
+  "conclusion": "success",
   "headSha": "6c27cf87eab5a3094c5f078b0a8bf6e91e3ad7f3",
   "jobs": [
     {
-      "completedAt": "0001-01-01T00:00:00Z",
-      "conclusion": "",
+      "completedAt": "2026-11-03T09:42:24Z",
+      "conclusion": "success",
       "databaseId": 125812670259,
       "name": "build",
       "startedAt": "2026-11-03T08:40:42Z",
-      "status": "in_progress",
+      "status": "completed",
       "steps": [
         {
           "completedAt": "2026-11-03T08:41:03Z",
@@ -459,977 +459,985 @@
           "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T08:57:56Z",
+          "conclusion": "success",
           "name": "Build d3d11-src.dll (DXMT d3d11 from source, SwapDeviceContextState)",
           "number": 57,
           "startedAt": "2026-11-03T08:51:28Z",
-          "status": "in_progress"
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T08:57:57Z",
+          "conclusion": "success",
           "name": "FEX submodule revision",
           "number": 58,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T08:57:56Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T08:57:59Z",
+          "conclusion": "success",
           "name": "Restore FEX iOS build",
           "number": 59,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T08:57:57Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T08:57:59Z",
+          "conclusion": "skipped",
           "name": "Patch FEX IOS_RPM_GUARD for the system-allocator branch",
           "number": 60,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T08:57:59Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T08:57:59Z",
+          "conclusion": "skipped",
           "name": "Guard FEX diagnostic probes for the iOS static-lib target",
           "number": 61,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T08:57:59Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T08:57:59Z",
+          "conclusion": "skipped",
           "name": "Build FEX for iOS",
           "number": 62,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T08:57:59Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T08:57:59Z",
+          "conclusion": "success",
           "name": "Verify FEX iOS archives",
           "number": 63,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T08:57:59Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T08:57:59Z",
+          "conclusion": "skipped",
           "name": "Save FEX iOS build",
           "number": 64,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T08:57:59Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T08:58:02Z",
+          "conclusion": "success",
           "name": "Restore FEX ARM64EC build",
           "number": 65,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T08:57:59Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:02:36Z",
+          "conclusion": "success",
           "name": "Build xtajit64.dll (FEX fixes, AVX opt-in)",
           "number": 66,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T08:58:02Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:02:36Z",
+          "conclusion": "skipped",
           "name": "Save FEX ARM64EC build",
           "number": 67,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:02:36Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:02:39Z",
+          "conclusion": "success",
           "name": "Restore FEX WOW64 build",
           "number": 68,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:02:36Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:04:41Z",
+          "conclusion": "success",
           "name": "Build xtajit.dll (WOW64, CPUID index fix)",
           "number": 69,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:02:39Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:04:41Z",
+          "conclusion": "skipped",
           "name": "Save FEX WOW64 build",
           "number": 70,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:04:41Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:06:42Z",
+          "conclusion": "success",
           "name": "Restore LLVM 15.0.7 iOS build",
           "number": 71,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:04:41Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:06:42Z",
+          "conclusion": "skipped",
           "name": "Build LLVM 15.0.7 for iOS (two-stage, per build/dxmt-ios/README.md)",
           "number": 72,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:06:42Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:06:42Z",
+          "conclusion": "success",
           "name": "Verify LLVM iOS build",
           "number": 73,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:06:42Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:06:42Z",
+          "conclusion": "skipped",
           "name": "Save LLVM 15.0.7 iOS build",
           "number": 74,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:06:42Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:06:45Z",
+          "conclusion": "success",
           "name": "Ensure Metal compiler",
           "number": 75,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:06:42Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:06:50Z",
+          "conclusion": "success",
           "name": "Generate DXMT shader headers",
           "number": 76,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:06:45Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:06:51Z",
+          "conclusion": "success",
           "name": "Locate Metal Shader Converter headers",
           "number": 77,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:06:50Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:06:56Z",
+          "conclusion": "success",
           "name": "Build Madeira Dock host",
           "number": 78,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:06:51Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:06:57Z",
+          "conclusion": "success",
           "name": "Patch DXMT present pacing with 30/40 FPS modes",
           "number": 79,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:06:56Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:06:57Z",
+          "conclusion": "success",
           "name": "Patch DXMT with frame generation",
           "number": 80,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:06:57Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:06:57Z",
+          "conclusion": "success",
           "name": "Patch DXMT with GPU fault attribution",
           "number": 81,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:06:57Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:06:57Z",
+          "conclusion": "success",
           "name": "Patch DXMT buffer->texture blits with a depth/stencil aspect",
           "number": 82,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:06:57Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:06:57Z",
+          "conclusion": "success",
           "name": "Patch DXMT with DXIL tessellation emulation",
           "number": 83,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:06:57Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:06:58Z",
+          "conclusion": "success",
           "name": "Patch DXMT constant buffers bound short",
           "number": 84,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:06:57Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:06:58Z",
+          "conclusion": "success",
           "name": "Patch DXMT to realign 16-bit index ranges",
           "number": 85,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:06:58Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:06:58Z",
+          "conclusion": "success",
           "name": "Patch DXMT vertex fetch bounds",
           "number": 86,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:06:58Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:06:59Z",
+          "conclusion": "success",
           "name": "Patch DXMT byte-aligned vertex fetch",
           "number": 87,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:06:58Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:06:59Z",
+          "conclusion": "success",
           "name": "Patch DXMT context state swap",
           "number": 88,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:06:59Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:06:59Z",
+          "conclusion": "success",
           "name": "Patch DXMT CopyStructureCount without a buffer",
           "number": 89,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:06:59Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:06:59Z",
+          "conclusion": "success",
           "name": "Patch DXMT render target views on a buffer",
           "number": 90,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:06:59Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:06:59Z",
+          "conclusion": "success",
           "name": "Patch DXMT SRV GetDesc mip count",
           "number": 91,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:06:59Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:06:59Z",
+          "conclusion": "success",
           "name": "Patch DXMT GS/TS draw-argument marshal loops",
           "number": 92,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:06:59Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:00Z",
+          "conclusion": "success",
           "name": "Patch DXMT d3d9.customDriver",
           "number": 93,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:06:59Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:00Z",
+          "conclusion": "success",
           "name": "Patch DXMT layer format",
           "number": 94,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:00Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:00Z",
+          "conclusion": "success",
           "name": "Patch DXMT tiny fullscreen window",
           "number": 95,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:00Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:00Z",
+          "conclusion": "success",
           "name": "Patch DXMT D3D9 fullscreen extent",
           "number": 96,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:00Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:00Z",
+          "conclusion": "success",
           "name": "Patch DXMT D3D9 index-buffer range refresh",
           "number": 97,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:00Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:01Z",
+          "conclusion": "success",
           "name": "Patch DXMT D3D9 query park time",
           "number": 98,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:00Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:01Z",
+          "conclusion": "success",
           "name": "Patch DXMT D3D9 texture format log",
           "number": 99,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:01Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:01Z",
+          "conclusion": "success",
           "name": "Patch DXMT D3D9 stuck query report",
           "number": 100,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:01Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:01Z",
+          "conclusion": "success",
           "name": "Patch DXMT D3D11 stuck query report",
           "number": 101,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:01Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:02Z",
+          "conclusion": "success",
           "name": "Patch DXMT mesh pipeline failures",
           "number": 102,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:01Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:02Z",
+          "conclusion": "success",
           "name": "Patch DXMT fault info",
           "number": 103,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:02Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:02Z",
+          "conclusion": "success",
           "name": "Patch airconv lean SM50 shaders",
           "number": 104,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:02Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:02Z",
+          "conclusion": "success",
           "name": "Patch winemetal includes for the new layout",
           "number": 105,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:02Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:02Z",
+          "conclusion": "success",
           "name": "Patch winemetal shared textures for iOS",
           "number": 106,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:02Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:02Z",
+          "conclusion": "success",
           "name": "Patch winemetal RAM cap for 8 GB devices",
           "number": 107,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:02Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:03Z",
+          "conclusion": "success",
           "name": "Patch airconv float experiments",
           "number": 108,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:02Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:03Z",
+          "conclusion": "success",
           "name": "Patch airconv texture load bounds",
           "number": 109,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:03Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:03Z",
+          "conclusion": "success",
           "name": "Patch airconv typed UAV store bounds",
           "number": 110,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:03Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:03Z",
+          "conclusion": "success",
           "name": "Patch winemetal luminance probe",
           "number": 111,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:03Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:03Z",
+          "conclusion": "success",
           "name": "Patch winemetal readback census",
           "number": 112,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:03Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:04Z",
+          "conclusion": "success",
           "name": "Patch winemetal probe safe read",
           "number": 113,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:04Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:04Z",
+          "conclusion": "success",
           "name": "Patch winemetal sampler reduction",
           "number": 114,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:04Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:04Z",
+          "conclusion": "success",
           "name": "Patch winemetal pipeline cache warm-up",
           "number": 115,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:04Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:04Z",
+          "conclusion": "success",
           "name": "Patch winemetal native shader-cache access",
           "number": 116,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:04Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:04Z",
+          "conclusion": "success",
           "name": "Patch winemetal empty fragment function",
           "number": 117,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:04Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:05Z",
+          "conclusion": "success",
           "name": "Patch winemetal GPU timeline for [frame]",
           "number": 118,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:04Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:05Z",
+          "conclusion": "success",
           "name": "Patch airconv God of War experiments",
           "number": 119,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:05Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:05Z",
+          "conclusion": "success",
           "name": "Patch airconv geometry shader input system values",
           "number": 120,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:05Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:05Z",
+          "conclusion": "success",
           "name": "Patch airconv geometry shader instance id",
           "number": 121,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:05Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:06Z",
+          "conclusion": "success",
           "name": "Patch winemetal GPU trace and render-pass experiment",
           "number": 122,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:05Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:06Z",
+          "conclusion": "success",
           "name": "Patch winemetal GPU stall watch and slow-frame trace",
           "number": 123,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:06Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:06Z",
+          "conclusion": "success",
           "name": "Patch winemetal GPU time for 32-bit callers",
           "number": 124,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:06Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:06Z",
+          "conclusion": "success",
           "name": "Patch winemetal lean render-pass descriptors",
           "number": 125,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:06Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:06Z",
+          "conclusion": "success",
           "name": "Patch winemetal frame cap for the power governor",
           "number": 126,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:06Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:06Z",
+          "conclusion": "success",
           "name": "Patch winemetal frame-time ring",
           "number": 127,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:06Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:07Z",
+          "conclusion": "success",
           "name": "Patch winemetal late render-pass store actions",
           "number": 128,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:06Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:07Z",
+          "conclusion": "success",
           "name": "Patch winemetal untracked placement heaps",
           "number": 129,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:07Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:07Z",
+          "conclusion": "success",
           "name": "Patch winemetal weak shader-cache SPI",
           "number": 130,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:07Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:07Z",
+          "conclusion": "success",
           "name": "Patch winemetal frame generation below iOS 26",
           "number": 131,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:07Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:07Z",
+          "conclusion": "success",
           "name": "Patch winemetal pause while inactive",
           "number": 132,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:07Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:16Z",
+          "conclusion": "success",
           "name": "Patch wine for the opt-in x64 machine answer (i386 farm only)",
           "number": 133,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:07Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:19Z",
+          "conclusion": "success",
           "name": "Patch wine with the exception-handler registration log (i386 farm only)",
           "number": 134,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:16Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:20Z",
+          "conclusion": "success",
           "name": "Patch wine with the msvcrt init diagnostics (i386 farm only)",
           "number": 135,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:19Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:20Z",
+          "conclusion": "success",
           "name": "i386 farm revision",
           "number": 136,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:20Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:25Z",
+          "conclusion": "success",
           "name": "Restore i386 farm",
           "number": 137,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:20Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:25Z",
+          "conclusion": "skipped",
           "name": "Build i386 farm (WoW64)",
           "number": 138,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:25Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:25Z",
+          "conclusion": "skipped",
           "name": "Save i386 farm",
           "number": 139,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:25Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:07:25Z",
+          "conclusion": "success",
           "name": "Put back the files patched for the i386 farm only (x64 machine answer)",
           "number": 140,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:25Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:09:39Z",
+          "conclusion": "success",
           "name": "Build d3d9-dxmt.dll (DXMT Direct3D 9 for 64-bit games, arm64ec)",
           "number": 141,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:07:25Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:09:40Z",
+          "conclusion": "success",
           "name": "Build d3d8to9.dll (Direct3D 8 on Direct3D 9, i386)",
           "number": 142,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:09:39Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:09:42Z",
+          "conclusion": "success",
           "name": "Build cnc-ddraw.dll (DirectDraw replacement, i386)",
           "number": 143,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:09:40Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:09:45Z",
+          "conclusion": "success",
           "name": "Build the fork-only smoke tests (bcd-smoke)",
           "number": 144,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:09:42Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:09:48Z",
+          "conclusion": "success",
           "name": "Build BCD Host",
           "number": 145,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:09:45Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:16:11Z",
+          "conclusion": "success",
           "name": "Build dxmt-ios",
           "number": 146,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:09:48Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:16:14Z",
+          "conclusion": "success",
           "name": "Combine DXMT + LLVM into libdxmt_combined.a",
           "number": 147,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:16:11Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:16:45Z",
+          "conclusion": "success",
           "name": "Build madeira_d3d12.dll from source",
           "number": 148,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:16:14Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:17:10Z",
+          "conclusion": "success",
           "name": "Build the Direct3D 9, 10 and 11 test programs",
           "number": 149,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:16:45Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:17:15Z",
+          "conclusion": "success",
           "name": "Build the system test programs (x64 and x86)",
           "number": 150,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:17:10Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:17:18Z",
+          "conclusion": "success",
           "name": "Build the runtime installer (bcd-runtimes-x64.exe)",
           "number": 151,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:17:15Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:17:20Z",
+          "conclusion": "success",
           "name": "Build the start helper (bcd-helper-x64.exe)",
           "number": 152,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:17:18Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:17:22Z",
+          "conclusion": "success",
           "name": "Build BCD's winebrowser.exe (three farms)",
           "number": 153,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:17:20Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:17:23Z",
+          "conclusion": "success",
           "name": "Retain verified unchanged base 7-Zip programs",
           "number": 154,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:17:22Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:17:56Z",
+          "conclusion": "success",
           "name": "Build DXMT nvapi64.dll",
           "number": 155,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:17:23Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:17:57Z",
+          "conclusion": "success",
           "name": "Build faultrep.dll",
           "number": 156,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:17:56Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:17:58Z",
+          "conclusion": "success",
           "name": "Build d3d12core.dll",
           "number": 157,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:17:57Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:18:24Z",
+          "conclusion": "success",
           "name": "Restore wine arm64ec build",
           "number": 158,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:17:58Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:32:08Z",
+          "conclusion": "success",
           "name": "Build extra Wine DLLs for arm64ec",
           "number": 159,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:18:24Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:32:14Z",
+          "conclusion": "success",
           "name": "Recover missing optional runtime files from the exact base release",
           "number": 160,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:32:08Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:32:14Z",
+          "conclusion": "success",
           "name": "Verify Wine media reader DLLs",
           "number": 161,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:32:14Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:32:14Z",
+          "conclusion": "success",
           "name": "Verify the opt-in DLLs the lists and rules name",
           "number": 162,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:32:14Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:32:14Z",
+          "conclusion": "skipped",
           "name": "Save wine arm64ec build",
           "number": 163,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:32:14Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:32:16Z",
+          "conclusion": "success",
           "name": "Build stand-in DLLs (d3d10, avifil32, vulkan-1)",
           "number": 164,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:32:14Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:32:21Z",
+          "conclusion": "success",
           "name": "Verify committed PE DLLs",
           "number": 165,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:32:16Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:32:35Z",
+          "conclusion": "success",
           "name": "Fetch the VC++ runtime DLLs from Microsoft",
           "number": 166,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:32:21Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:32:35Z",
+          "conclusion": "success",
           "name": "Report vcruntime contents",
           "number": 167,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:32:35Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:35:01Z",
+          "conclusion": "success",
           "name": "Build libmadeira_rppairing.a (Built-in StikJIT pairing)",
           "number": 168,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:32:35Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:35:02Z",
+          "conclusion": "success",
           "name": "Verify all linked archives exist",
           "number": 169,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:35:01Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:35:02Z",
+          "conclusion": "success",
           "name": "Stage licence copies",
           "number": 170,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:35:02Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
-          "name": "Stamp version 0.1.${{ steps.bn.outputs.n }}",
+          "completedAt": "2026-11-03T09:35:02Z",
+          "conclusion": "success",
+          "name": "Stamp version 0.1.626",
           "number": 171,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:35:02Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:35:06Z",
+          "conclusion": "success",
           "name": "StikJIT interface for the runner's Swift",
           "number": 172,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:35:02Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:41:21Z",
+          "conclusion": "success",
           "name": "Archive (unsigned)",
           "number": 173,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:35:06Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:41:25Z",
+          "conclusion": "success",
           "name": "Verify the macdrv symbols DXMT resolves at runtime",
           "number": 174,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:41:21Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:41:59Z",
+          "conclusion": "success",
           "name": "Package separate unsigned test IPA",
           "number": 175,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:41:25Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:42:14Z",
+          "conclusion": "success",
           "name": "Run actions/upload-artifact@v4",
           "number": 176,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:41:59Z",
+          "status": "completed"
         },
         {
-          "completedAt": "0001-01-01T00:00:00Z",
-          "conclusion": "",
+          "completedAt": "2026-11-03T09:42:20Z",
+          "conclusion": "success",
           "name": "Post Run actions/checkout@v4",
           "number": 352,
-          "startedAt": "0001-01-01T00:00:00Z",
-          "status": "pending"
+          "startedAt": "2026-11-03T09:42:14Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T09:42:21Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 353,
+          "startedAt": "2026-11-03T09:42:20Z",
+          "status": "completed"
         }
       ],
       "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41604861178/job/125812670259"
     }
   ],
-  "status": "in_progress",
+  "status": "completed",
   "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41604861178"
 }

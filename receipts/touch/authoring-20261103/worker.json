@@ -1,12 +1,13 @@
 {
-  "workerPID": 8168,
+  "workerPID": 25896,
   "port": 8939,
-  "source": "6c27cf87eab5a3094c5f078b0a8bf6e91e3ad7f3",
+  "source": "e8126bad10c3e4cd4d6b3eeec6be77bc4fc050f9",
   "isolatedState": true,
   "cachedHTTP": 200,
   "actions": 33,
   "newGeneration": false,
   "credentialsUnchanged": true,
   "originalWorkerLeftRunning": true,
-  "phoneEndpointChanged": false
+  "phoneEndpointChanged": false,
+  "layoutQualityChecksLoaded": true
 }

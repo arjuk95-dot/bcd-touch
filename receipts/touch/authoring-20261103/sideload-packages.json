@@ -1,0 +1,91 @@
+{
+  "conclusion": "success",
+  "headSha": "e8126bad10c3e4cd4d6b3eeec6be77bc4fc050f9",
+  "jobs": [
+    {
+      "completedAt": "2026-11-03T09:53:56Z",
+      "conclusion": "success",
+      "databaseId": 125844154217,
+      "name": "package",
+      "startedAt": "2026-11-03T09:51:33Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-03T09:51:37Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-03T09:51:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T09:52:12Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-03T09:51:37Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T09:52:21Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@v4",
+          "number": 3,
+          "startedAt": "2026-11-03T09:52:12Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T09:53:03Z",
+          "conclusion": "success",
+          "name": "Prepare update for the existing BCD slot",
+          "number": 4,
+          "startedAt": "2026-11-03T09:52:21Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T09:53:14Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 5,
+          "startedAt": "2026-11-03T09:53:03Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T09:53:44Z",
+          "conclusion": "success",
+          "name": "Prepare the separate install with sideload entitlements",
+          "number": 6,
+          "startedAt": "2026-11-03T09:53:14Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T09:53:53Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 7,
+          "startedAt": "2026-11-03T09:53:44Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T09:53:54Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 14,
+          "startedAt": "2026-11-03T09:53:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T09:53:54Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 15,
+          "startedAt": "2026-11-03T09:53:54Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41614413524/job/125844154217"
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41614413524"
+}
