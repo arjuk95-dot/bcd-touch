@@ -1,0 +1,1 @@
+PASS: production ControlsWindow routes twelve open-area points to pack surface; legacy mouse override suppressed; physical pointer and stock routing preserved. Actual simulator UIKit hit tests with engine/model boundary stubs, no guest.

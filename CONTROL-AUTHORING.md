@@ -1,6 +1,6 @@
 # Controls for another game
 
-This phase shares one editor between researched game packs and offline genre presets. It is source work under test, not installed on the owner's phone yet. The accepted Dread timing build remains `df25bb3`; raising Dread's own look sensitivity improved camera speed. The editor's renamed **Swipe response** scales how fast finger motion reaches full right-stick output. It cannot raise the game's maximum turn rate.
+This phase shares one editor between researched game packs and offline genre presets. Exact-source SDK checks and the simulator/store/restart fixtures pass; the full archive is running. This authoring phase is not installed on the owner's phone yet. The accepted Dread timing build remains `df25bb3`; raising Dread's own look sensitivity improved camera speed. The editor's renamed **Swipe response** scales how fast finger motion reaches full right-stick output. It cannot raise the game's maximum turn rate.
 
 ## On the phone
 
@@ -36,7 +36,7 @@ python tools/touch-packs/worker.py generate touch-evidence/game-request.json --s
 
 Use `--regenerate` on the worker command to replace an existing cached result after changing preparation preferences. Use the actual store ID or `local`, actual executable and known edition/build. Add `--bindings PATH` for each selected text input configuration (32 KiB per file, 48 KiB total). This tool reads those files without editing them. It sends file names and contents, not account/registry directories. Request identity includes their digest. To apply through the app, use the app's own install request identity; a manually guessed executable/build may not match it.
 
-The LAN worker command and pairing configuration are in [the worker README](tools/touch-packs/README.md). Credentials remain on the desktop. Generation, validation and physical testing remain separate statuses. Controller packs reject keyboard/mouse output, including gestures and radial selections. Pack version 2 adds key chords, middle click and wheel actions; existing version 1 packs remain supported. Older clients reject version 2 and keep their fallback.
+The LAN worker command and pairing configuration are in [the worker README](tools/touch-packs/README.md). On this PC, the updated worker is already running on port 8939 with a separate validated cache, using the existing private pairing token. The original port-8937 service is retained. The phone endpoint will switch only after the new build is verified; the current phone configuration is unchanged. Credentials remain on the desktop. Generation, validation and physical testing remain separate statuses. Controller packs reject keyboard/mouse output, including gestures and radial selections. Pack version 2 adds key chords, middle click and wheel actions; existing version 1 packs remain supported. Older clients reject version 2 and keep their fallback.
 
 ## Verification scope
 

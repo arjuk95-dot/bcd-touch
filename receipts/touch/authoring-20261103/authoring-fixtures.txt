@@ -1,0 +1,1 @@
+PASS: five genre presets in each input mode, phone and iPad geometry exported by production renderer; catalog symbols available. Simulator fixture, no actual iPad or game.

@@ -1,77 +1,75 @@
 {
   "conclusion": "success",
-  "headSha": "0f1c4c79705ea4a53288946a1f2e6e3efa2d717d",
+  "headSha": "6c27cf87eab5a3094c5f078b0a8bf6e91e3ad7f3",
   "jobs": [
     {
-      "completedAt": "2026-11-03T08:32:50Z",
+      "completedAt": "2026-11-03T08:50:03Z",
       "conclusion": "success",
-      "databaseId": 125806800024,
+      "databaseId": 125812035984,
       "name": "preview",
-      "startedAt": "2026-11-03T08:26:17Z",
+      "startedAt": "2026-11-03T08:39:09Z",
       "status": "completed",
       "steps": [
         {
-          "completedAt": "2026-11-03T08:26:19Z",
+          "completedAt": "2026-11-03T08:39:12Z",
           "conclusion": "success",
           "name": "Set up job",
           "number": 1,
-          "startedAt": "2026-11-03T08:26:18Z",
+          "startedAt": "2026-11-03T08:39:10Z",
           "status": "completed"
         },
         {
-          "completedAt": "2026-11-03T08:26:43Z",
+          "completedAt": "2026-11-03T08:39:46Z",
           "conclusion": "success",
           "name": "Run actions/checkout@v4",
           "number": 2,
-          "startedAt": "2026-11-03T08:26:19Z",
+          "startedAt": "2026-11-03T08:39:12Z",
           "status": "completed"
         },
         {
-          "completedAt": "2026-11-03T08:26:43Z",
+          "completedAt": "2026-11-03T08:39:46Z",
           "conclusion": "success",
           "name": "Select the iOS 18.5 simulator toolchain",
           "number": 3,
-          "startedAt": "2026-11-03T08:26:43Z",
+          "startedAt": "2026-11-03T08:39:46Z",
           "status": "completed"
         },
         {
-          "completedAt": "2026-11-03T08:32:42Z",
+          "completedAt": "2026-11-03T08:49:51Z",
           "conclusion": "success",
           "name": "Capture production renderer (no guest game)",
           "number": 4,
-          "startedAt": "2026-11-03T08:26:43Z",
+          "startedAt": "2026-11-03T08:39:46Z",
           "status": "completed"
         },
         {
-          "completedAt": "2026-11-03T08:32:46Z",
+          "completedAt": "2026-11-03T08:49:57Z",
           "conclusion": "success",
           "name": "Run actions/upload-artifact@v4",
           "number": 5,
-          "startedAt": "2026-11-03T08:32:42Z",
+          "startedAt": "2026-11-03T08:49:51Z",
           "status": "completed"
         },
         {
-          "completedAt": "2026-11-03T08:32:47Z",
+          "completedAt": "2026-11-03T08:49:59Z",
           "conclusion": "success",
           "name": "Post Run actions/checkout@v4",
           "number": 10,
-          "startedAt": "2026-11-03T08:32:46Z",
+          "startedAt": "2026-11-03T08:49:57Z",
           "status": "completed"
         },
         {
-          "completedAt": "2026-11-03T08:32:47Z",
+          "completedAt": "2026-11-03T08:50:00Z",
           "conclusion": "success",
           "name": "Complete job",
           "number": 11,
-          "startedAt": "2026-11-03T08:32:47Z",
+          "startedAt": "2026-11-03T08:49:59Z",
           "status": "completed"
         }
       ],
-      "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41603257890/job/125806800024"
+      "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41604853474/job/125812035984"
     }
   ],
   "status": "completed",
-  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41603257890",
-  "appSourceMatchesArchive": "b9e9c9390fee945d495e3cce0ecd60f82cc112e4",
-  "scope": "Simulator renderer, UIKit/controller/keyboard ownership and production store persistence fixtures; no physical iPad or game."
+  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41604853474"
 }
