@@ -10,7 +10,7 @@
   "currentInstalledAppSource": "df25bb3f0bb7308b81a79adcd79f4242502e7ac4",
   "sourceChecks": "Exact-source production SDK/stock/worker checks and 35-image simulator/store/restart suite passed; selected layouts visually reviewed",
   "pending": [
-    "USB connection/unlock for fresh metadata backup and verified SideStore staging",
+    "Owner Safari download and SideStore update over Wi-Fi; direct device backup/readback unavailable on this route",
     "Personal signing/update in existing BCD slot and installed-source/rights readback",
     "Phone worker endpoint switch to updated port 8939 after source verification",
     "Physical editor/new input-mode tests and original outstanding guest/controller/iPad matrix"
@@ -25,5 +25,6 @@
   "localArchiveAndCRCChecks": "passed",
   "stagedOnPhone": false,
   "freshBackup": "Not completed: paired phone absent from usbmux; no phone writes performed",
-  "workerSource": "e8126bad10c3e4cd4d6b3eeec6be77bc4fc050f9"
+  "workerSource": "e8126bad10c3e4cd4d6b3eeec6be77bc4fc050f9",
+  "transport": "Wi-Fi only, selected by owner; local HTTP full-file SHA and range checks passed"
 }

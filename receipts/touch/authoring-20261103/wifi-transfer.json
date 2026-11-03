@@ -1,0 +1,16 @@
+{
+  "bytes": 185690749,
+  "sha256": "ade1826a5de6273982ac21d429690b5987b42a8f2c30312a3eab97e39a569bfa",
+  "localHTTPReadbackVerified": true,
+  "headAndRangesVerified": true,
+  "directoryListing": false,
+  "privatePairingConfigReady": true,
+  "expiresAfterSeconds": 7200,
+  "phoneDownloadVerified": false,
+  "installed": false,
+  "freshPhoneBackup": false,
+  "transport": "Owner selected Wi-Fi only; no USB or pairing changes",
+  "status": "Wi-Fi download available; phone completion not confirmed",
+  "transportChoice": "Owner explicitly selected Wi-Fi transfer only",
+  "deviceFilesystemOrPairingChanged": false
+}
