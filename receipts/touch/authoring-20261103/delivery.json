@@ -1,0 +1,18 @@
+{
+  "base": "adc9cc742f52601a42f52ac6b4fbcc701bdb16ad",
+  "branch": "wo-bcd-touch-001",
+  "appSource": "b9e9c9390fee945d495e3cce0ecd60f82cc112e4",
+  "buildRun": "https://github.com/arjunkl/bcd-touch/actions/runs/41602521750",
+  "build": "in progress",
+  "nativePackaging": "not started",
+  "installedOnPhone": false,
+  "physicallyTested": false,
+  "currentInstalledAppSource": "df25bb3f0bb7308b81a79adcd79f4242502e7ac4",
+  "sourceChecks": "production Swift/SDK and worker checks passed; latest renderer/restart fixture retry pending",
+  "pending": [
+    "Full archive and native existing-slot IPA packaging",
+    "Final genre/editor visual review and restart fixture",
+    "New phone installation and physical editor/input-mode tests",
+    "Original outstanding guest/hardware/iPad matrix"
+  ]
+}

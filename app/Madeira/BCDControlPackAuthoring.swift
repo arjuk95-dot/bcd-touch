@@ -59,15 +59,17 @@ enum BCDPackAuthoring {
     /// Templates expose real outputs with honest raw labels, never guessed gameplay meanings.
     static func preset(identity: BCDControlPack.Identity, title: String, genre: String, mode: String) -> BCDControlPack {
         let controller = mode == "controller"
+        let platformer = genre == "side-scroller"
         let outputs = controller ? ["LS", "RS"] + BCDPackCatalog.buttons :
-            ["key:87", "key:83", "key:65", "key:68", "mouse:left", "mouse:right", "key:32", "key:69", "key:16", "key:27", "key:9", "mouse:wheelUp", "mouse:wheelDown"]
+            (platformer ? ["key:38", "key:40", "key:37", "key:39", "key:90", "key:88", "key:67", "key:86", "key:16", "key:27", "key:13", "key:9"] :
+            ["key:87", "key:83", "key:65", "key:68", "mouse:left", "mouse:right", "key:32", "key:69", "key:16", "key:27", "key:9", "mouse:wheelUp", "mouse:wheelDown"])
         var actions = outputs.enumerated().map { i, output in
             BCDControlPack.Action(id: "preset-\(i)", label: BCDPackCatalog.outputLabel(output),
                 icon: output == "LS" ? "figure.walk" : (output == "RS" ? "scope" : "circle"), output: output,
                 behavior: output.contains("wheel") || ["Menu", "View", "key:27", "key:9"].contains(output) ? "tap" : "hold",
                 evidence: "manual-preset", contexts: ["onFoot", "menu", "vehicle"])
         }
-        let primary = controller ? "RT" : "mouse:left"
+        let primary = controller ? "RT" : (platformer ? "key:90" : (genre == "racing" ? "key:87" : "mouse:left"))
         if let i = actions.firstIndex(where: { $0.output == primary }) {
             actions[i].icon = genre == "racing" ? "speedometer" : (genre == "strategy" ? "cursorarrow" : "burst")
         }
@@ -100,14 +102,25 @@ enum BCDPackAuthoring {
                 p.radial = remaining.dropFirst(5).map(\.id)
                 add("Menu",0.57,0.075,0.035); add("View",0.43,0.075,0.035)
             } else {
-                let directions = ["key:87","key:83","key:65","key:68"]
-                for (i, key) in directions.enumerated() {
+                let directions = platformer ? ["key:38","key:40","key:37","key:39"] : ["key:87","key:83","key:65","key:68"]
+                for (i, key) in directions.enumerated() where genre != "racing" {
                     let positions = [(0.14,0.66),(0.14,0.90),(0.065,0.79),(0.24,0.79)]
                     add(key,positions[i].0,positions[i].1,0.045)
                 }
-                add("mouse:left",0.89,isPad ? 0.78 : 0.70,isPad ? 0.08 : 0.10,genre == "first-person" ? "fireAim" : "button")
-                add("mouse:right",0.94,0.40,0.045); add("key:32",0.94,0.91,0.045); add("key:69",0.81,0.91,0.045)
-                add("key:27",0.57,0.075,0.035); add("key:9",0.43,0.075,0.035)
+                if genre == "racing" {
+                    add("key:65",0.07,0.79,0.06); add("key:68",isPad ? 0.21 : 0.25,0.79,0.06)
+                    add("key:87",0.89,isPad ? 0.78 : 0.70,isPad ? 0.08 : 0.10)
+                    add("key:83",0.94,0.40,0.055); add("key:32",0.95,0.91,0.045); add("key:69",0.81,0.91,0.045)
+                    add("key:27",0.57,0.075,0.035); add("key:9",0.43,0.075,0.035)
+                } else if platformer {
+                    add("key:90",0.88,isPad ? 0.78 : 0.72,isPad ? 0.08 : 0.10)
+                    add("key:88",0.95,0.91,0.05); add("key:67",0.94,0.40,0.045); add("key:86",0.81,0.91,0.045)
+                    add("key:27",0.57,0.075,0.035); add("key:13",0.43,0.075,0.035)
+                } else {
+                    add("mouse:left",0.89,isPad ? 0.78 : 0.70,isPad ? 0.08 : 0.10,genre == "first-person" ? "fireAim" : "button")
+                    add("mouse:right",0.94,0.40,0.045); add("key:32",0.94,0.91,0.045); add("key:69",0.81,0.91,0.045)
+                    add("key:27",0.57,0.075,0.035); add("key:9",0.43,0.075,0.035)
+                }
                 p.radial = actions.filter { !layout.controls.map(\.action).contains($0.id) }.map(\.id)
             }
             layout.controls.append(.init(id: "occasional", action: p.radial.first ?? actions[0].id, role: "radial", x: 0.48, y: 0.91, radius: 0.045, hitRadius: 0.045, opacity: 0.30))

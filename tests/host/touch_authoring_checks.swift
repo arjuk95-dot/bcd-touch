@@ -8,6 +8,10 @@ func checkTouchAuthoring() throws {
             try p.validate(for: identity)
             assert(!p.unresolved.isEmpty && p.actions.allSatisfy { $0.label == BCDPackCatalog.outputLabel($0.output) })
             assert(p.phone != p.pad, "Phone and pad must have independent reach geometry")
+            if genre == "side-scroller" && mode == "keyboardMouse" {
+                assert(p.actions.contains { $0.output == "key:90" } && p.actions.contains { $0.output == "key:88" })
+                assert(!p.actions.contains { $0.output.hasPrefix("mouse:") }, "Manual platformer template must have directional/action keys")
+            }
             let added = try BCDPackAuthoring.addButton(to: p, context: "onFoot")
             assert(added.actions.count == p.actions.count + 1)
             try added.validate()

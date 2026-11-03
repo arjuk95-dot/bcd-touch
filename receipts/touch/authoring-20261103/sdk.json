@@ -1,0 +1,83 @@
+{
+  "conclusion": "success",
+  "headSha": "b9e9c9390fee945d495e3cce0ecd60f82cc112e4",
+  "jobs": [
+    {
+      "completedAt": "2026-11-03T08:22:01Z",
+      "conclusion": "success",
+      "databaseId": 125804193286,
+      "name": "touch",
+      "startedAt": "2026-11-03T08:20:00Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-03T08:20:02Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-03T08:20:01Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T08:20:24Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-03T08:20:02Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T08:20:25Z",
+          "conclusion": "success",
+          "name": "Select the iOS 18 simulator SDK used by the preview checks",
+          "number": 3,
+          "startedAt": "2026-11-03T08:20:24Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T08:21:43Z",
+          "conclusion": "success",
+          "name": "Production Swift timing, state, schema and UIKit checks",
+          "number": 4,
+          "startedAt": "2026-11-03T08:20:25Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T08:21:44Z",
+          "conclusion": "success",
+          "name": "Stock touch and physical controller regression",
+          "number": 5,
+          "startedAt": "2026-11-03T08:21:43Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T08:21:57Z",
+          "conclusion": "success",
+          "name": "Worker and invalid-pack checks",
+          "number": 6,
+          "startedAt": "2026-11-03T08:21:44Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T08:21:58Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 12,
+          "startedAt": "2026-11-03T08:21:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-03T08:21:59Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 13,
+          "startedAt": "2026-11-03T08:21:58Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41602456044/job/125804193286"
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41602456044"
+}
