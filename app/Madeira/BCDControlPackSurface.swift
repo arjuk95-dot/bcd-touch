@@ -124,6 +124,7 @@ final class BCDPackView: UIView {
     private var previousSize = CGSize.zero
     private var epoch = UUID()
     private var pulses = Set<UUID>()
+    private var pulseActions: [UUID: String] = [:]
     init() {
         super.init(frame: .zero); backgroundColor = .clear; isMultipleTouchEnabled = true
         NotificationCenter.default.addObserver(self, selector: #selector(interrupted), name: UIApplication.willResignActiveNotification, object: nil)
@@ -216,6 +217,7 @@ final class BCDPackView: UIView {
         epoch = UUID()
         for f in fingers.values { release(f.owner) }
         for owner in pulses { release(owner) }; pulses.removeAll()
+        pulseActions.removeAll()
         clearToggles()
         fingers.removeAll(); setNeedsDisplay()
     }
@@ -273,10 +275,10 @@ final class BCDPackView: UIView {
     }
     private func pulse(_ a: BCDControlPack.Action) {
         let owner = UUID(), generation = epoch
-        pulses.insert(owner); send(a, owner: owner)
+        pulses.insert(owner); pulseActions[owner] = a.id; send(a, owner: owner); setNeedsDisplay()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
             guard let self, self.epoch == generation else { return }
-            self.release(owner); self.pulses.remove(owner)
+            self.release(owner); self.pulses.remove(owner); self.pulseActions[owner] = nil; self.setNeedsDisplay()
         }
     }
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -444,7 +446,7 @@ final class BCDPackView: UIView {
             let a = action(c.action)
             let toggled = toggles[c.action] != nil
             let tint = toggled ? UIColor(red:1,green:0.67,blue:0.18,alpha:1) : UIColor.white
-            let pressed = fingers.values.contains { $0.control?.id == c.id }
+            let pressed = fingers.values.contains { $0.control?.id == c.id } || pulseActions.values.contains(c.action)
             if pressed { ctx.setFillColor(tint.withAlphaComponent(0.08).cgColor); ctx.fillEllipse(in: circle) }
             ctx.setStrokeColor(tint.withAlphaComponent(toggled || pressed ? 0.95 : c.opacity * ((pack?.version ?? 1) >= 3 ? 0.9 : 0.65)).cgColor)
             ctx.setLineWidth(pressed ? 1.5 : 1); ctx.strokeEllipse(in: circle)

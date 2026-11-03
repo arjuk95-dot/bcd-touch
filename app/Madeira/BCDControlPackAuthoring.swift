@@ -74,7 +74,16 @@ import UIKit
             let format = UIGraphicsImageRendererFormat(); format.scale = 3
             image = UIGraphicsImageRenderer(size: CGSize(width:48,height:48),format:format).image { context in
                 let c = context.cgContext
-                c.setStrokeColor(UIColor.white.cgColor); c.setLineWidth(1.7)
+                let box: CGRect
+                switch name {
+                case "bcd.sword": box=CGRect(x:5,y:6,width:36,height:38)
+                case "bcd.interact": box=CGRect(x:8,y:6,width:27,height:37)
+                case "bcd.inventory": box=CGRect(x:10,y:6,width:28,height:37)
+                default: box=CGRect(x:3,y:6,width:38,height:35)
+                }
+                let scale=min(44/box.width,44/box.height)
+                c.translateBy(x:24,y:24);c.scaleBy(x:scale,y:scale);c.translateBy(x:-box.midX,y:-box.midY)
+                c.setStrokeColor(UIColor.white.cgColor); c.setLineWidth(1.7/scale)
                 c.setLineCap(.round); c.setLineJoin(.round)
                 func line(_ points: [CGPoint], close: Bool = false) {
                     guard let first = points.first else { return }

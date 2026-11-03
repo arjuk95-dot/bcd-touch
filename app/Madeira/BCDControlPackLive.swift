@@ -51,7 +51,14 @@ import UniformTypeIdentifiers
         else if let d = try? Data(contentsOf: folder.appendingPathComponent("overrides.json")), let old = try? JSONDecoder().decode([String: BCDControlPack].self, from: d) {
             overrides = old.mapValues { PersonalEdit(pack: $0, baseline: nil) }
         }
-        for k in jobs.keys where jobs[k]?.state == "requesting" { jobs[k]?.state = "queued" }
+        var migrated = false
+        for k in jobs.keys {
+            if jobs[k]?.state == "requesting" { jobs[k]?.state = "queued"; migrated = true }
+            if (Int(jobs[k]?.request.requirements["packVersion"] ?? "1") ?? 1) < 3 {
+                jobs[k]?.request.requirements["packVersion"] = "3"; migrated = true
+            }
+        }
+        if migrated { try? Self.encoded(jobs).write(to: folder.appendingPathComponent("jobs.json"), options: .atomic) }
     }
     nonisolated static func hash(_ data: Data) -> String { SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined() }
     nonisolated static func encoded<T: Encodable>(_ value: T) -> Data {
@@ -178,9 +185,9 @@ import UniformTypeIdentifiers
         let localSelected = sessionUsesLocal
         var local: BCDControlPack?
         if localSelected && sameSession { local = base }
-        else if localSelected, let data = try? Data(contentsOf: folder.appendingPathComponent("local-" + gameKey! + ".json")), var candidate = try? BCDControlPack.decode(data) {
+        else if localSelected, let data = try? Data(contentsOf: folder.appendingPathComponent("local-" + gameKey! + ".json")), var candidate = try? BCDControlPack.decode(data, placement: .personal) {
             candidate.identity = req.identity // A player-selected template follows this installation; generated caches never bypass identity matching.
-            if (try? candidate.validate(for: req.identity)) != nil { local = candidate }
+            if (try? candidate.validate(for: req.identity, placement: .personal)) != nil { local = candidate }
         }
         let candidate = local ?? cached(key, identity: req.identity)
         if sameSession, let current = pack, let candidate, current.inputMode != candidate.inputMode {
@@ -243,7 +250,9 @@ import UniformTypeIdentifiers
             updated[key] = PersonalEdit(pack: value, baseline: base)
             try Self.encoded(updated).write(to: folder.appendingPathComponent("personal-edits-v2.json"), options: .atomic)
             if recordUndo, let current = pack { undoHistory.append(current); if undoHistory.count > 20 { undoHistory.removeFirst() } }
-            overrides = updated; pack = value; status = "Personal controls saved · this game"
+            overrides = updated; pack = value
+            if !value.contexts.contains(context) { context = value.contexts[0] }
+            status = "Personal controls saved · this game"
             return true
         } catch { status = "Edit not saved: \(error)"; return false }
     }
@@ -258,6 +267,7 @@ import UniformTypeIdentifiers
             try Self.encoded(updated).write(to: folder.appendingPathComponent("personal-edits-v2.json"), options: .atomic)
             if let current = pack { undoHistory.append(current) }
             overrides = updated; pack = base; status = "Preset restored · personal edits can be undone"
+            if let base, !base.contexts.contains(context) { context = base.contexts[0] }
         } catch { status = "Reset not saved: \(error)" }
     }
 
@@ -275,8 +285,8 @@ struct BCDPackLayer: View {
                     BCDPackSurface(pack: p, context: store.context, debug: store.debug, editing: store.editing)
                         .id(p.id + store.context + String(store.editing) + String(focus.gameFocused))
                     if store.editing && !store.placingControls {
-                        BCDPackInspector().frame(width: min(380, geo.size.width * 0.46), height: max(120, geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom - 24))
-                            .padding(.leading, geo.safeAreaInsets.leading + 8).padding(.top, geo.safeAreaInsets.top + 12)
+                        BCDPackInspector().frame(width: min(380, geo.size.width * 0.46), height: max(120, geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom - 64))
+                            .padding(.leading, geo.safeAreaInsets.leading + 8).padding(.top, geo.safeAreaInsets.top + 52)
                     }
                     if store.editing && store.placingControls {
                         VStack {
@@ -289,7 +299,7 @@ struct BCDPackLayer: View {
                                 Button("Back to game", systemImage: "xmark") { store.editing = false }
                             }.buttonStyle(.bordered).padding(6).background(.ultraThinMaterial).clipShape(RoundedRectangle(cornerRadius: 12))
                             if !placementBarAtBottom { Spacer() }
-                        }.padding(.horizontal, 8).padding(.top, geo.safeAreaInsets.top + 6).padding(.bottom, geo.safeAreaInsets.bottom + 6)
+                        }.padding(.horizontal, 8).padding(.top, geo.safeAreaInsets.top + 52).padding(.bottom, geo.safeAreaInsets.bottom + 6)
                             .frame(maxWidth: .infinity)
                     }
                 }

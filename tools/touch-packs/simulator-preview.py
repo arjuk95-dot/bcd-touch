@@ -44,6 +44,16 @@ with tempfile.TemporaryDirectory(prefix='touch-preview-') as tmp:
     for p in container.glob('*routing*.txt'):shutil.copyfile(p,out/p.name)
     for p in container.glob('*regression*.txt'):shutil.copyfile(p,out/p.name)
     for p in container.glob('authoring-*.txt'):shutil.copyfile(p,out/p.name)
+    if not (container/'client-phase-1.txt').exists():
+        # Preserve partial renders and diagnostics before a fixture assertion terminates the job.
+        for p in container.glob('*.png'):shutil.copyfile(p,out/p.name)
+        try:
+            result=subprocess.run(['xcrun','simctl','spawn',uid,'log','show','--style','compact','--last','5m','--predicate','process == "TouchPreview"'],capture_output=True,text=True,timeout=20)
+            (out/'simulator-app-log.txt').write_text((result.stdout+result.stderr)[-100000:])
+        except subprocess.TimeoutExpired:(out/'simulator-app-log.txt').write_text('Simulator log query timed out')
+        reports=Path.home()/'Library/Logs/DiagnosticReports'
+        for p in sorted(reports.glob('TouchPreview*.ips'),key=lambda p:p.stat().st_mtime)[-2:]:
+            if p.stat().st_size<=2*1024*1024:shutil.copyfile(p,out/p.name)
     assert (container/'client-phase-1.txt').exists(),'Production Swift store client fixture did not finish'
     subprocess.run(['xcrun','simctl','launch','--terminate-running-process',uid,'com.arjunkl.bcdtouch.preview'],env=dict(os.environ,SIMCTL_CHILD_PACK_FIXTURES='1',SIMCTL_CHILD_PACK_CLIENT_RESUME='1'),check=True,timeout=120)
     for _ in range(30):
@@ -57,5 +67,5 @@ with tempfile.TemporaryDirectory(prefix='touch-preview-') as tmp:
     for p in container.glob('*-swift-identity.txt'):shutil.copyfile(p,out/p.name)
     for p in container.glob('*-context-visibility.txt'):shutil.copyfile(p,out/p.name)
     for p in container.glob('client-*.txt'):shutil.copyfile(p,out/p.name)
-    (out/'preview-receipt.json').write_text(json.dumps(dict(device=device['name'],runtime=device['runtime'],kind='offscreen production UIKit renderer fixtures on this simulator; phone 956x440 points with 62/62/0/21 insets; iPad 1194x834 points with 0/0/24/20 insets; no actual iPad boot or game',images=[p.name for p in images]),indent=2))
+    (out/'preview-receipt.json').write_text(json.dumps(dict(device=device['name'],runtime=device['runtime'],kind='offscreen production UIKit renderer fixtures on this simulator; legacy geometry inset 62/62/0/21 for phone and 0/0/24/20 for pad; owner screen-anchor exports use full bounds without simulated safe insets; no actual iPad boot or guest game',images=[p.name for p in images]),indent=2))
     subprocess.run(['xcrun','simctl','shutdown',uid],check=True,timeout=30)

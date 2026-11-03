@@ -81,6 +81,8 @@ import UIKit
         let index=original.phone.controls.firstIndex { $0.role=="move" }!
         let movedX=0.13
         if ProcessInfo.processInfo.environment["PACK_CLIENT_RESUME"]=="1" {
+            let migrated=try JSONDecoder().decode([String:BCDPackStore.Job].self,from:Data(contentsOf:store.folder.appendingPathComponent("jobs.json")))
+            assert(migrated[key]?.request.requirements["packVersion"]=="3" && migrated[key]?.request.generation=="initial","Client upgrade lost generation identity or retained an unsupported protocol ceiling")
             store.applyLaunchPreference(entry)
             guard !store.enabled else { throw NSError(domain:"TouchFixture",code:1,userInfo:[NSLocalizedDescriptionKey:"Per-game stock input preference was not off at restart"]) }
             store.activate(entry)
@@ -106,6 +108,10 @@ import UIKit
         try await captureEditorFixtures()
         try captureAuthoringFixtures()
         var moved=store.pack!;moved.phone.controls[index].x=movedX
+        var contextEdit=moved;contextEdit.contexts=["fixture-play"]
+        for i in contextEdit.actions.indices { contextEdit.actions[i].contexts=["fixture-play"] }
+        assert(store.saveEdits(contextEdit) && store.context=="fixture-play","Import-like context change left an invisible HUD")
+        store.undoEdit();assert(store.context==moved.contexts[0])
         moved.version = 2
         let editedAction=moved.actions.firstIndex { $0.output=="RT" }!
         moved.actions[editedAction].label="Player action fixture";moved.actions[editedAction].icon="shield";moved.actions[editedAction].output="RB"
@@ -159,8 +165,10 @@ import UIKit
             try await Task.sleep(nanoseconds:100_000_000)
         }
         assert(store.status.hasPrefix("Stock/cached fallback"), "Offline worker did not preserve fallback")
-        let jobs=try JSONDecoder().decode([String:BCDPackStore.Job].self,from:Data(contentsOf:store.folder.appendingPathComponent("jobs.json")))
+        var jobs=try JSONDecoder().decode([String:BCDPackStore.Job].self,from:Data(contentsOf:store.folder.appendingPathComponent("jobs.json")))
         assert(jobs.count==1 && jobs[key]?.attempts==1, "Duplicate preparation created duplicate jobs")
+        jobs[key]?.request.requirements["packVersion"]="2"
+        try BCDPackStore.encoded(jobs).write(to:store.folder.appendingPathComponent("jobs.json"),options:.atomic)
         try BCDPackStore.encoded(regenerated).write(to:cached,options:.atomic)
         try Data("PASS: production Swift store cached/duplicate preparation, invalid cache rejection, real loopback connection failure fallback, and moved override after simulated cache regeneration. Simulator fixture; no real install-completion event or guest.".utf8).write(to:folder.appendingPathComponent("client-phase-1.txt"),options:.atomic)
     }
@@ -518,6 +526,8 @@ import UIKit
     @MainActor private func captureEditorFixtures() async throws {
         let scene=UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first!
         let folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
+        let store=BCDPackStore.shared,wasEditing=BCDPackStore.shared.editing,wasPlacing=BCDPackStore.shared.placingControls
+        defer { store.editing=wasEditing;store.placingControls=wasPlacing }
         assert(BCDPackCatalog.icons.allSatisfy { BCDPackIcons.image($0.id) != nil }, "Icon catalog contains an unavailable local icon")
         func canvas(in view:UIView) -> BCDPackView? {
             if let surface=view as? BCDPackView { return surface }
@@ -525,19 +535,19 @@ import UIKit
             return nil
         }
         for height in [320,440] {
+            store.editing=true;store.placingControls=false
             let size=CGSize(width:956,height:CGFloat(height))
             let window=UIWindow(windowScene:scene);window.frame=CGRect(origin:.zero,size:size);window.windowLevel = .normal+102
             let host=UIHostingController(rootView:ZStack(alignment:.topLeading) {
                 Color.black
-                BCDPackInspector().frame(width:380,height:CGFloat(height)-24).padding(12)
-            })
+                BCDPackLayer()
+            }.ignoresSafeArea())
             window.rootViewController=host;window.isHidden=false;host.view.layoutIfNeeded()
             try await Task.sleep(nanoseconds:150_000_000)
             let format=UIGraphicsImageRendererFormat();format.scale=2;format.opaque=true
             let image=UIGraphicsImageRenderer(size:size,format:format).image { _ in host.view.drawHierarchy(in:CGRect(origin:.zero,size:size),afterScreenUpdates:true) }
             try image.pngData()!.write(to:folder.appendingPathComponent("editor-\(height)-simulator.png"))
             window.isHidden=true
-            let store=BCDPackStore.shared,wasEditing=BCDPackStore.shared.editing,wasPlacing=BCDPackStore.shared.placingControls
             store.editing=true;store.placingControls=true
             let compact=UIHostingController(rootView:ZStack { Color.black; BCDPackLayer() }.ignoresSafeArea())
             window.rootViewController=compact;window.isHidden=false;compact.view.layoutIfNeeded()
@@ -551,7 +561,7 @@ import UIKit
             }
             let compactImage=UIGraphicsImageRenderer(size:size,format:format).image { _ in compact.view.drawHierarchy(in:CGRect(origin:.zero,size:size),afterScreenUpdates:true) }
             try compactImage.pngData()!.write(to:folder.appendingPathComponent("placement-\(height)-simulator.png"))
-            window.isHidden=true;store.editing=wasEditing;store.placingControls=wasPlacing
+            window.isHidden=true;store.placingControls=false
         }
     }
 }
