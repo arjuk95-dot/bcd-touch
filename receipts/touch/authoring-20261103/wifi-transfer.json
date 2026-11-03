@@ -6,11 +6,12 @@
   "directoryListing": false,
   "privatePairingConfigReady": true,
   "expiresAfterSeconds": 7200,
-  "phoneDownloadVerified": false,
-  "installed": false,
+  "phoneDownloadVerified": true,
+  "installed": true,
   "freshPhoneBackup": false,
   "transport": "Owner selected Wi-Fi only; no USB or pairing changes",
-  "status": "Wi-Fi download available; phone completion not confirmed",
+  "status": "Owner reports existing-slot update installed; manual worker configuration and physical editor checks pending",
   "transportChoice": "Owner explicitly selected Wi-Fi transfer only",
-  "deviceFilesystemOrPairingChanged": false
+  "deviceFilesystemOrPairingChanged": false,
+  "installationEvidence": "Owner report only; installed-source readback unavailable"
 }

@@ -5,14 +5,13 @@
   "buildRun": "https://github.com/arjunkl/bcd-touch/actions/runs/41604861178",
   "build": "passed",
   "nativePackaging": "passed",
-  "installedOnPhone": false,
+  "installedOnPhone": true,
   "physicallyTested": false,
-  "currentInstalledAppSource": "df25bb3f0bb7308b81a79adcd79f4242502e7ac4",
+  "currentInstalledAppSource": null,
   "sourceChecks": "Exact-source production SDK/stock/worker checks and 35-image simulator/store/restart suite passed; selected layouts visually reviewed",
   "pending": [
-    "Owner Safari download and SideStore update over Wi-Fi; direct device backup/readback unavailable on this route",
-    "Personal signing/update in existing BCD slot and installed-source/rights readback",
-    "Phone worker endpoint switch to updated port 8939 after source verification",
+    "Direct installed-source and effective-entitlement readback unavailable over current Wi-Fi service",
+    "Owner Files replacement of worker.json for updated port 8939; existing phone endpoint unchanged",
     "Physical editor/new input-mode tests and original outstanding guest/controller/iPad matrix"
   ],
   "workerPort": 8939,
@@ -24,7 +23,11 @@
   "packageRun": "https://github.com/arjunkl/bcd-touch/actions/runs/41614413524",
   "localArchiveAndCRCChecks": "passed",
   "stagedOnPhone": false,
-  "freshBackup": "Not completed: paired phone absent from usbmux; no phone writes performed",
+  "freshBackup": "Not completed: Wi-Fi app services closed before any phone file access or writes",
   "workerSource": "e8126bad10c3e4cd4d6b3eeec6be77bc4fc050f9",
-  "transport": "Wi-Fi only, selected by owner; local HTTP full-file SHA and range checks passed"
+  "transport": "Wi-Fi only, selected by owner; local HTTP full-file SHA and range checks passed",
+  "installationEvidence": "Owner reported Updated after a verified phone download",
+  "lastDirectlyVerifiedInstalledAppSource": "df25bb3f0bb7308b81a79adcd79f4242502e7ac4",
+  "installedSourceReadbackVerified": false,
+  "effectiveSignedEntitlementsVerified": false
 }
