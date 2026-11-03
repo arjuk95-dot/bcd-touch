@@ -290,6 +290,14 @@
                 "type": "number",
                 "minimum": 0.1,
                 "maximum": 1
+              },
+              "coordinateSpace": {
+                "type": "string",
+                "enum": [
+                  "safe",
+                  "screen"
+                ],
+                "description": "Optional personal display anchor. Omission preserves existing safe-area anchors; generated packs use safe."
               }
             },
             "required": [
@@ -400,6 +408,14 @@
                 "type": "number",
                 "minimum": 0.1,
                 "maximum": 1
+              },
+              "coordinateSpace": {
+                "type": "string",
+                "enum": [
+                  "safe",
+                  "screen"
+                ],
+                "description": "Optional personal display anchor. Omission preserves existing safe-area anchors; generated packs use safe."
               }
             },
             "required": [
@@ -538,5 +554,46 @@
     "unresolved"
   ],
   "additionalProperties": false,
-  "$schema": "https://json-schema.org/draft/2020-12/schema"
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "version": {
+            "const": 1
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "phone": {
+            "properties": {
+              "controls": {
+                "items": {
+                  "not": {
+                    "required": [
+                      "coordinateSpace"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "pad": {
+            "properties": {
+              "controls": {
+                "items": {
+                  "not": {
+                    "required": [
+                      "coordinateSpace"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

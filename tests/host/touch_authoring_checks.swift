@@ -14,7 +14,7 @@ func checkTouchAuthoring() throws {
             }
             let added = try BCDPackAuthoring.addButton(to: p, context: "onFoot")
             assert(added.actions.count == p.actions.count + 1)
-            try added.validate()
+            try added.validate(placement: .personal)
         }
     }
     let original = BCDPackAuthoring.preset(identity: identity, title: "Merge fixture", genre: "first-person", mode: "controller")
@@ -41,6 +41,32 @@ func checkTouchAuthoring() throws {
     let legacy = try BCDPackAuthoring.merge(base: original, personal: personal, baseline: nil)
     assert(legacy.aim.sensitivity == 2 && legacy.phone.controls[0].x == 0.12)
     assert(legacy.actions[a].output == original.actions[a].output, "Legacy overrides must not invent binding edits")
+    var free = original
+    for pad in [false, true] {
+        var layout = pad ? free.pad : free.phone
+        let buttons = layout.controls.indices.filter { layout.controls[$0].role == "button" || layout.controls[$0].role == "fireAim" }
+        for i in buttons.prefix(2) {
+            layout.controls[i].x = 0.5; layout.controls[i].y = 0.5; layout.controls[i].coordinateSpace = "screen"
+        }
+        layout.controls[0].x = 0; layout.controls[0].y = 1; layout.controls[0].coordinateSpace = "screen"
+        let first = layout.controls.removeFirst(); layout.controls.append(first)
+        if pad { free.pad = layout } else { free.phone = layout }
+    }
+    try free.validate(placement: .personal)
+    let freeData = try JSONEncoder().encode(free)
+    let freeReloaded = try BCDControlPack.decode(freeData, for: identity, placement: .personal)
+    assert(freeReloaded == free)
+    do { try free.validate(); assertionFailure("Generated pack accepted personal placement") } catch {}
+    let freeMerged = try BCDPackAuthoring.merge(base: regenerated, personal: free, baseline: original)
+    assert(freeMerged.phone.controls.map(\.id) == free.phone.controls.map(\.id), "Personal overlap order lost on regeneration")
+    assert(freeMerged.phone.controls.last?.coordinateSpace == "screen" && freeMerged.phone.controls.last?.x == 0 && freeMerged.phone.controls.last?.y == 1)
+    assert(freeMerged.pad.controls.last?.coordinateSpace == "screen")
+    let crowded = try BCDPackAuthoring.addButton(to: free, context: "onFoot")
+    assert(crowded.actions.count == free.actions.count + 1)
+    var invalidPersonal = free; invalidPersonal.phone.controls[0].x = .nan
+    do { try invalidPersonal.validate(placement: .personal); assertionFailure("Nonfinite personal geometry accepted") } catch {}
+    invalidPersonal = free; invalidPersonal.phone.controls[0].coordinateSpace = "executable"
+    do { try invalidPersonal.validate(placement: .personal); assertionFailure("Unknown coordinate space accepted") } catch {}
     for value in ["key:0", "key:256", "key:-1", "key:+65", "keys:17", "keys:17+17", "keys:17+", "keys:17+65+66+67+68"] {
         assert(!BCDPackCatalog.validOutput(value, mode: "keyboardMouse", version: 2), "Accepted malformed binding: \(value)")
     }
@@ -56,5 +82,5 @@ func checkTouchAuthoring() throws {
     slow.move(dx: 100, dy: 0, time: 0.04, calibration: c)
     c.sensitivity = 8; faster.move(dx: 100, dy: 0, time: 0.04, calibration: c)
     assert(slow.sample(time: 0.04).x == 1 && faster.sample(time: 0.04).x == 1, "Editor cannot exceed full stick")
-    print("PASS: ten unknown-game presets, honest labels, add/delete, three-way personal edits, v1 compatibility, binding rejection and sensitivity saturation (host fixtures)")
+    print("PASS: ten presets; personal overlap/full-screen anchors, export/import and regeneration order; generated spacing remains strict; malformed bindings/geometry rejected (host fixtures)")
 }

@@ -139,18 +139,18 @@ enum BCDPackAuthoring {
             var layout = pad ? p.pad : p.phone
             let r = 0.04
             let candidates = [0.08,0.20,0.32,0.44,0.56,0.68,0.80,0.92].flatMap { x in [0.07,0.91,0.32,0.45,0.58].map { (x,$0) } }
-            guard let point = candidates.first(where: { x, y in
+            let point = candidates.first(where: { x, y in
                 let a = layout.aimRect
                 guard x+r <= a.x || x-r >= a.x+a.width || y+r <= a.y || y-r >= a.y+a.height else { return false }
                 return layout.controls.allSatisfy { c in
                     let sameContext = p.actions.first(where: { $0.id == c.action })?.contexts.contains(context) ?? true
                     return !sameContext || abs(x-c.x) >= r+c.hitRadius+0.01 || abs(y-c.y) >= r+c.hitRadius+0.01
                 }
-            }) else { throw BCDControlPack.Invalid.reason("No free button space. Move an existing control or use the radial first.") }
+            }) ?? (0.5, 0.5) // Personal placement remains possible when all suggested free slots are occupied.
             layout.controls.append(.init(id: id, action: id, role: "button", x: point.0, y: point.1, radius: r, hitRadius: r, opacity: 0.4))
             if pad { p.pad = layout } else { p.phone = layout }
         }
-        try p.validate(); return p
+        try p.validate(placement: .personal); return p
     }
     static func ensurePlayerEvidence(_ p: inout BCDControlPack) {
         if !p.evidence.contains(where: { $0.id == "player-binding" }) {
@@ -179,8 +179,10 @@ enum BCDPackAuthoring {
             for c in edited.controls {
                 let before = old?.controls.first { $0.id == c.id }
                 if let i = layout.controls.firstIndex(where: { $0.id == c.id }) {
-                    if before == nil || c.x != before!.x { layout.controls[i].x = c.x }
-                    if before == nil || c.y != before!.y { layout.controls[i].y = c.y }
+                    let changedSpace = before == nil || c.coordinateSpace != before!.coordinateSpace
+                    if changedSpace { layout.controls[i].coordinateSpace = c.coordinateSpace }
+                    if changedSpace || c.x != before!.x { layout.controls[i].x = c.x }
+                    if changedSpace || c.y != before!.y { layout.controls[i].y = c.y }
                     if before == nil || c.radius != before!.radius { layout.controls[i].radius = c.radius }
                     if before == nil || c.hitRadius != before!.hitRadius { layout.controls[i].hitRadius = c.hitRadius }
                     if before == nil || c.opacity != before!.opacity { layout.controls[i].opacity = c.opacity }
@@ -189,6 +191,11 @@ enum BCDPackAuthoring {
                         if c.role != before.role { layout.controls[i].role = c.role }
                     } else if ["button","fireAim"].contains(c.role), ["button","fireAim"].contains(layout.controls[i].role) { layout.controls[i].role = c.role }
                 } else if (old != nil && before == nil) || c.id == "left-duplicate" { layout.controls.append(c) }
+            }
+            if let old, edited.controls.map(\.id) != old.controls.map(\.id) {
+                let byID = Dictionary(uniqueKeysWithValues: layout.controls.map { ($0.id, $0) })
+                let personalIDs = Set(edited.controls.map(\.id))
+                layout.controls = edited.controls.compactMap { byID[$0.id] } + layout.controls.filter { !personalIDs.contains($0.id) }
             }
             if pad { p.pad = layout } else { p.phone = layout }
         }
@@ -217,6 +224,6 @@ enum BCDPackAuthoring {
             p.version = max(p.version, personal.version)
             ensurePlayerEvidence(&p)
         } else { p.aim = personal.aim }
-        try p.validate(for: base.identity); return p
+        try p.validate(for: base.identity, placement: .personal); return p
     }
 }

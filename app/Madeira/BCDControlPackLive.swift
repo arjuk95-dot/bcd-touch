@@ -28,6 +28,7 @@ import UniformTypeIdentifiers
     @Published var status = "Stock controls"
     @Published var debug = false
     @Published var editing = false
+    @Published var placingControls = false
     @Published var context = "onFoot"
     @Published var enabled = true
     private var jobs: [String: Job] = [:]
@@ -234,7 +235,7 @@ import UniformTypeIdentifiers
     @discardableResult func saveEdits(_ value: BCDControlPack, recordUndo: Bool = true) -> Bool {
         guard let key = personalKey, let base else { return false }
         do {
-            try value.validate(for: base.identity)
+            try value.validate(for: base.identity, placement: .personal)
             guard value.inputMode == base.inputMode else { throw BCDControlPack.Invalid.reason("Changing input mode requires a preset and a new launch.") }
             var updated = overrides
             updated[key] = PersonalEdit(pack: value, baseline: base)
@@ -264,20 +265,35 @@ struct BCDPackLayer: View {
     @ObservedObject private var store = BCDPackStore.shared
     @ObservedObject private var library = LibraryModel.shared
     @ObservedObject private var focus = BCDPackFocus.shared
+    @State private var placementBarAtBottom = false
     var body: some View {
         if let p = store.pack, store.enabled {
             GeometryReader { geo in
                 ZStack(alignment: .topLeading) {
                     BCDPackSurface(pack: p, context: store.context, debug: store.debug, editing: store.editing)
                         .id(p.id + store.context + String(store.editing) + String(focus.gameFocused))
-                    if store.editing {
+                    if store.editing && !store.placingControls {
                         BCDPackInspector().frame(width: min(380, geo.size.width * 0.46), height: max(120, geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom - 24))
                             .padding(.leading, geo.safeAreaInsets.leading + 8).padding(.top, geo.safeAreaInsets.top + 12)
+                    }
+                    if store.editing && store.placingControls {
+                        VStack {
+                            if placementBarAtBottom { Spacer() }
+                            HStack {
+                                Button("Edit controls", systemImage: "slider.horizontal.3") { store.placingControls = false }
+                                Button("Undo", systemImage: "arrow.uturn.backward") { store.undoEdit() }
+                                Button(placementBarAtBottom ? "Toolbar to top" : "Toolbar to bottom", systemImage: placementBarAtBottom ? "arrow.up" : "arrow.down") { placementBarAtBottom.toggle() }
+                                    .labelStyle(.iconOnly)
+                                Button("Back to game", systemImage: "xmark") { store.editing = false }
+                            }.buttonStyle(.bordered).padding(6).background(.ultraThinMaterial).clipShape(RoundedRectangle(cornerRadius: 12))
+                            if !placementBarAtBottom { Spacer() }
+                        }.padding(.horizontal, 8).padding(.top, geo.safeAreaInsets.top + 6).padding(.bottom, geo.safeAreaInsets.bottom + 6)
+                            .frame(maxWidth: .infinity)
                     }
                 }
             }.onAppear { configure() }
                 .onChange(of: p) { _, _ in configure() }
-                .onChange(of: store.editing) { _, _ in configure() }
+                .onChange(of: store.editing) { _, editing in if !editing { store.placingControls = false }; configure() }
                 .onChange(of: library.blocksGameplayTouch) { _, _ in configure() }
                 .onChange(of: focus.gameFocused) { _, _ in configure() }
                 .onDisappear { GamepadInput.shared.configurePack(enabled: library.current != nil && store.pack != nil && store.enabled && p.inputMode == "controller", accepting: false, calibration: p.aim) }
@@ -309,6 +325,8 @@ struct BCDPackInspector: View {
             ScrollView {
             VStack(spacing: 10) {
             Text(store.status).font(.caption)
+            Button("Move buttons", systemImage: "hand.draw") { store.placingControls = true }
+            Text("Drag anywhere, including over other controls. The last control in the list receives overlapping taps.").font(.caption)
             Toggle("iPad layout", isOn: $pad)
             if let p = store.pack {
                 Text(p.inputMode == "controller" ? "Xbox controller controls" : "Keyboard and mouse controls").font(.subheadline)
@@ -324,6 +342,13 @@ struct BCDPackInspector: View {
                 }
                 if let c = (pad ? p.pad : p.phone).controls.first(where: { $0.id == selected }) {
                     Text("Binding: " + (p.actions.first { $0.id == c.action }.map { BCDPackCatalog.outputLabel($0.output) } ?? "Radial"))
+                    Button("Bring to front", systemImage: "square.3.layers.3d.top.filled") {
+                        edit { value in
+                            var layout = pad ? value.pad : value.phone
+                            layout.controls.removeAll { $0.id == c.id }; layout.controls.append(c)
+                            if pad { value.pad = layout } else { value.phone = layout }
+                        }
+                    }
                     Text("Button size").font(.caption)
                     Slider(value: Binding(get: { c.radius }, set: { v in changeControl { $0.radius = v; $0.hitRadius = v } }), in: 0.035...0.2)
                     Text("Opacity").font(.caption)
@@ -368,7 +393,7 @@ struct BCDPackInspector: View {
                 defer { if access { url.stopAccessingSecurityScopedResource() } }
                 let handle = try FileHandle(forReadingFrom: url); defer { try? handle.close() }
                 let data = try handle.read(upToCount: 262145) ?? Data()
-                let value = try BCDControlPack.decode(data, for: store.pack?.identity)
+                let value = try BCDControlPack.decode(data, for: store.pack?.identity, placement: .personal)
                 guard value.inputMode == store.pack?.inputMode else { throw BCDControlPack.Invalid.reason("Choose a preset with the imported input mode before launching the game.") }
                 _ = store.saveEdits(value)
             } catch { store.status = "Import not applied: \(error)" }
@@ -387,11 +412,11 @@ struct BCDPackDocument: FileDocument {
     var pack: BCDControlPack?
     init(pack: BCDControlPack?) { self.pack = pack }
     init(configuration: ReadConfiguration) throws {
-        pack = try BCDControlPack.decode(configuration.file.regularFileContents ?? Data())
+        pack = try BCDControlPack.decode(configuration.file.regularFileContents ?? Data(), placement: .personal)
     }
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
         guard let pack else { throw BCDControlPack.Invalid.reason("No controls to export") }
-        try pack.validate()
+        try pack.validate(placement: .personal)
         return FileWrapper(regularFileWithContents: BCDPackStore.encoded(pack))
     }
 }

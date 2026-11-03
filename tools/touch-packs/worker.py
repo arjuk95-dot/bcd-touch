@@ -46,7 +46,7 @@ def atomic(path, value):
     temp = path.with_suffix('.tmp-' + uuid.uuid4().hex)
     temp.write_bytes(canonical(value)); temp.replace(path)
 
-def validate(pack, identity=None):
+def validate(pack, identity=None, personal=False):
     import jsonschema
     jsonschema.validate(pack, json.loads((HERE / 'pack.schema.json').read_text(encoding='utf-8')))
     assert len(canonical(pack)) <= 262144, 'Pack too large'
@@ -75,9 +75,12 @@ def validate(pack, identity=None):
         assert len({c['id'] for c in layout['controls']}) == len(layout['controls'])
         for c in layout['controls']:
             assert c['action'] in actions or c['role'] == 'radial'
+            assert 'coordinateSpace' not in c or pack['version']>=2, 'Display anchors require pack version 2'
             assert c['radius'] <= c['hitRadius'] <= c['radius']*1.15, 'Oversized hidden hit region'
-            h=c['hitRadius']
-            assert c['x']+h <= r['x'] or c['x']-h >= r['x']+r['width'] or c['y']+h <= r['y'] or c['y']-h >= r['y']+r['height'], 'Control overlaps reserved swipe rectangle'
+            if not personal:
+                assert c.get('coordinateSpace','safe')=='safe', 'Generated controls must use safe-area anchors'
+                h=c['hitRadius']
+                assert c['x']+h <= r['x'] or c['x']-h >= r['x']+r['width'] or c['y']+h <= r['y'] or c['y']-h >= r['y']+r['height'], 'Control overlaps reserved swipe rectangle'
             if c['role'] == 'move': assert actions[c['action']]['output'] == 'LS'
             if c['role'] == 'fireAim': assert actions[c['action']]['behavior'] == 'hold'
         reachable={c['action'] for c in layout['controls'] if c['role']!='radial'} | set(pack['radial']) | {g['action'] for g in pack['gestures']}
@@ -228,11 +231,11 @@ def serve(args):
 if __name__ == '__main__':
     p=argparse.ArgumentParser(); sub=p.add_subparsers(dest='command',required=True)
     s=sub.add_parser('serve'); s.add_argument('--host',default='127.0.0.1'); s.add_argument('--port',type=int,default=8937); s.add_argument('--state',required=True); s.add_argument('--token-file',required=True); s.add_argument('--codex',default='codex'); s.add_argument('--model'); s.add_argument('--no-research',action='store_true')
-    v=sub.add_parser('validate'); v.add_argument('pack')
+    v=sub.add_parser('validate'); v.add_argument('pack'); v.add_argument('--personal',action='store_true',help='Allow personal overlap and full-screen anchors; binding/identity/size checks remain')
     g=sub.add_parser('generate'); g.add_argument('request'); g.add_argument('--state',required=True); g.add_argument('--codex',default='codex'); g.add_argument('--model'); g.add_argument('--no-research',action='store_true'); g.add_argument('--regenerate',action='store_true')
     a=p.parse_args()
     if a.command=='serve': serve(a)
-    elif a.command=='validate': validate(json.loads(Path(a.pack).read_text(encoding='utf-8'))); print('VALIDATED; physical test pending')
+    elif a.command=='validate': validate(json.loads(Path(a.pack).read_text(encoding='utf-8')),personal=a.personal); print('VALIDATED; physical test pending')
     else:
         w=Worker(a.state,a.codex,a.model,not a.no_research); req=json.loads(Path(a.request).read_text(encoding='utf-8'))
         if a.regenerate:req['generation']=uuid.uuid4().hex

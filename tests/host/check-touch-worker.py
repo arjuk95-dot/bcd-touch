@@ -34,6 +34,21 @@ v2['actions'][0].update(output='mouse:wheelUp',behavior='hold')
 try:w.validate(v2)
 except Exception:pass
 else:raise AssertionError('Holding a wheel action must be rejected')
+# Personal exports can occupy the swipe rectangle, overlap and reach the display edge.
+free=copy.deepcopy(json.loads((ROOT/'packs/pilots/dread-delusion.json').read_text(encoding='utf-8')))
+free['version']=2
+for device in ['phone','pad']:
+    for c in free[device]['controls'][:2]:c.update(x=.5,y=.5,coordinateSpace='screen')
+    free[device]['controls'][-1].update(x=0,y=1,coordinateSpace='screen')
+w.validate(free,personal=True)
+try:w.validate(free)
+except Exception:pass
+else:raise AssertionError('Generated validation accepted personal display placement')
+for mutation in [lambda p:p['phone']['controls'][0].update(coordinateSpace='script'),lambda p:p['phone']['controls'][0].update(x=1.01),lambda p:p.update(version=1),lambda p:p['phone']['controls'][0].update(hitRadius=.9)]:
+    broken=copy.deepcopy(free);mutation(broken)
+    try:w.validate(broken,personal=True)
+    except Exception:pass
+    else:raise AssertionError('Personal layout bypassed structural validation')
 # Store-neutral request construction reads only explicitly selected bounded binding files.
 request_spec=importlib.util.spec_from_file_location('request_game',ROOT/'tools/touch-packs/request-game.py')
 request_module=importlib.util.module_from_spec(request_spec);request_spec.loader.exec_module(request_module)

@@ -37,7 +37,7 @@ with tempfile.TemporaryDirectory(prefix='touch-preview-') as tmp:
     subprocess.run(['xcrun','simctl','launch','--terminate-running-process',uid,'com.arjunkl.bcdtouch.preview'],env=dict(os.environ,SIMCTL_CHILD_PACK_FIXTURES='1'),check=True,timeout=120)
     container=Path(run(['xcrun','simctl','get_app_container',uid,'com.arjunkl.bcdtouch.preview','data']))/'Documents'
     for _ in range(45):
-        if len(list(container.glob('*.png')))==35 and (container/'client-phase-1.txt').exists():break
+        if len(list(container.glob('*.png')))==37 and (container/'client-phase-1.txt').exists():break
         time.sleep(1)
     for p in container.glob('client-*.txt'):shutil.copyfile(p,out/p.name)
     for p in container.glob('*routing*.txt'):shutil.copyfile(p,out/p.name)
@@ -51,7 +51,7 @@ with tempfile.TemporaryDirectory(prefix='touch-preview-') as tmp:
     for evidence in container.glob('client-*.txt'):shutil.copyfile(evidence,out/evidence.name)
     if (container/'client-error.txt').exists():print((container/'client-error.txt').read_text()[:2000],flush=True)
     assert (container/'client-phase-2.txt').exists(),'Production Swift store restart fixture did not finish'
-    images=list(container.glob('*.png'));assert len(images)==35 and len(list(container.glob('template-*.png')))==20,'Renderer/editor/template fixture export did not complete'
+    images=list(container.glob('*.png'));assert len(images)==37 and len(list(container.glob('template-*.png')))==20,'Renderer/editor/template/placement fixture export did not complete'
     for p in images:shutil.copyfile(p,out/p.name)
     for p in container.glob('*-swift-identity.txt'):shutil.copyfile(p,out/p.name)
     for p in container.glob('*-context-visibility.txt'):shutil.copyfile(p,out/p.name)

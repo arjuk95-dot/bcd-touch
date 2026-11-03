@@ -19,6 +19,8 @@ struct BCDControlPack: Codable, Equatable {
     struct Control: Codable, Equatable {
         var id: String; var action: String; var role: String
         var x: Double; var y: Double; var radius: Double; var hitRadius: Double; var opacity: Double
+        // Existing/generated controls retain safe-area anchors. Personal drags can use the whole display.
+        var coordinateSpace: String? = nil
     }
     struct Layout: Codable, Equatable {
         struct Rect: Codable, Equatable { var x: Double; var y: Double; var width: Double; var height: Double }
@@ -46,7 +48,8 @@ struct BCDControlPack: Codable, Equatable {
         case reason(String)
         var description: String { if case .reason(let s) = self { return s }; return "Invalid pack" }
     }
-    func validate(for expected: Identity? = nil) throws {
+    enum Placement { case generated, personal }
+    func validate(for expected: Identity? = nil, placement: Placement = .generated) throws {
         func require(_ ok: Bool, _ reason: String) throws { if !ok { throw Invalid.reason(reason) } }
         func text(_ s: String) -> Bool { !s.isEmpty && s.utf8.count <= 256 && !s.unicodeScalars.contains { $0.value < 32 } }
         try require([1, 2].contains(version), "Unsupported pack version")
@@ -81,12 +84,17 @@ struct BCDControlPack: Codable, Equatable {
                 try require(["button", "move", "fireAim", "radial", "gesture"].contains(c.role), "Unknown touch role")
                 try require([c.x,c.y,c.radius,c.hitRadius,c.opacity].allSatisfy(\.isFinite), "Nonfinite geometry")
                 try require((0...1).contains(c.x) && (0...1).contains(c.y) && (0.035...0.2).contains(c.radius) && c.hitRadius >= c.radius && c.hitRadius <= c.radius * 1.15 && (0.1...1).contains(c.opacity), "Invalid or oversized hidden hit region")
+                try require(c.coordinateSpace == nil || ["safe", "screen"].contains(c.coordinateSpace!), "Unknown coordinate space")
+                try require(c.coordinateSpace == nil || version >= 2, "Display anchors require pack version 2")
                 if c.role == "move" { try require(actions.first { $0.id == c.action }?.output == "LS", "Movement must use LS") }
                 if c.role == "fireAim" { try require(actions.first { $0.id == c.action }?.behavior == "hold", "Drag fire must hold") }
                 if ["button", "fireAim", "gesture"].contains(c.role) { try require(!["LS", "RS"].contains(actions.first { $0.id == c.action }?.output ?? ""), "Axes require continuous surfaces") }
-                // Conservative normalized square protects the whole reserved rectangle on either aspect ratio.
-                let h = c.hitRadius
-                try require(c.x + h <= r.x || c.x - h >= r.x + r.width || c.y + h <= r.y || c.y - h >= r.y + r.height, "Hit region intrudes into reserved swipe area")
+                if placement == .generated {
+                    try require(c.coordinateSpace != "screen", "Generated controls must use safe-area anchors")
+                    // Generation quality rule only. Personal layouts may overlap any region or control.
+                    let h = c.hitRadius
+                    try require(c.x + h <= r.x || c.x - h >= r.x + r.width || c.y + h <= r.y || c.y - h >= r.y + r.height, "Hit region intrudes into reserved swipe area")
+                }
             }
         }
         for layout in [phone, pad] {
@@ -96,9 +104,9 @@ struct BCDControlPack: Codable, Equatable {
         try require(radial.allSatisfy { id in !["LS", "RS"].contains(actions.first { $0.id == id }?.output ?? "") } && gestures.allSatisfy { g in !["LS", "RS"].contains(actions.first { $0.id == g.action }?.output ?? "") }, "Axes cannot be pulsed")
         try require(aim.sensitivity.isFinite && (0.1...8).contains(aim.sensitivity) && aim.vertical.isFinite && (0.25...2).contains(aim.vertical) && aim.deadZone.isFinite && (0...0.4).contains(aim.deadZone) && aim.fullSpeed.isFinite && (200...3000).contains(aim.fullSpeed), "Invalid aim calibration")
     }
-    static func decode(_ data: Data, for expected: Identity? = nil) throws -> Self {
+    static func decode(_ data: Data, for expected: Identity? = nil, placement: Placement = .generated) throws -> Self {
         guard data.count <= 262144 else { throw Invalid.reason("Pack exceeds 256 KiB") }
         let p = try JSONDecoder().decode(Self.self, from: data)
-        try p.validate(for: expected); return p
+        try p.validate(for: expected, placement: placement); return p
     }
 }

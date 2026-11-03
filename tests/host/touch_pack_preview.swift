@@ -84,6 +84,9 @@ import UIKit
             guard !store.enabled else { throw NSError(domain:"TouchFixture",code:1,userInfo:[NSLocalizedDescriptionKey:"Per-game stock input preference was not off at restart"]) }
             store.activate(entry)
             assert(store.pack?.phone.controls[index].x==movedX, "Personal edit lost after process restart")
+            let restored = store.pack!.phone.controls.last!
+            assert(restored.action == "rt" && restored.coordinateSpace == "screen" && restored.x == 0.5 && restored.y == 0.5, "Personal overlap/full-screen anchor/order lost after restart")
+            assert(store.pack!.phone.controls.filter { $0.coordinateSpace == "screen" && $0.x == 0.5 && $0.y == 0.5 }.count >= 2)
             assert(store.pack?.actions.contains { $0.label == "Player action fixture" && $0.icon == "shield" && $0.output == "RB" } == true, "Personal binding/icon/label lost after process restart")
             assert(store.pack?.title==original.title+" fixture regeneration", "Wrong cached pack after restart")
             store.setLaunchPreference(entry,generated:true);store.applyLaunchPreference(entry)
@@ -101,8 +104,14 @@ import UIKit
         try await captureEditorFixtures()
         try captureAuthoringFixtures()
         var moved=store.pack!;moved.phone.controls[index].x=movedX
+        moved.version = 2
         let editedAction=moved.actions.firstIndex { $0.output=="RT" }!
         moved.actions[editedAction].label="Player action fixture";moved.actions[editedAction].icon="shield";moved.actions[editedAction].output="RB"
+        for i in moved.phone.controls.indices where ["rt", "a"].contains(moved.phone.controls[i].action) {
+            moved.phone.controls[i].coordinateSpace = "screen"; moved.phone.controls[i].x = 0.5; moved.phone.controls[i].y = 0.5
+        }
+        let front = moved.phone.controls.remove(at: moved.phone.controls.firstIndex { $0.action == "rt" }!)
+        moved.phone.controls.append(front)
         assert(store.saveEdits(moved))
         var temporary=moved;temporary.aim.sensitivity=3;assert(store.saveEdits(temporary));store.undoEdit()
         assert(store.pack?.aim==moved.aim,"Undo failed")
@@ -112,6 +121,7 @@ import UIKit
         LibraryModel.shared.blocksGameplayTouch=true;store.activate(entry)
         assert(store.pack?.title==regenerated.title && store.pack?.phone.controls[index].x==movedX)
         assert(store.pack?.actions.contains { $0.label=="Player action fixture" && $0.output=="RB" } == true,"Binding edit lost on regeneration")
+        assert(store.pack?.phone.controls.last == moved.phone.controls.last, "Personal overlap/order lost on regeneration")
         store.setAuthoringChoice(entry,key:"mode",value:"keyboardMouse");store.usePreset(entry)
         store.activate(entry)
         assert(store.pack?.inputMode=="controller","Selecting next-launch preset changed the current guest session")
@@ -247,6 +257,44 @@ import UIKit
         }
         assert(PackBoundarySpy.keyboardEvents==0 && PackBoundarySpy.mouseEvents==0,"Controller surface emitted keyboard/mouse events")
         surface.clear()
+        var overlapping = p; overlapping.version = 2
+        let rtIndex = overlapping.phone.controls.firstIndex { $0.action == "rt" }!
+        let aIndex = overlapping.phone.controls.firstIndex { $0.action == "a" }!
+        overlapping.actions[overlapping.actions.firstIndex { $0.id == "a" }!].behavior = "hold"
+        for i in [rtIndex, aIndex] {
+            overlapping.phone.controls[i].coordinateSpace = "screen"
+            overlapping.phone.controls[i].x = 0.55; overlapping.phone.controls[i].y = 0.5
+            overlapping.phone.controls[i].role = "button"
+        }
+        let top = overlapping.phone.controls.remove(at: aIndex); overlapping.phone.controls.append(top)
+        try overlapping.validate(placement: .personal)
+        surface.configure(overlapping, context:p.contexts[0], debug:true, editing:false)
+        let overlapPoint = surface.controlCenter(top)
+        surface.beginTouch("independent-fire", at:point(duplicate), time:t+0.03)
+        surface.beginTouch("top-overlap", at:overlapPoint, time:t+0.03)
+        assert(pad.sample.buttons & TouchPadAction.buttons["A"]! != 0 && pad.sample.rt == 255, "Topmost overlapping button did not acquire independently")
+        surface.endTouch("top-overlap", at:overlapPoint, cancelled:true)
+        assert(pad.sample.buttons == 0 && pad.sample.rt == 255, "Cancelling an overlap released another finger")
+        let empty = CGPoint(x:surface.bounds.width*0.5,y:surface.bounds.height*0.3)
+        surface.beginTouch("cross-overlap",at:empty,time:t+0.04)
+        let crossingOwner=pad.lookOwner
+        surface.moveTouch("cross-overlap",to:overlapPoint,time:t+0.06)
+        assert(pad.lookOwner==crossingOwner && pad.sample.buttons == 0 && surface.activeTouchRoles.contains("look"), "Overlap stole an existing look finger")
+        surface.clear()
+        let beforeDrag=store.pack!
+        surface.configure(beforeDrag,context:p.contexts[0],debug:true,editing:true)
+        let dragged=beforeDrag.phone.controls.first { $0.role == "fireAim" }!
+        let from=surface.controlCenter(dragged),destination=CGPoint(x:5,y:surface.bounds.maxY-5)
+        surface.beginTouch("personal-drag",at:from,time:t+0.07)
+        surface.moveTouch("personal-drag",to:destination,time:t+0.08)
+        surface.endTouch("personal-drag",at:destination,cancelled:false)
+        let placed=store.pack!.phone.controls.first { $0.id == dragged.id }!
+        assert(placed.coordinateSpace == "screen" && abs(surface.controlCenter(placed).x-5)<0.001 && abs(surface.controlCenter(placed).y-destination.y)<0.001, "Drag did not save at full display coordinates")
+        let edge=surface.positionedControl(dragged,at:CGPoint(x:-10,y:surface.bounds.maxY+10))
+        assert(edge.x == 0 && edge.y == 1, "Placement must reach the display edge and stop outside it")
+        store.undoEdit();assert(store.pack == beforeDrag)
+        try Data("PASS: production personal drag saves at display edge; overlap uses last-drawn control, cancellation preserves another held trigger, crossing look keeps ownership; regeneration/restart checked separately. Simulator with engine spies, no guest.".utf8).write(to:FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0].appendingPathComponent("free-placement-regression.txt"))
+        surface.clear()
         var keyboard=BCDPackAuthoring.preset(identity:p.identity,title:"Keyboard fixture",genre:"first-person",mode:"keyboardMouse")
         let one=keyboard.actions.firstIndex { $0.output=="key:87" }!,two=keyboard.actions.firstIndex { $0.output=="key:83" }!
         keyboard.actions[one].output="keys:17+87";keyboard.actions[two].output="keys:17+83"
@@ -365,6 +413,14 @@ import UIKit
             let image=UIGraphicsImageRenderer(size:size,format:format).image { _ in host.view.drawHierarchy(in:CGRect(origin:.zero,size:size),afterScreenUpdates:true) }
             try image.pngData()!.write(to:folder.appendingPathComponent("editor-\(height)-simulator.png"))
             window.isHidden=true
+            let store=BCDPackStore.shared,wasEditing=BCDPackStore.shared.editing,wasPlacing=BCDPackStore.shared.placingControls
+            store.editing=true;store.placingControls=true
+            let compact=UIHostingController(rootView:ZStack { Color.black; BCDPackLayer() }.ignoresSafeArea())
+            window.rootViewController=compact;window.isHidden=false;compact.view.layoutIfNeeded()
+            try await Task.sleep(nanoseconds:150_000_000)
+            let compactImage=UIGraphicsImageRenderer(size:size,format:format).image { _ in compact.view.drawHierarchy(in:CGRect(origin:.zero,size:size),afterScreenUpdates:true) }
+            try compactImage.pngData()!.write(to:folder.appendingPathComponent("placement-\(height)-simulator.png"))
+            window.isHidden=true;store.editing=wasEditing;store.placingControls=wasPlacing
         }
     }
 }

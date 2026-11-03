@@ -140,7 +140,27 @@ final class BCDPackView: UIView {
     private var layout: BCDControlPack.Layout? { pad ? pack?.pad : pack?.phone }
     private var safe: CGRect { bounds.inset(by: safeAreaInsets) }
     private var unit: CGFloat { min(safe.width, safe.height) }
-    private func center(_ c: BCDControlPack.Control) -> CGPoint { CGPoint(x: safe.minX + c.x * safe.width, y: safe.minY + c.y * safe.height) }
+    func controlCenter(_ c: BCDControlPack.Control) -> CGPoint {
+        let frame = c.coordinateSpace == "screen" ? bounds : safe
+        return CGPoint(x: frame.minX + c.x * frame.width, y: frame.minY + c.y * frame.height)
+    }
+    private func center(_ c: BCDControlPack.Control) -> CGPoint {
+        let origin = controlCenter(c)
+        if editing, let finger = fingers.values.first(where: { $0.role == "edit" && $0.control?.id == c.id }) {
+            return bounded(CGPoint(x: origin.x + finger.last.x - finger.start.x, y: origin.y + finger.last.y - finger.start.y))
+        }
+        return origin
+    }
+    private func bounded(_ point: CGPoint) -> CGPoint {
+        CGPoint(x: max(bounds.minX, min(bounds.maxX, point.x)), y: max(bounds.minY, min(bounds.maxY, point.y)))
+    }
+    func positionedControl(_ c: BCDControlPack.Control, at point: CGPoint) -> BCDControlPack.Control {
+        var result = c; let point = bounded(point)
+        result.coordinateSpace = "screen"
+        result.x = Double((point.x - bounds.minX) / max(1, bounds.width))
+        result.y = Double((point.y - bounds.minY) / max(1, bounds.height))
+        return result
+    }
     private func action(_ id: String) -> BCDControlPack.Action? { pack?.actions.first { $0.id == id && $0.contexts.contains(context) } }
     private var radialActions: [BCDControlPack.Action] { (pack?.radial ?? []).compactMap { action($0) } }
     private func visible(_ c: BCDControlPack.Control) -> Bool {
@@ -314,10 +334,13 @@ final class BCDPackView: UIView {
                 }
             }
             if f.role == "edit", let c = f.control {
-                var edited = pack; let p = point
+                var edited = pack
+                edited.version = max(edited.version, 2)
+                let origin = controlCenter(c)
+                let destination = CGPoint(x: origin.x + point.x - f.start.x, y: origin.y + point.y - f.start.y)
                 func change(_ controls: inout [BCDControlPack.Control]) {
                     if let i = controls.firstIndex(where: { $0.id == c.id }) {
-                        controls[i].x += Double((p.x - f.start.x) / max(1, safe.width)); controls[i].y += Double((p.y - f.start.y) / max(1, safe.height))
+                        controls[i] = positionedControl(c, at: destination)
                     }
                 }
                 if pad { change(&edited.pad.controls) } else { change(&edited.phone.controls) }
