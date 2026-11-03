@@ -112,6 +112,7 @@ final class BCDPackView: UIView {
         var toggleWasOn = false
         var slideArmed = false
         var slideFired = false
+        var didDrag = false
     }
     private var pack: BCDControlPack?
     private var context = "onFoot"
@@ -338,7 +339,9 @@ final class BCDPackView: UIView {
                 HardwareInput.shared.postRelative(Int32(max(-30000, min(30000, Double(point.x - finger.last.x) * calibration.sensitivity * 2))),
                     Int32(max(-30000, min(30000, Double(point.y - finger.last.y) * calibration.sensitivity * calibration.vertical * 2 * (calibration.invertY ? -1 : 1)))))
             }
-        } else if finger.role == "toggle" { updateSlide(&finger, at: point)
+        } else if finger.role == "toggle" {
+            if hypot(point.x-finger.start.x,point.y-finger.start.y) >= 8 { finger.didDrag = true }
+            updateSlide(&finger, at: point)
         } else if finger.role == "move" {
             let radius = max(CGFloat(1), unit * CGFloat(finger.control?.radius ?? 0.14))
             GamepadInput.shared.packTouch(owner: finger.owner, value: TouchPadAction.sample("LS", x: Double((point.x - finger.start.x) / radius), y: Double((finger.start.y - point.y) / radius)))
@@ -375,8 +378,9 @@ final class BCDPackView: UIView {
             }
             guard !LibraryModel.shared.blocksGameplayTouch, BCDPackFocus.shared.refresh(), let pack else { clear(); return }
             if f.role == "toggle", let c = f.control, let a = action(c.action) {
+                if hypot(point.x-f.start.x,point.y-f.start.y) >= 8 { f.didDrag = true }
                 updateSlide(&f, at: point)
-                if f.toggleWasOn && !f.slideFired { setToggle(a, enabled: false) }
+                if f.toggleWasOn && !f.slideFired && !f.didDrag { setToggle(a, enabled: false) }
                 return
             }
             if f.role == "radial", let index = f.selection, radialActions.indices.contains(index), radialActions[index].behavior != "hold" { pulse(radialActions[index]) }

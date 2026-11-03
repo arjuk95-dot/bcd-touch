@@ -410,6 +410,10 @@ import UIKit
         assert(pad.sample.lt==255 && pad.sample.lx>0 && pad.lookOwner==nil)
         try await Task.sleep(nanoseconds:110_000_000)
         assert(pad.sample.rt==0 && pad.sample.lt==255,"Slide did not retain Aim after attack release")
+        let miss=CGPoint(x:view.bounds.width*0.6,y:view.bounds.height*0.25)
+        view.beginTouch("missed-slide",at:aimPoint,time:t+0.07)
+        view.moveTouch("missed-slide",to:miss,time:t+0.09);view.endTouch("missed-slide",at:miss,cancelled:false)
+        assert(pad.sample.lt==255,"A drag that missed Attack was incorrectly treated as a toggle-off tap")
         view.beginTouch("aim-off",at:aimPoint,time:t+0.1);view.endTouch("aim-off",at:aimPoint,cancelled:false)
         assert(pad.sample.lt==0 && pad.sample.lx>0)
         // A fast slide can end in Attack before a separate move callback arrives.
