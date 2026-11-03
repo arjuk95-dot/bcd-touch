@@ -1,0 +1,17 @@
+{
+  "pid": 13864,
+  "source": "35ee829899eb7ce29ae264f9f211001badeca86a",
+  "host": "192.168.1.5",
+  "port": 8939,
+  "cachedHTTP": 200,
+  "actions": 33,
+  "newGeneration": false,
+  "pairingTokenUnchanged": true,
+  "original8937WorkerUntouched": true,
+  "preflightValidatedCaches": 6,
+  "pendingJobs": 0,
+  "phoneHostUpdatePending": false,
+  "phoneHostUSBReadbackVerified": true,
+  "phoneWorkerURLOnlyChanged": true,
+  "gamesAndControlPacksWritten": false
+}

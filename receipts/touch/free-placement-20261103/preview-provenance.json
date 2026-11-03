@@ -1,0 +1,199 @@
+{
+  "device": "iPhone 16 Pro Max",
+  "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-18-6",
+  "kind": "offscreen production UIKit renderer fixtures on this simulator; legacy geometry inset 62/62/0/21 for phone and 0/0/24/20 for pad; owner screen-anchor exports use full bounds without simulated safe insets; no actual iPad boot or guest game",
+  "images": [
+    {
+      "name": "authoring-icon-catalog-fixture.png",
+      "sha256": "c85d181b693601db080b2e0d9f7af957ecc5a4dc99f856362c806200884d3858"
+    },
+    {
+      "name": "chronicles-of-the-wolf-pad-hits.png",
+      "sha256": "372f53a233cfb06d5c731edbd8f9705e53cae9b3b3f0dfd68187d1b3c1c30fa8"
+    },
+    {
+      "name": "chronicles-of-the-wolf-pad-hud.png",
+      "sha256": "97d6e5b81ecf8ed1da95b504227aa40518e729cad6284d7018247cd90cccca22"
+    },
+    {
+      "name": "chronicles-of-the-wolf-phone-hits.png",
+      "sha256": "e05035117f06863c2cfc6d9941fdfe936d610e0353653c3f4d92405dc85ba89c"
+    },
+    {
+      "name": "chronicles-of-the-wolf-phone-hud.png",
+      "sha256": "7751936b0d8d69bc9b08bbdd69fe708b97e57bd9e0f00b6bcf36b183f1286480"
+    },
+    {
+      "name": "dread-delusion-installed-iphone-pad-hits.png",
+      "sha256": "bfa36faca60293855f16f271fa14f090ba7b03ea37c0a4b668d79b43437456eb"
+    },
+    {
+      "name": "dread-delusion-installed-iphone-pad-hud.png",
+      "sha256": "e317b5eabc35ffa628b9a3c07dd89a567d1ec6923c495758694bbd148953a08d"
+    },
+    {
+      "name": "dread-delusion-installed-iphone-phone-hits.png",
+      "sha256": "f6b1b19f2f48e423ed02de52a2176f18fa3e8164f0b0323b1729877943b6e911"
+    },
+    {
+      "name": "dread-delusion-installed-iphone-phone-hud.png",
+      "sha256": "d7da250fc2be3d82079c02ab3a02dd7c848edcd6d97d3ae133c945a563f29a92"
+    },
+    {
+      "name": "dread-delusion-pad-hits.png",
+      "sha256": "bdb722a36e75eed3b8a98ce65bb0b5d922f3020286fa9ae7671134313ac4d31f"
+    },
+    {
+      "name": "dread-delusion-pad-hud.png",
+      "sha256": "846a083b669aec19ee12b9c2ec26c5593ad2e032a0ac0d0e9bca35407b593cf0"
+    },
+    {
+      "name": "dread-delusion-phone-hits.png",
+      "sha256": "752e91cee90a0de5372de54392b95fbf26836ee6756f9fc8532312d8f4f0cf24"
+    },
+    {
+      "name": "dread-delusion-phone-hud.png",
+      "sha256": "0b3ae6bb702b6f31312c0e558e109e971516a5601786c76aeeb08916970d2a64"
+    },
+    {
+      "name": "editor-320-simulator.png",
+      "sha256": "8de34a7be29131c4fc313fec6747480c738ea094c0691599a5578ccbbe4e433a"
+    },
+    {
+      "name": "editor-440-simulator.png",
+      "sha256": "131bb186fe47b0b64217853eee72b07ffe4f338f994e50534a1547a976f9e7b4"
+    },
+    {
+      "name": "placement-320-simulator.png",
+      "sha256": "514694d94c7be6b8900cf1f83ed9ab8b5a364951b21897edbfb4486883a64819"
+    },
+    {
+      "name": "placement-440-simulator.png",
+      "sha256": "659ba92b433f90e5867d5d2904432eca60f67ef2c06072a9a4a6dae38a866751"
+    },
+    {
+      "name": "template-first-person-controller-pad.png",
+      "sha256": "2334f72d3c8b28cbc16182b6e6ef1baaa943665d3ff230508352e2f2f17ab909"
+    },
+    {
+      "name": "template-first-person-controller-phone.png",
+      "sha256": "81fb4555c0a5d7f47ea6e96fe863411a26748c0e1f1ad64d160b0255cfa81038"
+    },
+    {
+      "name": "template-first-person-keyboardMouse-pad.png",
+      "sha256": "be1a63dd56ada085aa6f85f7f235f4d3f1960723cbcd6f14288de91bd9dd76f1"
+    },
+    {
+      "name": "template-first-person-keyboardMouse-phone.png",
+      "sha256": "9814bafdd3a9db540c02bfbff11dadf86db4ed694bb4e957f2392a98ef1c1d1d"
+    },
+    {
+      "name": "template-racing-controller-pad.png",
+      "sha256": "200ee8bffc432f0d7b55e6229bd3d18b95fee87d37458bcad5f19aae1aea991a"
+    },
+    {
+      "name": "template-racing-controller-phone.png",
+      "sha256": "8924a91cf2675fed697f1f8deae7f69a5613659fe6b66e4c0a4aee7bd374d426"
+    },
+    {
+      "name": "template-racing-keyboardMouse-pad.png",
+      "sha256": "7f039b2e9baa74de6326c1e963aa06a05185f8bd837730c40868f406a1b8296b"
+    },
+    {
+      "name": "template-racing-keyboardMouse-phone.png",
+      "sha256": "e9becdbf5e093fdb52aa8b812c4472272259360430cb28cc990506e382da5654"
+    },
+    {
+      "name": "template-side-scroller-controller-pad.png",
+      "sha256": "4d7fe5948301935fa040930e51fe76d2edbfd3208700231047e4f8cbd1186405"
+    },
+    {
+      "name": "template-side-scroller-controller-phone.png",
+      "sha256": "8102f406aec49ac84c2ee5aefd5b5044e85c5bb672f31ac2524ef44526fd1487"
+    },
+    {
+      "name": "template-side-scroller-keyboardMouse-pad.png",
+      "sha256": "93443281e6a1fbafe4a12a677d616493c9547bc88eba7290e7efd904b414bce7"
+    },
+    {
+      "name": "template-side-scroller-keyboardMouse-phone.png",
+      "sha256": "427f29c3a5d44824054c0c6066d82d9750ba9b20d932a2f976d642e58c6c0364"
+    },
+    {
+      "name": "template-strategy-controller-pad.png",
+      "sha256": "d15d4be7a8b6bfccd34db152b6a8c364cb46c64bd4924debc8047dd62d4a546e"
+    },
+    {
+      "name": "template-strategy-controller-phone.png",
+      "sha256": "890e25ffe9b2855c363fdfb88f5f611651a3c9a2051d8bd87dac3c3fabd5b5d8"
+    },
+    {
+      "name": "template-strategy-keyboardMouse-pad.png",
+      "sha256": "8f720730ef1e7779ed7a4159c62db062c76fa37989cd11993799c347be16520c"
+    },
+    {
+      "name": "template-strategy-keyboardMouse-phone.png",
+      "sha256": "79c8e39f892d06fe29e609c9c4863e3bebff47000585725d43d741cd756b8994"
+    },
+    {
+      "name": "template-third-person-controller-pad.png",
+      "sha256": "17ef85f39c718ef65a38808dfdb40dbe5f6c2836701900917922ec222985da14"
+    },
+    {
+      "name": "template-third-person-controller-phone.png",
+      "sha256": "61dff80ff44e47e7733d18d1de251f24d3dfc28a3bc0cf620101a30c14748460"
+    },
+    {
+      "name": "template-third-person-keyboardMouse-pad.png",
+      "sha256": "0c2e64230c81a091e260405bd535f272bc9d6c5fdf0b67e91f69ced62dbabc02"
+    },
+    {
+      "name": "template-third-person-keyboardMouse-phone.png",
+      "sha256": "cbc5f1fa92e96d3f154bab2f1b3a47ea920a32fdd023ab1a97c6722418c4dc29"
+    },
+    {
+      "name": "tenebris-owner-pad-active-hits.png",
+      "sha256": "2576e4b8c692be71f728a11a151f5e7e338b6cec5a30c24b442e3ba08be71ef0"
+    },
+    {
+      "name": "tenebris-owner-pad-active-hud.png",
+      "sha256": "c0d258a8ce608dde103252e3fbc42cbf8ec0dfb436ee4653266328c31b44df45"
+    },
+    {
+      "name": "tenebris-owner-phone-active-hits.png",
+      "sha256": "69c36f3f8fbbf5933ac761cf1a42c07f9ce2ddf47b94ba3e9af24f632c72732a"
+    },
+    {
+      "name": "tenebris-owner-phone-active-hud.png",
+      "sha256": "4903e71715e81e968a30ecf10b1bcb7074a2c0fb15a33e4b065d7ac38881a4a2"
+    },
+    {
+      "name": "tenebris-somnia-owner-iphone-pad-hits.png",
+      "sha256": "d6433501d3113606ba3d1e10587559eebe982f068ce70b9455dc8e664935713e"
+    },
+    {
+      "name": "tenebris-somnia-owner-iphone-pad-hud.png",
+      "sha256": "912648bab8153b5c04606769ecb4e6aef4cafd5cb06782d178a76a172d3f810e"
+    },
+    {
+      "name": "tenebris-somnia-owner-iphone-phone-hits.png",
+      "sha256": "b6ed637e2b37cf033ff9c2950c07e76365ed9266f1135361241bbff129bc2eb2"
+    },
+    {
+      "name": "tenebris-somnia-owner-iphone-phone-hud.png",
+      "sha256": "b04b179974bbad495a9d9c5d85a0e06d86d1e1431f8bdcabaea336da9a75e5a8"
+    }
+  ],
+  "appSource": "b78e96073e65e6d1431376f5134ae08ea60dc037",
+  "run": "https://github.com/arjunkl/bcd-touch/actions/runs/41691945334",
+  "visuallyReviewed": [
+    "tenebris-owner-phone-active-hud.png",
+    "tenebris-owner-phone-active-hits.png",
+    "tenebris-owner-pad-active-hud.png",
+    "tenebris-owner-pad-active-hits.png",
+    "placement-320-simulator.png",
+    "placement-440-simulator.png",
+    "editor-320-simulator.png"
+  ],
+  "physicallyTested": false
+}

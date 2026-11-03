@@ -1,0 +1,5 @@
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T15:35:39.5148010Z PASS: ten presets; personal overlap/full-screen anchors, export/import and regeneration order; generated spacing remains strict; malformed bindings/geometry rejected (host fixtures)
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T15:35:39.5574820Z PASS: simultaneous LS/RT/RS, duplicate fire release, reversals, saturation, stale expiry, reset, pause, physical arbitration and invalid packs
+touch	Production Swift timing, state, schema and UIKit checks	2026-11-03T15:36:29.6654810Z PASS: production pack views, window routing and legacy attachment typechecked against iOS SDK (engine/view boundaries stubbed)
+touch	Stock touch and physical controller regression	2026-11-03T15:36:32.4081160Z PASS: touch mappings, independent holds, lifecycle clearing, analogue ranges, physical merge and session slot
+touch	Worker and invalid-pack checks	2026-11-03T15:36:56.2843980Z PASS: pilot validation, identity/mode/hit rejection, cache/restart/overrides, corrupt-cache recovery, bounded failed-generation retries and duplicate-server startup (host fixtures)

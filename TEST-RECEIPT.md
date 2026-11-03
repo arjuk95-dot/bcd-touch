@@ -1,5 +1,15 @@
 # Touch-fork test receipt
 
+## Free placement and Tenebris version 3 — build in progress
+
+App source `b78e96073e65e6d1431376f5134ae08ea60dc037`, same v0.1.626 base. [SDK/input/worker checks](https://github.com/arjunkl/bcd-touch/actions/runs/41691926925) and [45 simulator exports plus production-store restart](https://github.com/arjunkl/bcd-touch/actions/runs/41691945334) pass. The production renderer was visually reviewed for the owner's phone HUD, actual hit regions, independent iPad geometry and compact editor placement. The [full iOS build](https://github.com/arjunkl/bcd-touch/actions/runs/41693381721) is active; no new IPA is installed yet. [Current evidence](receipts/touch/free-placement-20261103/delivery.json).
+
+The owner confirmed Tenebris LT Aim, RT Attack, A Interact, X Run, B Inventory and Menu Pause. The personal pack follows the mockup and records that provenance. Simulator engine-boundary spies cover hidden-idle floating LS, tap-to-toggle LT, one RT pulse per configured slide including fast release and repeated crossings, an already-on Aim latch, a drag that misses Attack, independent movement/fire owners, cancellation/focus/pause/context cleanup, no-look mode and zero keyboard/mouse calls. These are not guest traces or a physical game test.
+
+Personal placement, deliberate overlap, edge anchors/order, Add LT, compact toolbar hit routing, save/import context recovery and persisted request-capability migration are covered. Original Dread swipe timing and controller publisher regressions pass. Seven selected exports and all 45 hashes are retained in the evidence directory. The iPad images are offscreen geometry on the iPhone 16 Pro Max simulator, iOS 18.6; no iPad was booted. The backdrop is empty.
+
+Pending: native archive/package, existing-slot install verification, owner-preset application with metadata backup, physical Tenebris movement/Aim/slide/attack/edit-return tests and actual iPad testing. Guest input traces, hardware-controller/gyro regression and the other original physical checks remain pending. The previous 6c27cf8 editor is installed; no games or saves were copied for this phase.
+
 ## Shared authoring beta — USB-verified install and worker setup; editor tests pending
 
 The owner now prioritizes automatic preparation and manual customization equally. The new existing-slot `BCD-Touch-controls-6c27cf8.ipa` is verified locally: 185,690,749 bytes, SHA-256 `ade1826a5de6273982ac21d429690b5987b42a8f2c30312a3eab97e39a569bfa`. App source `6c27cf87eab5a3094c5f078b0a8bf6e91e3ad7f3`, same v0.1.626 base. [Full archive](https://github.com/arjunkl/bcd-touch/actions/runs/41604861178), [native sideload packaging](https://github.com/arjunkl/bcd-touch/actions/runs/41614413524), deep/strict signatures, three entitlement requests, unchanged repackaged instructions and full local ZIP CRC/SHA checks passed. [Package receipt](receipts/touch/authoring-20261103/existing-update-package.json).

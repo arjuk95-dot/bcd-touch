@@ -21,7 +21,7 @@ def make_request(title, executable, store_id='local', edition='installed', build
     canonical=json.dumps(collected,sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()
     return dict(version=1,title=title,identity=dict(executable=executable.replace('\\','/').lower(),storeID=store_id,
         edition=edition,build=build,bindingDigest=hashlib.sha256(canonical).hexdigest()),bindings=collected,
-        requirements=dict(packVersion='2',inputMode=mode,genre=genre,mode=mode,
+        requirements=dict(packVersion='3',inputMode=mode,genre=genre,mode=mode,
             phone='iPhone landscape safe area; preserve continuous swipe space and thumb reach',
             pad='Independent iPad landscape reach layout',
             evidence='Prefer these actual player binding files; otherwise research primary game controls. Unknown bindings remain raw and unresolved.',

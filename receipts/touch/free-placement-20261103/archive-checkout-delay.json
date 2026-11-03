@@ -1,0 +1,17 @@
+{
+  "run": "https://github.com/arjunkl/bcd-touch/actions/runs/41665784752",
+  "source": "35e8e81bed1a66a5d44cd7865be404e4c15bee09",
+  "status": "cancelled",
+  "step": "Run actions/checkout@v4 / recursive FEX submodules",
+  "reason": "GitHub DNS and HTTPS connection failures during dependency checkout; cancelled before any compilation",
+  "errors": [
+    "##[error]fatal: unable to access 'https://github.com/arjunkl/bcd-touch/': Failed to connect to github.com port 443 after 75006 ms: Couldn't connect to server",
+    "##[error]fatal: unable to access 'https://github.com/FEX-Emu/fex-posixtest-bins.git/': Failed to connect to github.com port 443 after 11918 ms: Couldn't connect to server",
+    "##[error]fatal: unable to access 'https://github.com/fmtlib/fmt.git/': Failed to connect to github.com port 443 after 11910 ms: Couldn't connect to server",
+    "##[error]fatal: unable to access 'https://github.com/FEX-Emu/jemalloc.git/': Failed to connect to github.com port 443 after 11916 ms: Couldn't connect to server",
+    "##[error]fatal: unable to access 'https://github.com/ericniebler/range-v3.git/': Failed to connect to github.com port 443 after 11919 ms: Couldn't connect to server",
+    "##[error]fatal: unable to access 'https://github.com/willfaust/rpmalloc.git/': Could not resolve host: github.com"
+  ],
+  "ipaCreated": false,
+  "retryRun": "https://github.com/arjunkl/bcd-touch/actions/runs/41668260084"
+}

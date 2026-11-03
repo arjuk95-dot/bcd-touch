@@ -1,0 +1,12 @@
+{
+  "conclusion": "success",
+  "headSha": "35ee829899eb7ce29ae264f9f211001badeca86a",
+  "status": "completed",
+  "url": "https://github.com/arjunkl/bcd-touch/actions/runs/41666100877",
+  "compactCanvasHitTests": 16,
+  "landscapeHeights": [
+    320,
+    440
+  ],
+  "kind": "Production UIKit/SwiftUI simulator hit tests, no phone or guest"
+}

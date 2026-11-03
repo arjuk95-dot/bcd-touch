@@ -1,0 +1,1 @@
+PASS: production personal drag saves at display edge; overlap uses last-drawn control, cancellation preserves another held trigger, crossing look keeps ownership; regeneration/restart checked separately. Simulator with engine spies, no guest.

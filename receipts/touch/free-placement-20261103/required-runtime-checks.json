@@ -1,0 +1,17 @@
+{
+  "run": "https://github.com/arjunkl/bcd-touch/actions/runs/41668260084",
+  "checks": [
+    {
+      "name": "Build xtajit64.dll (FEX fixes, AVX opt-in)",
+      "result": "success"
+    },
+    {
+      "name": "Build extra Wine DLLs for arm64ec",
+      "result": "success"
+    },
+    {
+      "name": "Verify committed PE DLLs",
+      "result": "success"
+    }
+  ]
+}

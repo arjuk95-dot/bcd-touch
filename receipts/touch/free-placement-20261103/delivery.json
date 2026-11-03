@@ -1,0 +1,33 @@
+{
+  "base": "adc9cc742f52601a42f52ac6b4fbcc701bdb16ad",
+  "branch": "wo-bcd-touch-001",
+  "appSource": "b78e96073e65e6d1431376f5134ae08ea60dc037",
+  "installedSource": "6c27cf87eab5a3094c5f078b0a8bf6e91e3ad7f3",
+  "sdk": "passed",
+  "preview45": "passed",
+  "compactHitRouting": "passed",
+  "archive": "running",
+  "buildRun": "https://github.com/arjunkl/bcd-touch/actions/runs/41693381721",
+  "phoneAppUpdated": false,
+  "physicallyTested": false,
+  "implementation": [
+    "Personal full-display placement and overlap, continuous drag preview, compact editor toolbar and persistent control ordering",
+    "Direct Add button menu exposes all supported outputs including LT; newly added controls enter placement mode",
+    "Version-3 explicit toggles, directed toggle-to-tap slide, inside labels, movement regions, no-look mode and four outline icons",
+    "Tenebris owner-confirmed bindings and mockup: amber LT latch, one RT per Aim-to-Attack slide, hidden idle floating LS, separate phone/pad layouts",
+    "Persisted pending requests migrate protocol capability without changing generation identity; local presets and edit contexts survive upgrade"
+  ],
+  "packStatus": {
+    "authored": "Owner mockup plus confirmed selected bindings; not a new model generation",
+    "validated": true,
+    "physicallyTested": false
+  },
+  "pending": [
+    "Full app archive and existing-slot package",
+    "Direct-PC bounded HTTP delivery",
+    "Install-source verification and backed-up owner preset selection",
+    "Physical Tenebris toggle/slide/placement test and real iPad testing",
+    "Guest and physical-controller/gyro checks from the original work order"
+  ],
+  "phoneWriteScope": "Worker URL only earlier in this phase; no new app/control-pack/game/save writes"
+}
