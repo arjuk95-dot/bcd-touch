@@ -1,0 +1,26 @@
+{
+  "kind": "Desktop HTTP fixture with genuine Codex generation using recorded Chronicles input configuration; not a new phone request or gameplay test",
+  "workerContractSource": "78ad8981f33d69f9ca7e1ef70c23085fcf9cf433 before later catalog and session-boundary additions",
+  "roundtrip": {
+    "cachedHTTP": 200,
+    "duplicateHTTP": 202,
+    "initialHTTP": 202,
+    "key": "e055f885bade4adf937e0229ee017112a040cebef41b3f6202d0039a49115a65",
+    "physicallyTested": false,
+    "returnedHTTP": 200,
+    "seconds": 84.91,
+    "title": "chronicles-v2-request",
+    "validated": true
+  },
+  "generated": true,
+  "validated": true,
+  "physicallyTested": false,
+  "modelAttempts": 1,
+  "completedWebSearches": 0,
+  "bindingEvidence": "Supplied recorded installed config; no new online binding lookup was needed or performed.",
+  "returnedVersion": 2,
+  "inputMode": "keyboardMouse",
+  "actions": 12,
+  "sha256": "cd872f7e4b24b67259457166a83976fe63d2115741253d88d78028ea1c3ae06d",
+  "productionWorkerOrPhoneChanged": false
+}

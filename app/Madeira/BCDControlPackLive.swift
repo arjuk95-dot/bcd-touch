@@ -35,6 +35,7 @@ import UniformTypeIdentifiers
     private var selectedKey: String?
     private var personalKey: String?
     private var sessionID: UUID?
+    private var sessionUsesLocal = false
     struct PersonalEdit: Codable { var pack: BCDControlPack; var baseline: BCDControlPack? }
     private var overrides: [String: PersonalEdit] = [:]
     private var undoHistory: [BCDControlPack] = []
@@ -88,7 +89,8 @@ import UniformTypeIdentifiers
         let req = request(entry)
         let proposed = req.requirements["genre"] ?? "first-person"
         let genre = BCDPackCatalog.genres.contains { $0.0 == proposed } ? proposed : "third-person"
-        let mode = authoringChoice(entry, key: "mode") == "keyboardMouse" ? "keyboardMouse" : "controller"
+        let choice = authoringChoice(entry, key: "mode")
+        let mode = choice == "keyboardMouse" || (choice == "auto" && req.requirements["mode"]?.hasPrefix("keyboardMouse") == true) ? "keyboardMouse" : "controller"
         let preset = BCDPackAuthoring.preset(identity: req.identity, title: entry.title, genre: genre, mode: mode)
         do {
             try preset.validate(for: req.identity)
@@ -157,6 +159,7 @@ import UniformTypeIdentifiers
     }
     func activate(_ entry: LibraryEntry?) {
         guard let entry else { sessionID = nil; pack = nil; base = nil; personalKey = nil; gameKey = nil; undoHistory.removeAll(); return }
+        let sameSession = sessionID == entry.id
         if sessionID == entry.id && !LibraryModel.shared.blocksGameplayTouch { return }
         // Changing a running HID session into XInput requires a new guest enumeration.
         if sessionID == entry.id && GamepadInput.sessionHIDKind != nil {
@@ -166,16 +169,22 @@ import UniformTypeIdentifiers
             else { prepare(entry) }
             return
         }
-        sessionID = entry.id
         let req = request(entry), key = Self.hash(Self.encoded(req.identity)); selectedKey = key
         gameKey = Self.hash(Self.encoded([req.identity.executable, req.identity.storeID, req.identity.edition]))
-        let localSelected = UserDefaults.standard.bool(forKey: "TouchPackLocal." + gameKey!)
+        if !sameSession { sessionUsesLocal = UserDefaults.standard.bool(forKey: "TouchPackLocal." + gameKey!) }
+        let localSelected = sessionUsesLocal
         var local: BCDControlPack?
-        if localSelected, let data = try? Data(contentsOf: folder.appendingPathComponent("local-" + gameKey! + ".json")), var candidate = try? BCDControlPack.decode(data) {
+        if localSelected && sameSession { local = base }
+        else if localSelected, let data = try? Data(contentsOf: folder.appendingPathComponent("local-" + gameKey! + ".json")), var candidate = try? BCDControlPack.decode(data) {
             candidate.identity = req.identity // A player-selected template follows this installation; generated caches never bypass identity matching.
             if (try? candidate.validate(for: req.identity)) != nil { local = candidate }
         }
-        base = local ?? cached(key, identity: req.identity); pack = base
+        let candidate = local ?? cached(key, identity: req.identity)
+        if sameSession, let current = pack, let candidate, current.inputMode != candidate.inputMode {
+            status = "Prepared input mode saved · next launch"; return
+        }
+        sessionID = entry.id
+        base = candidate; pack = base
         personalKey = local.map { gameKey! + "." + $0.id } ?? gameKey
         undoHistory.removeAll()
         var editFailure: String?

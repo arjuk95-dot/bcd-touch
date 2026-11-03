@@ -12,6 +12,8 @@ sys.path.insert(0,str(ROOT/'tools/touch-packs'))
 spec=importlib.util.spec_from_file_location('worker',ROOT/'tools/touch-packs/worker.py');w=importlib.util.module_from_spec(spec);spec.loader.exec_module(w)
 packs=list((ROOT/'packs/pilots').glob('*.json'))
 assert packs, 'Pilot packs missing'
+icon_catalog=json.loads((ROOT/'tools/touch-packs/icon-catalog.json').read_text(encoding='utf-8'))
+assert len(icon_catalog)>40 and len({entry['id'] for entry in icon_catalog})==len(icon_catalog)
 # New output vocabulary is versioned, mode-checked and never permits arbitrary key codes.
 v2=copy.deepcopy(json.loads(packs[0].read_text(encoding='utf-8')))
 v2['version']=2;v2['inputMode']='keyboardMouse'
@@ -59,6 +61,11 @@ dreadRequest=json.loads((ROOT/'packs/requests/dread-delusion-installed-iphone.js
 dreadPilot=json.loads((ROOT/'packs/pilots/dread-delusion-installed-iphone.json').read_text(encoding='utf-8'))
 dread=apply_dread_bindings(dreadPilot,dreadRequest);w.validate(dread,dreadRequest['identity'])
 byID={a['id']:a for a in dread['actions']}
+for altered,requirements in [(dread,dict(packVersion='2',inputMode='keyboardMouse')),(dict(dread,version=2),dict(packVersion='1',inputMode='controller'))]:
+    try:w.validate_result(altered,dict(identity=dread['identity'],requirements=requirements))
+    except Exception:pass
+    else:raise AssertionError('Ignored requested input mode or client version')
+
 assert {id:byID[id]['output'] for id in ['block','spell','sprint','crouch','use-item','raw-y','raw-a']}==dict(block='RB',spell='LT',sprint='LB',crouch='R3',**{'use-item':'D↑','raw-y':'Y','raw-a':'A'})
 assert byID['block']['behavior']=='hold' and byID['block']['contexts']==['onFoot']
 assert byID['panel-right']['contexts']==['menu'] and byID['ascend']['contexts']==['airship']

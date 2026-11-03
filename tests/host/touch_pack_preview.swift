@@ -113,7 +113,10 @@ import UIKit
         assert(store.pack?.actions.contains { $0.label=="Player action fixture" && $0.output=="RB" } == true,"Binding edit lost on regeneration")
         var unknown=LibraryEntry();unknown.title="Unknown title fixture";unknown.launchRelativePath="unknown-title.exe";unknown.relativePath="unknown-title.exe"
         store.setAuthoringChoice(unknown,key:"genre",value:"racing");store.setAuthoringChoice(unknown,key:"mode",value:"keyboardMouse")
-        store.usePreset(unknown);store.activate(unknown)
+        store.usePreset(unknown)
+        store.activate(entry)
+        assert(store.pack?.inputMode=="controller","Next-launch preset changed the active session")
+        store.activate(unknown)
         assert(store.pack?.inputMode=="keyboardMouse" && store.pack?.identity==store.request(unknown).identity)
         var manual=store.pack!;manual.actions[0].label="Personal accelerator";assert(store.saveEdits(manual))
         store.activate(entry);store.activate(unknown)

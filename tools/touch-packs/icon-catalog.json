@@ -1,0 +1,178 @@
+[
+  {
+    "id": "scope",
+    "label": "Aim"
+  },
+  {
+    "id": "burst",
+    "label": "Shoot"
+  },
+  {
+    "id": "figure.fencing",
+    "label": "Sword / attack"
+  },
+  {
+    "id": "capsule.portrait",
+    "label": "Ammunition"
+  },
+  {
+    "id": "bolt",
+    "label": "Attack"
+  },
+  {
+    "id": "shield",
+    "label": "Block / parry"
+  },
+  {
+    "id": "hand.tap",
+    "label": "Use"
+  },
+  {
+    "id": "bag",
+    "label": "Inventory"
+  },
+  {
+    "id": "map",
+    "label": "Map"
+  },
+  {
+    "id": "pause",
+    "label": "Pause"
+  },
+  {
+    "id": "arrow.up",
+    "label": "Jump"
+  },
+  {
+    "id": "figure.walk",
+    "label": "Move"
+  },
+  {
+    "id": "figure.run",
+    "label": "Sprint"
+  },
+  {
+    "id": "figure.stand",
+    "label": "Stance"
+  },
+  {
+    "id": "sparkles",
+    "label": "Spell"
+  },
+  {
+    "id": "flame",
+    "label": "Special"
+  },
+  {
+    "id": "cross.case",
+    "label": "Heal"
+  },
+  {
+    "id": "heart",
+    "label": "Health"
+  },
+  {
+    "id": "arrow.clockwise",
+    "label": "Reload"
+  },
+  {
+    "id": "arrow.left.arrow.right",
+    "label": "Cycle"
+  },
+  {
+    "id": "arrow.up.arrow.down",
+    "label": "Change"
+  },
+  {
+    "id": "circle.grid.2x2",
+    "label": "Actions"
+  },
+  {
+    "id": "checkmark",
+    "label": "Confirm"
+  },
+  {
+    "id": "xmark",
+    "label": "Cancel"
+  },
+  {
+    "id": "text.bubble",
+    "label": "Dialogue"
+  },
+  {
+    "id": "eye",
+    "label": "View"
+  },
+  {
+    "id": "camera",
+    "label": "Camera"
+  },
+  {
+    "id": "binoculars",
+    "label": "Inspect"
+  },
+  {
+    "id": "flashlight.on.fill",
+    "label": "Light"
+  },
+  {
+    "id": "car",
+    "label": "Vehicle"
+  },
+  {
+    "id": "speedometer",
+    "label": "Accelerate"
+  },
+  {
+    "id": "stop.circle",
+    "label": "Brake"
+  },
+  {
+    "id": "arrow.turn.up.left",
+    "label": "Steer"
+  },
+  {
+    "id": "airplane",
+    "label": "Flight"
+  },
+  {
+    "id": "gearshape",
+    "label": "Settings"
+  },
+  {
+    "id": "person.2",
+    "label": "Companion"
+  },
+  {
+    "id": "flag",
+    "label": "Objective"
+  },
+  {
+    "id": "magnifyingglass",
+    "label": "Search"
+  },
+  {
+    "id": "cursorarrow",
+    "label": "Pointer"
+  },
+  {
+    "id": "keyboard",
+    "label": "Keyboard"
+  },
+  {
+    "id": "a.circle",
+    "label": "A"
+  },
+  {
+    "id": "b.circle",
+    "label": "B"
+  },
+  {
+    "id": "x.circle",
+    "label": "X"
+  },
+  {
+    "id": "y.circle",
+    "label": "Y"
+  }
+]
