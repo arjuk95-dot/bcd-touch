@@ -400,6 +400,11 @@ import UIKit
         let scene=UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first!
         let folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
         assert(BCDPackCatalog.icons.allSatisfy { UIImage(systemName:$0.id) != nil }, "Icon catalog contains an unavailable symbol")
+        func canvas(in view:UIView) -> BCDPackView? {
+            if let surface=view as? BCDPackView { return surface }
+            for child in view.subviews { if let surface=canvas(in:child) { return surface } }
+            return nil
+        }
         for height in [320,440] {
             let size=CGSize(width:956,height:CGFloat(height))
             let window=UIWindow(windowScene:scene);window.frame=CGRect(origin:.zero,size:size);window.windowLevel = .normal+102
@@ -418,6 +423,13 @@ import UIKit
             let compact=UIHostingController(rootView:ZStack { Color.black; BCDPackLayer() }.ignoresSafeArea())
             window.rootViewController=compact;window.isHidden=false;compact.view.layoutIfNeeded()
             try await Task.sleep(nanoseconds:150_000_000)
+            let placementCanvas=canvas(in:compact.view)!
+            for x in [0.15,0.35,0.65,0.85] {
+                for y in [0.5,0.8] {
+                    let point=CGPoint(x:compact.view.bounds.width*x,y:compact.view.bounds.height*y)
+                    assert(compact.view.hitTest(point,with:nil) === placementCanvas, "Compact placement toolbar blocks the canvas")
+                }
+            }
             let compactImage=UIGraphicsImageRenderer(size:size,format:format).image { _ in compact.view.drawHierarchy(in:CGRect(origin:.zero,size:size),afterScreenUpdates:true) }
             try compactImage.pngData()!.write(to:folder.appendingPathComponent("placement-\(height)-simulator.png"))
             window.isHidden=true;store.editing=wasEditing;store.placingControls=wasPlacing
