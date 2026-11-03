@@ -81,7 +81,7 @@ import UIKit
         let movedX=0.13
         if ProcessInfo.processInfo.environment["PACK_CLIENT_RESUME"]=="1" {
             store.applyLaunchPreference(entry)
-            assert(!store.enabled, "Per-game stock input preference lost after restart")
+            guard !store.enabled else { throw NSError(domain:"TouchFixture",code:1,userInfo:[NSLocalizedDescriptionKey:"Per-game stock input preference was not off at restart"]) }
             store.activate(entry)
             assert(store.pack?.phone.controls[index].x==movedX, "Personal edit lost after process restart")
             assert(store.pack?.actions.contains { $0.label == "Player action fixture" && $0.icon == "shield" && $0.output == "RB" } == true, "Personal binding/icon/label lost after process restart")
@@ -134,6 +134,7 @@ import UIKit
         assert(store.pack?.actions[0].label=="Personal accelerator","Manual preset edits lost on reactivation")
         store.activate(entry)
         assert(store.pack?.actions.contains { $0.label=="Player action fixture" } == true,"Preset overwrote researched edits")
+        store.setLaunchPreference(entry,generated:false) // Restore the preference expected by the fresh-process phase.
         LibraryModel.shared.blocksGameplayTouch=false
         var invalid=original;invalid.version=999
         try BCDPackStore.encoded(invalid).write(to:cached,options:.atomic)

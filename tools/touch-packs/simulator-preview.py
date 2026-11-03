@@ -48,6 +48,8 @@ with tempfile.TemporaryDirectory(prefix='touch-preview-') as tmp:
     for _ in range(30):
         if (container/'client-phase-2.txt').exists():break
         time.sleep(1)
+    for evidence in container.glob('client-*.txt'):shutil.copyfile(evidence,out/evidence.name)
+    if (container/'client-error.txt').exists():print((container/'client-error.txt').read_text()[:2000],flush=True)
     assert (container/'client-phase-2.txt').exists(),'Production Swift store restart fixture did not finish'
     images=list(container.glob('*.png'));assert len(images)==35 and len(list(container.glob('template-*.png')))==20,'Renderer/editor/template fixture export did not complete'
     for p in images:shutil.copyfile(p,out/p.name)
