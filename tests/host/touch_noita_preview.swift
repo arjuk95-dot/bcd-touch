@@ -53,6 +53,12 @@ extension TouchPackPreview {
                 view.configure(p,context:"onFoot",debug:true,editing:true)
                 let image=UIGraphicsImageRenderer(size:size).image { _ in view.draw(view.bounds) }
                 try image.pngData()!.write(to:folder.appendingPathComponent("noita-phone-editor-hits.png"))
+                view.configure(p,context:"onFoot",debug:false,editing:false)
+                let live=view.cursorEngine!
+                for notification in [UIDevice.orientationDidChangeNotification,BCDPackFocus.didLoseFocus,UIApplication.willResignActiveNotification] {
+                    view.beginTouch("interrupted-fire",at:view.controlCenter(p.phone.controls.first{$0.role=="fireAim"}!),time:ProcessInfo.processInfo.systemUptime)
+                    assert(live.firing);NotificationCenter.default.post(name:notification,object:nil);assert(live.activeOutputs.isEmpty)
+                }
             }
             view.clear()
         }

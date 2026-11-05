@@ -42,10 +42,12 @@ enum BCDNoitaPack {
         }
         var pack=BCDControlPack(version:4,id:"noita-cursor-v4",title:"Noita",identity:identity,inputMode:"keyboardMouse",aim:.init(),actions:actions,phone:layout(pad:false),pad:layout(pad:true),gestures:[],radial:(1...8).map { "slot-\($0)" },contexts:["onFoot","pointer"],evidence:[.init(id:"requested-defaults",source:"Owner's Noita KB/M specification",detail:"Expected defaults: A/D horizontal, W levitation, S down/eat, left mouse uses selected item, right mouse throws, F kick, E interact, Tab inventory, number keys 1–8 equipment, Escape pause. These expected defaults alone are not proof of installed remaps.")],unresolved:["Installed binding file and Noita controller-detection setting need verification.","Actual Noita cursor, scrolling-camera and inventory drag behavior require an on-device test."],lookMode:"relativeMouse",digitalMovement:.init(left:"move-left",right:"move-right",up:"levitate",down:"down-eat"),cursorControls:.init(fire:"use-selected",inventory:"inventory",pause:"pause",throwAction:"throw",primaryClick:"pointer-select",secondaryClick:"pointer-secondary"))
         pack.aim.deadZone=0
-        if !bindings.isEmpty {
+        let input=bindings.filter { $0.key.hasPrefix("noita/") }
+        if !input.isEmpty {
             pack.evidence.append(.init(id:"installed-input-metadata",source:"Bounded installed Noita input configuration",detail:"Input attributes were read on-device and included in the identity digest. Unrecognized fields are evidence only; they are not guessed bindings. Inspect preparation metadata or confirm mappings in Noita before marking physical validation complete."))
-            for (index,item) in bindings.filter({$0.key.hasPrefix("noita/")}).sorted(by:{$0.key<$1.key}).enumerated() {
-                pack.evidence.append(.init(id:"noita-input-\(index)",source:item.key,detail:String(item.value.prefix(4000))))
+            for (index,item) in input.sorted(by:{$0.key<$1.key}).enumerated() {
+                let excerpt=String(decoding:item.value.utf8.prefix(3900),as:UTF8.self)
+                pack.evidence.append(.init(id:"noita-input-\(index)",source:item.key,detail:excerpt))
             }
         }
         return pack

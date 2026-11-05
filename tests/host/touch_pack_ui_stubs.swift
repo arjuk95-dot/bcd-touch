@@ -49,6 +49,8 @@ struct LibraryEntry {
     static let shared = HardwareInput()
     func postRelative(_ x:Int32,_ y:Int32) {}
     func postCursorPackRelative(_ x:Int32,_ y:Int32) { winios_pointer(x,y,1,0) }
+    func setCursorPackActive(_ active:Bool) {}
+    func setCursorPackFocused(_ focused:Bool) {}
     var pointerHeldByProgram=false
     static var fixturePointer=false
     static func isPointerEvent(_ event:UIEvent?) -> Bool { fixturePointer }

@@ -85,7 +85,7 @@ final class BCDCursorPack {
     func openInventory(time: Double) { switchMode(.pointer);pulse(settings.inventory,time:time) }
     func pause(time: Double) { switchMode(.paused);pulse(settings.pause,time:time) }
     private func pointerMove(_ f: Finger, to p: CGPoint) {
-        let gain=CGFloat(pack.aim.sensitivity*(f.firing ? settings.firingMultiplier : 1))
+        let gain=CGFloat(pack.aim.sensitivity*((f.firing || firing) ? settings.firingMultiplier : 1))
         let vertical=CGFloat(pack.aim.vertical)*(pack.aim.invertY ? -1:1)
         carry.x += (p.x-f.last.x)*gain*guest.width/max(1,viewport.width)
         carry.y += (p.y-f.last.y)*gain*vertical*guest.height/max(1,viewport.height)
@@ -174,11 +174,12 @@ final class BCDCursorPack {
         if let c {
             if c.action==settings.inventory { openInventory(time:time);return }
             if c.action==settings.pause { pause(time:time);return }
+            if c.action==settings.throwAction { suspendAim();pulse(settings.throwAction,time:time);fingers[id]=Finger(role:"ignore",start:p,last:p,began:time);return }
             if c.role=="radial" { suspendAim();mode = .equipment;fingers[id]=Finger(role:"radial",start:p,last:p,began:time);return }
             var f=Finger(role:c.role,action:c.action,start:p,last:p,began:time)
             if c.action==settings.fire && c.role=="fireAim" {
-                if fingers.values.contains(where:{$0.role=="look" || $0.role=="fireAim"}) { f.role="ignore" }
-                else { f.firing=true;hold(c.action,id) }
+                if fingers.values.contains(where:{$0.role=="look" || $0.role=="fireAim"}) { f.role="button" }
+                f.firing=true;hold(c.action,id)
             } else if action(c.action)?.behavior=="hold" { hold(c.action,id) }
             else { pulse(c.action,time:time) }
             fingers[id]=f;return

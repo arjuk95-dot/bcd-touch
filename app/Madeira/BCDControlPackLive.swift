@@ -107,7 +107,10 @@ import UniformTypeIdentifiers
             try Self.encoded(preset).write(to: folder.appendingPathComponent("local-" + key + ".json"), options: .atomic)
             UserDefaults.standard.set(true, forKey: "TouchPackLocal." + key)
             UserDefaults.standard.set(true, forKey: preferenceKey(entry))
-            status = "Customizable preset ready · next launch. Verify its raw bindings in the game."
+            if BCDNoitaPack.matches(req.identity) {
+                setAuthoringChoice(entry,key:"mode",value:"keyboardMouse")
+                status="Noita cursor controls ready · next launch. Confirm bindings in Noita."
+            } else { status = "Customizable preset ready · next launch. Verify its raw bindings in the game." }
         } catch { status = "Preset could not be saved: \(error)" }
     }
     func summary(_ entry: LibraryEntry) -> String {
@@ -315,12 +318,16 @@ struct BCDPackLayer: View {
                 .onChange(of: store.editing) { _, editing in if !editing { store.placingControls = false }; configure() }
                 .onChange(of: library.blocksGameplayTouch) { _, _ in configure() }
                 .onChange(of: focus.gameFocused) { _, _ in configure() }
-                .onDisappear { GamepadInput.shared.configurePack(enabled: library.current != nil && store.pack != nil && store.enabled && p.inputMode == "controller", accepting: false, calibration: p.aim) }
+                .onDisappear {
+                    if p.cursorControls != nil { HardwareInput.shared.setCursorPackFocused(false) }
+                    GamepadInput.shared.configurePack(enabled: library.current != nil && store.pack != nil && store.enabled && p.inputMode == "controller", accepting: false, calibration: p.aim)
+                }
         }
     }
     private func configure() {
         guard let p = store.pack else { return }
         focus.setMonitoring(true)
+        if p.cursorControls != nil { HardwareInput.shared.setCursorPackFocused(focus.gameFocused && !library.blocksGameplayTouch && !store.editing) }
         GamepadInput.shared.configurePack(enabled: p.inputMode == "controller", accepting: focus.gameFocused && !library.blocksGameplayTouch && !store.editing, calibration: p.aim)
     }
 }

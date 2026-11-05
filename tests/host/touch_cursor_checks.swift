@@ -77,6 +77,11 @@ func checkCursorPacks() throws {
     assert(e.drain().filter{$0 == .button("mouse:left",true)}.count==1)
     e.end("first",at:fire,time:6.02,cancelled:true);assert(!e.drain().contains(.button("mouse:left",false)))
     e.end("second",at:e.center(duplicate),time:6.03,cancelled:true);assert(e.drain()==[.button("mouse:left",false)])
+    e.begin("independent-look",at:aim,time:6.1);e.begin("independent-fire",at:fire,time:6.2)
+    assert(e.drain()==[.button("mouse:left",true)])
+    e.move("independent-look",to:CGPoint(x:605,y:200),time:6.3);assert(motion(e.drain()).0==5)
+    e.end("independent-fire",at:fire,time:6.4,cancelled:true);assert(e.drain()==[.button("mouse:left",false)])
+    e.end("independent-look",at:CGPoint(x:605,y:200),time:6.5,cancelled:true)
     // Pause clears a held shot before Escape; recovering mode never sends a click.
     e.begin("held",at:fire,time:7);_ = e.drain();e.pause(time:7.1)
     events=e.drain();assert(events.first == .button("mouse:left",false) && events.contains(.button("key:27",true)))
@@ -118,7 +123,7 @@ func checkCursorPacks() throws {
         let q=engine();q.begin("radial",at:launcher,time:0);q.end("radial",at:launcher,time:0.1,cancelled:false);q.begin("slot",at:top,time:0.2)
         assert(q.activeOutputs.contains("key:49"));_ = q.drain()
         q.tick(0.2+1/fps);assert(q.activeOutputs.contains("key:49"))
-        q.tick(0.2+4/fps);assert(!q.activeOutputs.contains("key:49"))
+        q.tick(0.28+1/fps);assert(!q.activeOutputs.contains("key:49"))
     }
     var invalid=pack;invalid.version=3;assert((try? invalid.validate())==nil)
     invalid=pack;invalid.cursorControls?.fire="missing";assert((try? invalid.validate())==nil)

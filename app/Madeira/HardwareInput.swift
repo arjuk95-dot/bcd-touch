@@ -1743,6 +1743,13 @@ final class HardwareInput: ObservableObject {
         guard dx != 0 || dy != 0 else { return }
         winios_pointer(dx,dy,Self.moveFlag,0)
     }
+    private var cursorPackActive=false
+    private var cursorPackFocused=false
+    func setCursorPackActive(_ active: Bool) {
+        cursorPackActive=active;cursorPackFocused=false;touchCursorActive=active;lastAbsolute=nil
+        updateTracking();renderCursor()
+    }
+    func setCursorPackFocused(_ focused: Bool) { cursorPackFocused=focused;renderCursor() }
 
     /// Desktop session only: relative motion moves nothing that the drawn
     /// arrow follows (winios_pointer draws only absolute positions). Keep
@@ -1944,6 +1951,7 @@ final class HardwareInput: ObservableObject {
     /// (madeira-bcd) whenever the program hides its cursor, so that sign stays
     /// on while a following cursor takes absolute moves.
     private func updateTracking() {
+        if cursorPackActive { winios_direct_cursor_track(1);return }
         guard directCursorLive else { return }
         let on = mouseInUse && (currentRoute == .relative || lastAbsolute == nil || cursorState.shown == 0)
         winios_direct_cursor_track(on ? 1 : 0)
@@ -1986,6 +1994,9 @@ final class HardwareInput: ObservableObject {
     func directCursorChanged() {
         let before = cursorState
         winios_direct_cursor_get(&cursorState)
+        // Follow the guest's reported position, never an estimated touch origin.
+        // Moving the compositor arrow does not enqueue an absolute mouse event.
+        if cursorPackActive && Self.desktopMode { winios_cursor_move(cursorState.x,cursorState.y) }
         let now = CACurrentMediaTime()
         lastReportAt = now
         if cursorState.image_serial != before.image_serial { DirectCursorOverlay.shared.loadImage() }
@@ -2036,7 +2047,8 @@ final class HardwareInput: ObservableObject {
     private func renderCursor() {
         guard directCursorLive else { return }
         let shown = cursorState.shown != 0 || (touchCursorActive && cursorState.reports == 0)
-        let visible = (mouseInUse || touchCursorActive) && mouseFocused && shown && !InputSettings.shared.relative
+        let focused=cursorPackActive ? cursorPackFocused:mouseFocused
+        let visible = (mouseInUse || touchCursorActive) && focused && shown && (cursorPackActive || !InputSettings.shared.relative)
         var pos = (x: cursorState.x, y: cursorState.y)
         if let last = lastAbsolute {
             pos = ScreenMap.clamp(x: last.x, y: last.y, clipLeft: cursorState.clip_left, top: cursorState.clip_top,

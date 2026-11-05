@@ -17,6 +17,7 @@ import UIKit
 
     init() {
         let center = NotificationCenter.default
+        UIDevice.current.beginGeneratingDeviceOrientationNotifications()
         for name in [UIApplication.willResignActiveNotification, UIApplication.didEnterBackgroundNotification] {
             observers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated {
@@ -131,10 +132,12 @@ final class BCDPackView: UIView {
         super.init(frame: .zero); backgroundColor = .clear; isMultipleTouchEnabled = true
         NotificationCenter.default.addObserver(self, selector: #selector(interrupted), name: UIApplication.willResignActiveNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(interrupted), name: BCDPackFocus.didLoseFocus, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(rotated), name: UIDevice.orientationDidChangeNotification, object: nil)
     }
     required init?(coder: NSCoder) { fatalError() }
     deinit { cursorTimer?.invalidate();NotificationCenter.default.removeObserver(self) }
     @objc private func interrupted() { clear() }
+    @objc private func rotated() { if cursorEngine != nil { clear() } }
     func configure(_ p: BCDControlPack, context: String, debug: Bool, editing: Bool) {
         let changed = pack != p || self.context != context || self.editing != editing
         if changed { clear();cursorEngine = nil;cursorTimer?.invalidate();cursorTimer=nil }
