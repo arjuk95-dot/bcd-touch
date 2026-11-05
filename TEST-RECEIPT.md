@@ -1,5 +1,11 @@
 # Touch-fork test receipt
 
+## Tenebris update installed and preset selected — 5 November
+
+USB lookup verifies app source `b78e96073e65e6d1431376f5134ae08ea60dc037`. The owner-confirmed version-3 preset was selected as a local base after a fresh 135,598-byte settings/control backup. Its file, both launch-preference keys and all other backed-up metadata were read back successfully. Generated packs and personal edits remain intact. The worker resumed after the PC restart with six unchanged cache triples and zero pending jobs; cached Dread requests returned HTTP 200 over loopback and the current hotspot LAN. Its phone URL was updated with token and other keys preserved. [Device receipt](receipts/touch/tenebris-installed-20261105/summary.json).
+
+The phone reports increased-memory and debugging rights; extended virtual addressing is not reported. No new generation or game/save transfer occurred. Actual running-layout selection, floating movement, Aim toggle and slide-to-Attack await owner testing; real iPad, guest traces and the original hardware-controller/gyro checks remain pending. Earlier delivery records below describe their original preparation-time state.
+
 ## Free placement and Tenebris version 3 — verified IPA ready
 
 App source `b78e96073e65e6d1431376f5134ae08ea60dc037`, same v0.1.626 base. [SDK/input/worker checks](https://github.com/arjunkl/bcd-touch/actions/runs/41691926925) and [45 simulator exports plus production-store restart](https://github.com/arjunkl/bcd-touch/actions/runs/41691945334) pass. The production renderer was visually reviewed for the owner's phone HUD, actual hit regions, independent iPad geometry and compact editor placement. The [full iOS build](https://github.com/arjunkl/bcd-touch/actions/runs/41693381721) and [native sideload packaging](https://github.com/arjunkl/bcd-touch/actions/runs/41704803346) passed. The downloaded IPA passed full CRC/SHA verification and contains the exact app source. Existing bundle/helper IDs, both callbacks, notices, requested entitlements, native signatures and unchanged instructions through repackaging were verified. No new IPA is installed yet. [Current evidence](receipts/touch/free-placement-20261103/delivery.json).

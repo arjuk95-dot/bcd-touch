@@ -1,0 +1,12 @@
+{
+  "pid": 25300,
+  "host": "172.20.10.5",
+  "port": 8939,
+  "validatedCaches": 6,
+  "pendingJobs": 0,
+  "cachedHTTP": 200,
+  "cacheBytesUnchanged": true,
+  "newGeneration": false,
+  "phoneEndpointUpdatePending": false,
+  "phoneEndpointReadbackVerified": true
+}

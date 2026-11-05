@@ -1,0 +1,24 @@
+{
+  "utc": "2026-11-05T12:50:57.726226+00:00",
+  "appSource": "b78e96073e65e6d1431376f5134ae08ea60dc037",
+  "base": "adc9cc742f52601a42f52ac6b4fbcc701bdb16ad",
+  "packID": "tenebris-owner-mockup-v3",
+  "packSHA256": "81405dd31014757760bbe1dcc25e95360bb40fccbca81054108dc0ffd110637a",
+  "selection": "Local owner preset, separate from generated pack and its edits",
+  "phoneSourceVerified": true,
+  "presetFileAndPreferencesReadbackVerified": true,
+  "metadataBackupBytes": 135598,
+  "allOtherBackedUpMetadataUnchanged": true,
+  "workerPhoneURLReadbackVerified": true,
+  "workerCachedResponseHTTP": 200,
+  "newGeneration": false,
+  "gameFilesCopiedOrWritten": false,
+  "generated": false,
+  "validated": true,
+  "physicallyTested": false,
+  "pending": [
+    "Owner confirms actual selected layout and floating/Aim/slide behavior after fresh launch",
+    "Physical iPad testing",
+    "Original guest trace and gyro/physical-controller checks"
+  ]
+}

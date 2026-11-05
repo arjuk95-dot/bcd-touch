@@ -1,0 +1,10 @@
+{
+  "appSource": "b78e96073e65e6d1431376f5134ae08ea60dc037",
+  "workerEndpointUpdated": true,
+  "workerHost": "172.20.10.5",
+  "workerPort": 8939,
+  "phoneReadbackVerified": true,
+  "tokenPreserved": true,
+  "allOtherPhoneKeysPreserved": true,
+  "gameAndControlPackFilesModified": false
+}
