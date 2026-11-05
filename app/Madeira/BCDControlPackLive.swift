@@ -9,6 +9,7 @@ import UniformTypeIdentifiers
 
 @MainActor final class BCDPackStore: ObservableObject {
     static let shared = BCDPackStore()
+    var cursorMode: BCDCursorPack.Mode = .gameplay
     struct Request: Codable {
         var version = 1
         var generation = "initial"
@@ -176,6 +177,7 @@ import UniformTypeIdentifiers
     func activate(_ entry: LibraryEntry?) {
         guard let entry else { sessionID = nil; pack = nil; base = nil; personalKey = nil; gameKey = nil; selectedControl = ""; undoHistory.removeAll(); return }
         let sameSession = sessionID == entry.id
+        if !sameSession { cursorMode = .gameplay }
         if !sameSession { selectedControl = "" }
         if sessionID == entry.id && !LibraryModel.shared.blocksGameplayTouch { return }
         // Changing a running HID session into XInput requires a new guest enumeration.
@@ -293,7 +295,7 @@ struct BCDPackLayer: View {
             GeometryReader { geo in
                 ZStack(alignment: .topLeading) {
                     BCDPackSurface(pack: p, context: store.context, debug: store.debug, editing: store.editing)
-                        .id(p.id + store.context + String(store.editing) + String(focus.gameFocused))
+                        .id(p.id + store.context + String(store.editing) + (p.cursorControls == nil ? String(focus.gameFocused):""))
                     if store.editing && !store.placingControls {
                         BCDPackInspector().frame(width: min(380, geo.size.width * 0.46), height: max(120, geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom - 64))
                             .padding(.leading, geo.safeAreaInsets.leading + 8).padding(.top, geo.safeAreaInsets.top + 52)

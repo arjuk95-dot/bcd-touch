@@ -42,7 +42,7 @@ with tempfile.TemporaryDirectory(prefix='touch-pipeline-') as tmp:
             reports=Path.home()/'Library/Logs/DiagnosticReports'
             for report in sorted(reports.glob('Pipeline*.ips'),key=lambda p:p.stat().st_mtime)[-2:]:
                 if report.stat().st_size<=2*1024*1024:(out/report.name).write_bytes(report.read_bytes())
-        assert receipt.exists(),f'Production startup reservation case {index} did not pass; inspect preserved startup/log/crash evidence' 
+        assert receipt.exists(),f'Production startup reservation case {index} did not pass; inspect preserved startup/log/crash evidence'
         (out/receipt.name).write_text(receipt.read_text())
     subprocess.run(['xcrun','simctl','launch','--terminate-running-process',uid,'com.arjunkl.bcdtouch.pipeline'],check=True,timeout=120)
     data=Path(run(['xcrun','simctl','get_app_container',uid,'com.arjunkl.bcdtouch.pipeline','data']))/'Documents/pipeline-receipt.txt'

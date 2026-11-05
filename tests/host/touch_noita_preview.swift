@@ -46,6 +46,8 @@ extension TouchPackPreview {
                 engine.switchMode(.utilities);render("more")
                 engine.switchMode(.pointer);render("inventory-pointer")
                 view.clear();assert(engine.activeOutputs.isEmpty)
+                assert(engine.mode == .pointer,"Focus-style input clear must retain the explicit pointer mode")
+                engine.switchMode(.gameplay)
                 // Rotation invokes the production layoutSubviews cancellation.
                 engine.begin("held",at:engine.center(p.phone.controls.first{$0.role=="fireAim"}!),time:4)
                 assert(engine.firing);view.frame.size=CGSize(width:440,height:956);view.layoutIfNeeded();assert(!engine.firing && engine.activeOutputs.isEmpty)

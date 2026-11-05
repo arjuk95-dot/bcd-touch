@@ -145,6 +145,7 @@ final class BCDPackView: UIView {
         if p.cursorControls != nil && p.contexts.contains(context) && !editing && cursorEngine == nil {
             cursorEngine = BCDCursorPack(pack:p,pad:pad)
             if context == "pointer" { cursorEngine?.switchMode(.pointer) }
+            else if BCDPackStore.shared.pack?.id == p.id { cursorEngine?.switchMode(BCDPackStore.shared.cursorMode) }
             let clock=Timer(timeInterval:1.0/120.0,repeats:true) { [weak self] _ in
                 MainActor.assumeIsolated { guard let self else{return};self.cursorEngine?.tick(ProcessInfo.processInfo.systemUptime);self.flushCursor() }
             }
@@ -233,7 +234,7 @@ final class BCDPackView: UIView {
     }
     var radialLabelFrames: [CGRect] { fingers.values.filter { $0.role == "radial" }.flatMap { radialLabels($0).map { $0.frame } } }
     func clear() {
-        cursorEngine?.cancel();flushCursor()
+        cursorEngine?.cancel(resetMode:false);flushCursor()
         epoch = UUID()
         for f in fingers.values { release(f.owner) }
         for owner in pulses { release(owner) }; pulses.removeAll()
@@ -250,6 +251,7 @@ final class BCDPackView: UIView {
         engine.guest=CGSize(width:width>0 ? Int(width):960,height:height>0 ? Int(height):540)
     }
     private func flushCursor(redraw: Bool = false) {
+        if let engine=cursorEngine,BCDPackStore.shared.pack?.id == pack?.id { BCDPackStore.shared.cursorMode=engine.mode }
         let events=cursorEngine?.drain() ?? []
         for event in events {
             switch event {
