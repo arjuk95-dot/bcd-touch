@@ -1045,6 +1045,14 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
     - name: Verify staged GL dependency architecture and load commands
       run: python3 tools/opengl/inspect-dependencies.py
+    - name: Generate complete config catalog against the pinned engine sources
+      run: 'python3 build/tools/gen-config-catalog.py
+
+        python3 build/tools/gen-autotune-rules.py --check
+
+        mkdir -p build-out
+
+        cp app/Madeira/ConfigCatalog.generated.swift build-out/ConfigCatalog.generated.swift'
     - name: Stage licence copies
       run: bash build/stage-licenses.sh
     - name: Stamp version 0.1.${{ steps.bn.outputs.n }}
@@ -1134,7 +1142,19 @@ jobs:
 
           *.log
 
-          wine/build-arm64ec*.log'
+          wine/build-arm64ec*.log
+
+
+          build-out/ConfigCatalog.generated.swift
+
+
+          app/Madeira/gl/*.json
+
+
+          app/Madeira/gl/*Revisions*
+
+
+          app/Madeira/gl/source-submodules.txt'
         if-no-files-found: warn
         retention-days: 7
 'on':
