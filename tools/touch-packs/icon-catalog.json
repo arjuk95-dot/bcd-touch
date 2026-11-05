@@ -190,5 +190,13 @@
   {
     "id": "bcd.run",
     "label": "Run outline"
+  },
+  {
+    "id": "bcd.wand",
+    "label": "Wand / use selected item"
+  },
+  {
+    "id": "bcd.boot",
+    "label": "Kick outline"
   }
 ]

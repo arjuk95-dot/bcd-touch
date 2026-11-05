@@ -10,11 +10,14 @@ enum PipelineSpy {
     static var state=winios_gamepad()
     static var simultaneous=false
     static var triggerAtGyro=false
+    static var disconnectedPublications=0
+    static func disconnectedCount()->Int {lock.lock();defer{lock.unlock()};return disconnectedPublications}
     static func read() -> (winios_gamepad,Bool,Bool) { lock.lock();defer {lock.unlock()};return(state,simultaneous,triggerAtGyro) }
 }
 func winios_gamepad_set_state(_ slot:Int32,_ state:UnsafePointer<winios_gamepad>?) {
     guard slot==0 else{return};PipelineSpy.lock.lock();defer{PipelineSpy.lock.unlock()}
     PipelineSpy.state=state?.pointee ?? winios_gamepad()
+    if state==nil {PipelineSpy.disconnectedPublications += 1}
     let s=PipelineSpy.state
     if s.lx != 0 && s.right_trigger != 0 && (s.rx != 0 || s.ry != 0) {PipelineSpy.simultaneous=true}
 }

@@ -15,7 +15,7 @@ assert packs, 'Pilot packs missing'
 icon_catalog=json.loads((ROOT/'tools/touch-packs/icon-catalog.json').read_text(encoding='utf-8'))
 assert len(icon_catalog)>40 and len({entry['id'] for entry in icon_catalog})==len(icon_catalog)
 # New output vocabulary is versioned, mode-checked and never permits arbitrary key codes.
-v2=copy.deepcopy(json.loads(packs[0].read_text(encoding='utf-8')))
+v2=copy.deepcopy(json.loads((ROOT/'packs/pilots/dread-delusion.json').read_text(encoding='utf-8')))
 v2['version']=2;v2['inputMode']='keyboardMouse'
 reachable=set(v2['radial']) | {g['action'] for g in v2['gestures']}
 for device in ['phone','pad']:reachable.update(c['action'] for c in v2[device]['controls'])
@@ -154,6 +154,9 @@ for path in packs:
         for c in regenerated[device]['controls']:c['action']=remap.get(c['action'],c['action']);c['id']='new-'+c['id']
     regenerated['radial']=[remap[x] for x in regenerated['radial']]
     for g in regenerated['gestures']:g['action']=remap[g['action']]
+    for name,keys in [('digitalMovement',['left','right','up','down']),('cursorControls',['fire','inventory','pause','throwAction','primaryClick','secondaryClick'])]:
+        if name in regenerated:
+            for key in keys:regenerated[name][key]=remap[regenerated[name][key]]
     stabilized=stabilize(regenerated,p);w.validate(stabilized)
     assert [a['id'] for a in stabilized['actions']]==[a['id'] for a in p['actions']]
     for mutate in [lambda v:v.update(version=999),lambda v:(v.update(inputMode='controller'),v['actions'][0].update(output='mouse:left')),lambda v:v['phone']['controls'][0].update(hitRadius=.9),lambda v:v['identity'].update(build='wrong')]:
@@ -163,7 +166,7 @@ for path in packs:
         else:raise AssertionError('Invalid pack accepted')
     with tempfile.TemporaryDirectory() as tmp:
         worker=w.Worker(tmp)
-        request=dict(version=1,identity=p['identity'],title=p['title'],bindings={},requirements={})
+        request=dict(version=1,identity=p['identity'],title=p['title'],bindings={},requirements={'packVersion':str(p['version'])})
         key=w.key_for(p['identity']);w.atomic(Path(tmp)/(key+'.pack.json'),p)
         assert worker.submit(key,request)[0]==200 # cached install, duplicate event, next process
         assert worker.submit(key,request)[0]==200

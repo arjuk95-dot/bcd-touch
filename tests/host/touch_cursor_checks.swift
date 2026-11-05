@@ -69,6 +69,34 @@ func checkCursorPacks() throws {
     e.move("cursor",to:CGPoint(x:630,y:220),time:5.5);assert(motion(e.drain()).0==30)
     e.end("click",at:CGPoint(x:click.midX,y:click.midY),time:5.6,cancelled:false);assert(e.drain()==[.button("mouse:left",false)])
     e.switchMode(.gameplay);_ = e.drain();assert(e.activeOutputs.isEmpty)
+    // Two independent owners of the same output must release independently.
+    var duplicate=pack.phone.controls.first{$0.id=="fire"}!
+    duplicate.id="left-fire";duplicate.role="button";duplicate.x=0.1;duplicate.y=0.2;duplicate.radius=0.04;duplicate.hitRadius=0.04
+    e.layout.controls.append(duplicate)
+    e.begin("first",at:fire,time:6);e.begin("second",at:e.center(duplicate),time:6.01)
+    assert(e.drain().filter{$0 == .button("mouse:left",true)}.count==1)
+    e.end("first",at:fire,time:6.02,cancelled:true);assert(!e.drain().contains(.button("mouse:left",false)))
+    e.end("second",at:e.center(duplicate),time:6.03,cancelled:true);assert(e.drain()==[.button("mouse:left",false)])
+    // Pause clears a held shot before Escape; recovering mode never sends a click.
+    e.begin("held",at:fire,time:7);_ = e.drain();e.pause(time:7.1)
+    events=e.drain();assert(events.first == .button("mouse:left",false) && events.contains(.button("key:27",true)))
+    e.switchMode(.gameplay);assert(!e.drain().contains(.button("mouse:left",true)))
+    // Fresh floating origins on retouch, with no idle visual or inherited keys.
+    e.begin("floating",at:CGPoint(x:300,y:320),time:8);assert(e.movementFinger?.start==CGPoint(x:300,y:320))
+    e.end("floating",at:CGPoint(x:300,y:320),time:8.1,cancelled:false);assert(e.movementFinger==nil)
+    e.begin("floating",at:CGPoint(x:100,y:250),time:8.2);assert(e.movementFinger?.start==CGPoint(x:100,y:250))
+    e.cancel();_ = e.drain()
+    // Tap-open More, deliberate throw, and central cancel never select equipment.
+    e.begin("tap-wheel",at:launcher,time:9);e.end("tap-wheel",at:launcher,time:9.1,cancelled:false)
+    let more=e.moreFrame;e.begin("more",at:CGPoint(x:more.midX,y:more.midY),time:9.2);assert(e.mode == .utilities)
+    let throwButton=e.overlayButtons.first{$0.0=="throw"}!.2
+    e.begin("throw",at:CGPoint(x:throwButton.midX,y:throwButton.midY),time:9.3)
+    events=e.drain();assert(events.contains(.button("mouse:right",true)) && !events.contains(.button("mouse:left",true)))
+    e.tick(9.4);assert(e.drain().contains(.button("mouse:right",false)))
+    e.cancel();_ = e.drain()
+    // A long hold without a slide cancels, even if a personal launcher overlaps the ring.
+    e.begin("hold-wheel",at:launcher,time:10);e.end("hold-wheel",at:launcher,time:10.5,cancelled:false)
+    assert(e.mode == .gameplay && e.drain().isEmpty)
     // Fractional corrections are preserved, independent of input cadence/render scale.
     for hz in [60.0,120.0] { for scale in [0.5,1.0,2.0] {
         let q=engine();q.guest=CGSize(width:1000*scale,height:500*scale)
@@ -78,6 +106,20 @@ func checkCursorPacks() throws {
         assert(abs(Double(total)-12*scale)<=1)
         q.cancel();assert(q.activeOutputs.isEmpty)
     }}
+    // Repeated swipes cross the viewport's left half; no coordinate clipping to the aim area.
+    let cursor=engine();var x=800
+    for i in 0..<4 {
+        cursor.begin(i,at:CGPoint(x:700,y:200),time:Double(i))
+        cursor.move(i,to:CGPoint(x:500,y:200),time:Double(i)+0.1);x+=motion(cursor.drain()).0
+        cursor.end(i,at:CGPoint(x:500,y:200),time:Double(i)+0.2,cancelled:false);assert(cursor.drain().isEmpty)
+    }
+    assert(x==0)
+    for fps in [30.0,60.0] {
+        let q=engine();q.begin("radial",at:launcher,time:0);q.end("radial",at:launcher,time:0.1,cancelled:false);q.begin("slot",at:top,time:0.2)
+        assert(q.activeOutputs.contains("key:49"));_ = q.drain()
+        q.tick(0.2+1/fps);assert(q.activeOutputs.contains("key:49"))
+        q.tick(0.2+4/fps);assert(!q.activeOutputs.contains("key:49"))
+    }
     var invalid=pack;invalid.version=3;assert((try? invalid.validate())==nil)
     invalid=pack;invalid.cursorControls?.fire="missing";assert((try? invalid.validate())==nil)
     invalid=pack;invalid.digitalMovement?.downThreshold=0;assert((try? invalid.validate())==nil)

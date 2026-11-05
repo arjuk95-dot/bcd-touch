@@ -26,12 +26,14 @@ enum BCDNoitaPack {
         for i in 1...8 { actions.append(.init(id:"slot-\(i)",label:"\(i<=4 ? "Wand":"Item") slot \(i)",icon:i<=4 ? "bcd.wand":"bcd.inventory",output:"key:\(48+i)",behavior:"tap",evidence:"requested-defaults",contexts:["onFoot"])) }
         func layout(pad: Bool) -> BCDControlPack.Layout {
             func c(_ id: String,_ action: String,_ role: String,_ x: Double,_ y: Double,_ r: Double) -> BCDControlPack.Control {
-                .init(id:id,action:action,role:role,x:x,y:y,radius:r,hitRadius:r,opacity:0.75,labelPlacement:"inside")
+                var result=BCDControlPack.Control(id:id,action:action,role:role,x:x,y:y,radius:r,hitRadius:r,opacity:0.75,labelPlacement:"inside")
+                if ["inventory","pause"].contains(id) { result.showLabel=false }
+                return result
             }
             return .init(aimRect:.init(x:0.42,y:0.12,width:0.58,height:0.88),controls:[
                 c("move","move-left","move",0.17,0.76,pad ? 0.12:0.145),
-                c("inventory","inventory","button",0.04,0.08,0.042),
-                c("pause","pause","button",0.96,0.08,0.042),
+                c("inventory","inventory","button",0.04,0.08,pad ? 0.035:0.055),
+                c("pause","pause","button",pad ? 0.90:0.96,0.08,pad ? 0.035:0.055),
                 c("fire","use-selected","fireAim",pad ? 0.91:0.90,0.74,pad ? 0.085:0.105),
                 c("kick","kick","button",0.83,0.47,0.065),
                 c("interact","interact","button",0.95,0.40,0.067),

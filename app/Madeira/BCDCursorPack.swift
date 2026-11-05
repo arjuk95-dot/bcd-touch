@@ -115,16 +115,16 @@ final class BCDCursorPack {
     var radialFrame: CGRect {
         let r=min(unit*CGFloat(settings.radialRadius),min(safe.width,safe.height)/2-30)
         let x=max(safe.minX+r+4,min(safe.maxX-r-4,safe.minX+safe.width*CGFloat(settings.radialX)))
-        let y=max(safe.minY+r+4,min(safe.maxY-r-34,safe.minY+safe.height*CGFloat(settings.radialY)))
+        let y=max(safe.minY+r+4,min(safe.maxY-r-68,safe.minY+safe.height*CGFloat(settings.radialY)))
         return CGRect(x:x-r,y:y-r,width:r*2,height:r*2)
     }
     func sector(_ point: CGPoint) -> Int? {
         let r=radialFrame;let dx=point.x-r.midX,dy=point.y-r.midY
-        guard hypot(dx,dy)>r.width*0.18 && hypot(dx,dy)<=r.width*0.58 else { return nil }
+        guard hypot(dx,dy)>r.width*0.18 && hypot(dx,dy)<=r.width*0.5 else { return nil }
         let angle=(atan2(dy,dx) + .pi/2 + .pi/8 + 2 * .pi).truncatingRemainder(dividingBy:2 * .pi)
         return Int(angle/(2 * .pi)*8)%8
     }
-    var moreFrame: CGRect { let r=radialFrame;return CGRect(x:r.midX-46,y:r.maxY+3,width:92,height:30) }
+    var moreFrame: CGRect { let r=radialFrame;return CGRect(x:r.midX-46,y:r.maxY+4,width:92,height:44) }
     /// Explicit utility and pointer controls; these never pretend a key proved a game state.
     var overlayButtons: [(String,String,CGRect)] {
         if mode == .utilities {

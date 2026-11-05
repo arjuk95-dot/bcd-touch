@@ -13,9 +13,13 @@ def stabilize(pack,previous):
     for device in ['phone','pad']:
         for c in pack[device]['controls']:
             c['action']=changed.get(c['action'],c['action'])
+            if 'slideToAction' in c:c['slideToAction']=changed.get(c['slideToAction'],c['slideToAction'])
             matches=[old for old in previous[device]['controls'] if old['action']==c['action'] and old['role']==c['role']]
             if not matches:matches=[old for old in previous[device]['controls'] if old['action']==c['action']]
             if len(matches)==1:c['id']=matches[0]['id']
     pack['radial']=[changed.get(a,a) for a in pack['radial']]
     for g in pack['gestures']:g['action']=changed.get(g['action'],g['action'])
+    for name,keys in [('digitalMovement',['left','right','up','down']),('cursorControls',['fire','inventory','pause','throwAction','primaryClick','secondaryClick'])]:
+        if name in pack:
+            for key in keys:pack[name][key]=changed.get(pack[name][key],pack[name][key])
     return pack

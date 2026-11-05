@@ -5,15 +5,24 @@ import UIKit
     @MainActor func run() {
         guard UIApplication.shared.applicationState == .active else { DispatchQueue.main.asyncAfter(deadline:.now()+0.1){run()};return }
         if let selected=ProcessInfo.processInfo.environment["RESERVATION_FIXTURE"],let index=Int(selected) {
-            let cases=[(false,false,true,0),(false,true,true,1),(true,false,true,1),(false,true,false,0),(true,false,false,0)]
+            let cases=[(false,false,true,0),(false,true,true,1),(true,false,true,1),(false,true,false,0),(true,false,false,0),(true,true,true,0)]
             let (force,game,touch,expected)=cases[index]
             BCDGyroLive.padNeeded=false
             MadeiraConfig.fixtureGameValues=game ? ["env.MADEIRA_PAD_EARLY_SLOT":"1"] : [:]
+            if index==5 {
+                GamepadInput.packKeyboardMouseSession=true
+                MadeiraConfig.fixtureGameValues["env.MADEIRA_PAD_MODE"]="dualsense"
+                GamepadInput.shared.beginPadSession()
+                assert(GamepadInput.sessionHIDKind==nil && getenv("MADEIRA_HIDPAD")==nil)
+                GamepadInput.shared.configurePack(enabled:true,accepting:true,calibration:.init())
+                GamepadInput.shared.packTouch(owner:UUID(),value:TouchPadAction.sample("RT"))
+            }
             GamepadInput.shared.reserveSessionSlot(touchControls:touch,force:force)
             DispatchQueue.main.asyncAfter(deadline:.now()+0.12) {
                 assert(PipelineSpy.read().0.connected==Int32(expected),"Merged per-game and forced-pack startup policy failed")
+                if index==5 {assert(PipelineSpy.disconnectedCount()>0,"KB/M isolation was never sampled")}
                 let file=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0].appendingPathComponent("reservation-\(index).txt")
-                try? Data("PASS: production reservation case \(index), connected=\(expected). Simulator engine spy; no guest.".utf8).write(to:file)
+                try? Data("PASS: production reservation case \(index), connected=\(expected)\(index==5 ? "; cursor pack suppresses reserved XInput and configured DualSense HID":""). Simulator engine spy; no guest.".utf8).write(to:file)
             }
             return
         }

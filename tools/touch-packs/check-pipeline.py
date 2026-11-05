@@ -27,7 +27,7 @@ with tempfile.TemporaryDirectory(prefix='touch-pipeline-') as tmp:
     subprocess.run(['xcrun','simctl','uninstall',uid,'com.arjunkl.bcdtouch.pipeline'],check=False,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     subprocess.run(['xcrun','simctl','install',uid,str(app)],check=True,timeout=180)
     folder=Path(run(['xcrun','simctl','get_app_container',uid,'com.arjunkl.bcdtouch.pipeline','data']))/'Documents'
-    for index in range(5):
+    for index in range(6):
         subprocess.run(['xcrun','simctl','launch','--terminate-running-process',uid,'com.arjunkl.bcdtouch.pipeline'],env=dict(os.environ,SIMCTL_CHILD_RESERVATION_FIXTURE=str(index)),check=True,timeout=120)
         receipt=folder/f'reservation-{index}.txt'
         for _ in range(30):

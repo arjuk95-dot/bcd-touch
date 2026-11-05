@@ -2939,7 +2939,7 @@ struct TouchControlsOverlay: View {
                     if packStore.pack != nil && packStore.enabled && session {
                         if !library.blocksGameplayTouch && !packFocus.blockedByPresentation {
                             BCDPackLayer()
-                            if !packStore.editing {
+                            if !packStore.editing && packStore.pack?.cursorControls == nil {
                                 BCDPackTools().padding(.top, 8).padding(.leading, geo.safeAreaInsets.leading + 12).frame(maxWidth: .infinity, alignment: .leading)
                             }
                         }

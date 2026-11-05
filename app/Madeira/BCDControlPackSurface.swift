@@ -246,8 +246,9 @@ final class BCDPackView: UIView {
         var width:Int32=0,height:Int32=0;winios_screen_size(&width,&height)
         engine.guest=CGSize(width:width>0 ? Int(width):960,height:height>0 ? Int(height):540)
     }
-    private func flushCursor() {
-        for event in cursorEngine?.drain() ?? [] {
+    private func flushCursor(redraw: Bool = false) {
+        let events=cursorEngine?.drain() ?? []
+        for event in events {
             switch event {
             case .motion(let x,let y): HardwareInput.shared.postCursorPackRelative(x,y)
             case .button(let output,let down):
@@ -256,7 +257,7 @@ final class BCDPackView: UIView {
             case .customize: BCDPackStore.shared.editing=true
             }
         }
-        setNeedsDisplay()
+        if redraw || !events.isEmpty { setNeedsDisplay() }
     }
     private func clearToggles() {
         let owners = Array(toggles.values); toggles.removeAll()
@@ -325,7 +326,7 @@ final class BCDPackView: UIView {
     func beginTouch(_ identity: AnyHashable, at point: CGPoint, time: Double, receivedAt: Double? = nil) {
         guard UIApplication.shared.applicationState == .active, !LibraryModel.shared.blocksGameplayTouch,
               BCDPackFocus.shared.refresh(), let pack else { clear(); return }
-        if let engine=cursorEngine { cursorGeometry();engine.begin(identity,at:point,time:receivedAt ?? time);flushCursor();return }
+        if let engine=cursorEngine { cursorGeometry();engine.begin(identity,at:point,time:receivedAt ?? time);flushCursor(redraw:true);return }
         // Idempotent configuration keeps another finger's movement/fire held.
         GamepadInput.shared.configurePack(enabled: pack.inputMode == "controller", accepting: !editing, calibration: pack.aim)
         var control = layout?.controls.reversed().first { c in
@@ -371,7 +372,7 @@ final class BCDPackView: UIView {
     func moveTouch(_ identity: AnyHashable, to point: CGPoint, time: Double, receivedAt: Double? = nil) {
         guard UIApplication.shared.applicationState == .active, !LibraryModel.shared.blocksGameplayTouch,
               BCDPackFocus.shared.refresh() else { clear(); return }
-        if let engine=cursorEngine { cursorGeometry();engine.move(identity,to:point,time:receivedAt ?? time);flushCursor();return }
+        if let engine=cursorEngine { cursorGeometry();engine.move(identity,to:point,time:receivedAt ?? time);flushCursor(redraw:true);return }
         guard var finger = fingers[identity], time > finger.time else { return }
         if finger.role == "look" || finger.role == "fireAim" {
             if pack?.inputMode == "controller" {
@@ -412,7 +413,7 @@ final class BCDPackView: UIView {
     func endTouch(_ identity: AnyHashable, at point: CGPoint, cancelled: Bool) {
             if let engine=cursorEngine {
                 if LibraryModel.shared.blocksGameplayTouch || !BCDPackFocus.shared.refresh() { clear();return }
-                engine.end(identity,at:point,time:ProcessInfo.processInfo.systemUptime,cancelled:cancelled);flushCursor();return
+                engine.end(identity,at:point,time:ProcessInfo.processInfo.systemUptime,cancelled:cancelled);flushCursor(redraw:true);return
             }
             guard var f = fingers.removeValue(forKey: identity) else { return }
             release(f.owner)
@@ -496,7 +497,7 @@ final class BCDPackView: UIView {
             ctx.setStrokeColor(tint.withAlphaComponent(toggled || pressed ? 0.95 : c.opacity * ((pack?.version ?? 1) >= 3 ? 0.9 : 0.65)).cgColor)
             ctx.setLineWidth(pressed ? 1.5 : 1); ctx.strokeEllipse(in: circle)
             let icon = c.role == "radial" ? "circle.grid.2x2" : (a?.icon ?? "hand.draw")
-            let inside = c.labelPlacement == "inside"
+            let inside = c.labelPlacement == "inside" && c.showLabel != false
             if let image = BCDPackIcons.image(icon)?.withTintColor(tint.withAlphaComponent(c.opacity), renderingMode: .alwaysOriginal) {
                 image.draw(in: CGRect(x: p.x-r*0.42, y: p.y-r*(inside ? 0.65 : 0.42), width: r*0.84, height: r*0.84))
             } else {
