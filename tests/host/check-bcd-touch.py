@@ -142,9 +142,15 @@ for kept in ("controls(geo.size, session: session)", ".opacity(m.editing ? 1.0 :
              "if (m.visible || m.editing) && !library.blocksGameplayTouch {",
              "if session && !m.editing { BCDSessionLiveLayer() } else { topBar }",   # ui-session: BCD's in-game layer in LibraryHUD's place
              ".gesture(scalePinch, including: m.editing ? .all : .subviews)",
-             ".onChange(of: m.controls) { _, _ in configureGamepad(landscape: landscape) }",
-             ".onDisappear { GamepadInput.shared.configureTouch(controls: []); TouchMouseGate.padOverlay = false }"):
+             ".onChange(of: m.controls) { _, _ in configureGamepad(landscape: landscape) }"):
     check(kept in body, f"the overlay still does what it did: {kept}")
+# WO-BCD-TOUCH-001: the fork also stops its pack focus monitor here. Check the
+# original release calls within the lifecycle closure instead of its exact line.
+disappeared = block(body, ".onDisappear")
+check("GamepadInput.shared.configureTouch(controls: [])" in disappeared
+      and "TouchMouseGate.padOverlay = false" in disappeared
+      and "packFocus.setMonitoring(false)" in disappeared,
+      "overlay disappearance releases stock touch input and the pack focus monitor")
 config = block(overlay, "private func configureGamepad(landscape: Bool) {")
 check("let accepting = !m.editing && !library.blocksGameplayTouch" in config
       and "GamepadInput.shared.configureTouch(controls: Set(ids), acceptingInput: accepting)" in config,
