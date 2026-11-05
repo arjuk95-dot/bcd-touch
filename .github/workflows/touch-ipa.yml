@@ -735,7 +735,6 @@ jobs:
     - name: Build i386 farm (WoW64)
       id: i386build
       if: steps.i386cache.outputs.cache-hit != 'true'
-      continue-on-error: true
       shell: bash
       run: 'bash build/wine-i386/build.sh 2>&1 | tail -60; rc=${PIPESTATUS[0]}
 
@@ -746,6 +745,8 @@ jobs:
         [ "$rc" -eq 0 ] || { tail -40 wine/build-i386/madeira-i386-build.log 2>/dev/null; exit "$rc"; }
 
         '
+    - name: Verify actual x86 command-line tools in the built farm
+      run: python3 tools/touch-packs/check-command-tools.py
     - name: Save i386 farm
       if: steps.i386cache.outputs.cache-hit != 'true' && steps.i386build.outcome == 'success'
       uses: actions/cache/save@v4

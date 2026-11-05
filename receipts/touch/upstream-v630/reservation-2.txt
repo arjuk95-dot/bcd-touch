@@ -1,0 +1,1 @@
+PASS: production reservation case 2, connected=1. Simulator engine spy; no guest.

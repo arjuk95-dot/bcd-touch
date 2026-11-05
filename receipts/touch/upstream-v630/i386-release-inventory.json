@@ -1,0 +1,531 @@
+{
+  "source": "v0.1.630 official release",
+  "ipaSHA256": "21e3fbfdc4c4221a4295d35d28348e826226ff3f727a18f110d3617d371f83d2",
+  "programs": [
+    {
+      "path": "i386-windows/arp.exe",
+      "bytes": 24576,
+      "sha256": "1afc3591fc88d2e30f4af373b4f53f2aa3ff77ba277f85c186bf54c12fc670fb"
+    },
+    {
+      "path": "i386-windows/aspnet_regiis.exe",
+      "bytes": 24576,
+      "sha256": "3b3adbd6a25c7eb1f9ea7306e660cfa323048bf4c360c0354f0ba3bb5b06641a"
+    },
+    {
+      "path": "i386-windows/attrib.exe",
+      "bytes": 73728,
+      "sha256": "f29cc8e21e4af5781c3e582cca9772730089e25b09a7891cb747e98955fe6498"
+    },
+    {
+      "path": "i386-windows/bcd-smoke-d3d9.exe",
+      "bytes": 98816,
+      "sha256": "b40e99c51f614e713a0b0ed8621423de5fc9c854e2199c0bdb7db478d91641fa"
+    },
+    {
+      "path": "i386-windows/bcd-systest-x86.exe",
+      "bytes": 94720,
+      "sha256": "6f5a066c3b9b16ce50a014ca2638ccb863deb1df9669195173460c8b2f6bb66b"
+    },
+    {
+      "path": "i386-windows/cabarc.exe",
+      "bytes": 45056,
+      "sha256": "f4d5e53dc1716e64d0e572a59bd20e12db178a3c4ed7a50afcf55580aee7bfcd"
+    },
+    {
+      "path": "i386-windows/cacls.exe",
+      "bytes": 24576,
+      "sha256": "6055aa2cf4adfd13287e8c7a66a992b732f70790b48a4d03ad402ed6597e0d39"
+    },
+    {
+      "path": "i386-windows/certutil.exe",
+      "bytes": 32768,
+      "sha256": "8d303d638d9133b6827f3a526cc2c0e48fdbd14a5a7ba15e5aae6e52f24b00c9"
+    },
+    {
+      "path": "i386-windows/clock.exe",
+      "bytes": 53248,
+      "sha256": "b67d5f79639b49c20443370cb05333b404fe22318804124503ba2336d8a93f9e"
+    },
+    {
+      "path": "i386-windows/cmd.exe",
+      "bytes": 1040384,
+      "sha256": "ae85b7f7aceb969fab9a1f7d673239fb89946fbfdf50c0eeb3282ae58a3523b7"
+    },
+    {
+      "path": "i386-windows/control.exe",
+      "bytes": 24576,
+      "sha256": "4ece905867a908d49ea01fb19a5b9674622ea85bf0bdb77212031a2ac210056a"
+    },
+    {
+      "path": "i386-windows/cscript.exe",
+      "bytes": 241664,
+      "sha256": "c889670b62e9402fd83d8b3ced8d76dd2ef17170342010deffef5ee5eb3e2944"
+    },
+    {
+      "path": "i386-windows/d3d8-test-x86.exe",
+      "bytes": 100864,
+      "sha256": "9d60b99f3594074315e3222d07cd8153de10723a3f919df3be33ab1ad9b1799a"
+    },
+    {
+      "path": "i386-windows/d3d9-test-x86.exe",
+      "bytes": 96256,
+      "sha256": "635640cc4d4aa79eb18a2ba48103e8e0e17c75c7b3e9ed56171977ae60b97cc8"
+    },
+    {
+      "path": "i386-windows/ddraw-test-x86.exe",
+      "bytes": 249856,
+      "sha256": "33216536759b155f3d165b00a265112093d8c5ac93b2fada9676ec7c1d82afe8"
+    },
+    {
+      "path": "i386-windows/dism.exe",
+      "bytes": 28672,
+      "sha256": "c7f2f2c4bee5595103e3b1a33dbdcef32c55b7680124c6d356fe20b63d95ccbb"
+    },
+    {
+      "path": "i386-windows/dllhost.exe",
+      "bytes": 204800,
+      "sha256": "e2fbf09887f191a511469619c90d304eafae5cfdb56877ecfa21069cd6bbb03f"
+    },
+    {
+      "path": "i386-windows/dplaysvr.exe",
+      "bytes": 28672,
+      "sha256": "3c4d3d4811743d45bb7e6ec93c2f61cb3ca052b3aa5c5a23a59bbc17d6a53c17"
+    },
+    {
+      "path": "i386-windows/dpnsvr.exe",
+      "bytes": 28672,
+      "sha256": "42dd1cc280f3d43ffeaace13bf4d08c1d501814b94e9c5d9b81f67b9b94b340d"
+    },
+    {
+      "path": "i386-windows/dpvsetup.exe",
+      "bytes": 28672,
+      "sha256": "5ba1ecb880a370e00b37fa55967ea806f10280f1177be0c22676b77a9be18122"
+    },
+    {
+      "path": "i386-windows/dxdiag.exe",
+      "bytes": 94208,
+      "sha256": "371aedef28ba16eb12cddcebe38cbd1979d16d4acbac0bebc10784db34e433e3"
+    },
+    {
+      "path": "i386-windows/eject.exe",
+      "bytes": 32768,
+      "sha256": "4ccd579cc32983fbb21420f0ae2f9394be9239bcb9ad0226ffa2fbf6e00f25d5"
+    },
+    {
+      "path": "i386-windows/expand.exe",
+      "bytes": 20480,
+      "sha256": "c1753af1013e40622b274d2895c3f273222b8a05114acc2a6c5dca50c22fb93f"
+    },
+    {
+      "path": "i386-windows/explorer.exe",
+      "bytes": 212992,
+      "sha256": "6edb92af43721d53f45e0dc700a2242f4e29431e420639a20495aca0894bc15e"
+    },
+    {
+      "path": "i386-windows/extrac32.exe",
+      "bytes": 36864,
+      "sha256": "a53b46f600c69e8691a55f0e95710c81003dffbcf00b6d14298e5609a41a6212"
+    },
+    {
+      "path": "i386-windows/fc.exe",
+      "bytes": 32768,
+      "sha256": "de236343c093f61e09e71fa4469988a67d640db7c7533a03fad17fa555d46a3e"
+    },
+    {
+      "path": "i386-windows/find.exe",
+      "bytes": 36864,
+      "sha256": "b77091b0d654fd8635e0fc401c43657d65b0729307c4b4f7d32292ed5a1faac6"
+    },
+    {
+      "path": "i386-windows/findstr.exe",
+      "bytes": 36864,
+      "sha256": "a737b7ee15f63abfad6a479323a2c7a8c3b92557f963b09c3e2c81f1fc94964e"
+    },
+    {
+      "path": "i386-windows/fsutil.exe",
+      "bytes": 40960,
+      "sha256": "22c36edca4139a2bc5409ee8cff2d16ba3a2a77556ae961acb235046df858edf"
+    },
+    {
+      "path": "i386-windows/hh.exe",
+      "bytes": 94208,
+      "sha256": "0916396c18d069b9e904dca2d8be223f546f737027c883e729f59e2e84c74388"
+    },
+    {
+      "path": "i386-windows/hostname.exe",
+      "bytes": 36864,
+      "sha256": "1d2491606354cdd29d5a2d32fe849768dd64f26c919b2017623114a4b314f227"
+    },
+    {
+      "path": "i386-windows/icacls.exe",
+      "bytes": 24576,
+      "sha256": "9cd31a16a5ab9d60e6480ce4af8885edb58115b832470b6fa3ee659348477741"
+    },
+    {
+      "path": "i386-windows/icinfo.exe",
+      "bytes": 20480,
+      "sha256": "27de9e6d5b22d13ddf87f7ee9a94b15b6b3d5f9e2a11692d841314ed6fc4a0a2"
+    },
+    {
+      "path": "i386-windows/iexplore.exe",
+      "bytes": 118784,
+      "sha256": "8e954c5701fd0de49a2c671ad9c9e2950deff85173e5527f8650b44b827b0efb"
+    },
+    {
+      "path": "i386-windows/ipconfig.exe",
+      "bytes": 57344,
+      "sha256": "0c80baa4640fb4f9e8aed891b468f83eb056b8c896529f4a9e9ac7b33209c816"
+    },
+    {
+      "path": "i386-windows/klist.exe",
+      "bytes": 61440,
+      "sha256": "d8f177c7df9406608d16e4d8f0bb4d620737a2a06dea8c2d42d82a028a362d90"
+    },
+    {
+      "path": "i386-windows/lodctr.exe",
+      "bytes": 20480,
+      "sha256": "31f01c28ca943920334c4dc14af5d3e4e334a98259036da07e3797a9f9e298e2"
+    },
+    {
+      "path": "i386-windows/makecab.exe",
+      "bytes": 24576,
+      "sha256": "6d7db158a994ba993ebd6300b64fc40d5a25a8ba73773aa6a28471459aa65a7e"
+    },
+    {
+      "path": "i386-windows/midi-test-x86.exe",
+      "bytes": 95744,
+      "sha256": "d84c7a3ef490d517ce2de1413c9e818756d79ab064193b05e5a764b71ec427f6"
+    },
+    {
+      "path": "i386-windows/mofcomp.exe",
+      "bytes": 24576,
+      "sha256": "42feca94f2b81604a631355c9cfcbcbfd109cde424ab8b161856be9b48804406"
+    },
+    {
+      "path": "i386-windows/mshta.exe",
+      "bytes": 24576,
+      "sha256": "31223531fb962d9fa292f5be7456ec3dd4ef9e88c162cc3fcbb57b37fcb89f73"
+    },
+    {
+      "path": "i386-windows/msidb.exe",
+      "bytes": 45056,
+      "sha256": "d7c41b2ef62405bc19b92c558f631313fecd575bae61f7e5be955643c4816669"
+    },
+    {
+      "path": "i386-windows/msiexec.exe",
+      "bytes": 106496,
+      "sha256": "2812e214b05079ab70cb5249a607e4d79e003c925a16b5df78ccba0ab375868c"
+    },
+    {
+      "path": "i386-windows/msinfo32.exe",
+      "bytes": 32768,
+      "sha256": "ade8391585f30b6bf27812549ad643957482974abc7ff82cd3f170a9f3cdbd0a"
+    },
+    {
+      "path": "i386-windows/net.exe",
+      "bytes": 118784,
+      "sha256": "23a1f0a236976bf1608ee795e3af244e758316de5a57127daf238f8878007b0d"
+    },
+    {
+      "path": "i386-windows/netsh.exe",
+      "bytes": 24576,
+      "sha256": "bb9b75c306bc379b28a8ee7c7fa73593b62541fb6420968ba1690849e6c4304c"
+    },
+    {
+      "path": "i386-windows/netstat.exe",
+      "bytes": 69632,
+      "sha256": "8d842708757bd925668697405ba7fc578abbccdca04ba99ad5932439acab463d"
+    },
+    {
+      "path": "i386-windows/ngen.exe",
+      "bytes": 28672,
+      "sha256": "0bec52cd7cc604e25f5b3633bacb525d71a1c691fb7cddb277e0a712d56ccab9"
+    },
+    {
+      "path": "i386-windows/notepad.exe",
+      "bytes": 278528,
+      "sha256": "4e2b5ae1002071a227663e87aa6c4213b437659ff482f318d62ba56a6477dcb7"
+    },
+    {
+      "path": "i386-windows/odbcad32.exe",
+      "bytes": 24576,
+      "sha256": "1e81ae903c0733bcc6572b4eea90baade26fe8c1a95aac3ca1555cf459993f65"
+    },
+    {
+      "path": "i386-windows/oleview.exe",
+      "bytes": 569344,
+      "sha256": "b445e147ddfbbc6c4898a7bf2b1af6d2388e0dac325c5e0c88a3d7852c131a7f"
+    },
+    {
+      "path": "i386-windows/ping.exe",
+      "bytes": 32768,
+      "sha256": "aca261c148112d232c6a27ca78e8dff0a170b71a4b75acda07824087e6fea823"
+    },
+    {
+      "path": "i386-windows/pnputil.exe",
+      "bytes": 24576,
+      "sha256": "253305fc99b2ec43bdf9703b496ea4dd4e8b246c59b7783820e8ae607108494b"
+    },
+    {
+      "path": "i386-windows/powershell.exe",
+      "bytes": 32768,
+      "sha256": "be18d456627b9a91ebddcce124638bb9093c95648fc43a97993700356db361d1"
+    },
+    {
+      "path": "i386-windows/presentationfontcache.exe",
+      "bytes": 28672,
+      "sha256": "5566da5ace43db886e8241ca01b86d655b53aa6c690b06a431594a0df435816b"
+    },
+    {
+      "path": "i386-windows/progman.exe",
+      "bytes": 286720,
+      "sha256": "6e6d2ca9fa2d9c19969751d0c30791b0f8332a5821dc2ac486cca5fe22b4662d"
+    },
+    {
+      "path": "i386-windows/reg.exe",
+      "bytes": 421888,
+      "sha256": "23d9b81f70de839189303d71c0c68f3905a5a07ec07bae3f019d7403277d1be6"
+    },
+    {
+      "path": "i386-windows/regasm.exe",
+      "bytes": 24576,
+      "sha256": "49e7a9881d4a1e97d6d79c0096ecfa04de8fd9c27a4725b99574209917482654"
+    },
+    {
+      "path": "i386-windows/regedit.exe",
+      "bytes": 753664,
+      "sha256": "197045c1c269704a78d9fbed5421da1f97b35f0f3fd6022f1489f3ac5d6701a1"
+    },
+    {
+      "path": "i386-windows/regini.exe",
+      "bytes": 24576,
+      "sha256": "dfef201277acab6044b3189ab61a5db41e58b2a31b9d8df0223f1addf164a217"
+    },
+    {
+      "path": "i386-windows/regsvcs.exe",
+      "bytes": 24576,
+      "sha256": "1855c13aa554b29b21a28b911658499f9f8ff261a55f852bce8143131070e619"
+    },
+    {
+      "path": "i386-windows/regsvr32.exe",
+      "bytes": 86016,
+      "sha256": "54c2c296bff45a38fbd29240f00727104d270dd91279211f51078299d2a876b5"
+    },
+    {
+      "path": "i386-windows/robocopy.exe",
+      "bytes": 28672,
+      "sha256": "2e32a638b251067d8cca85e28e764c031b81ad2f56686d99e8b444050a849bb4"
+    },
+    {
+      "path": "i386-windows/runas.exe",
+      "bytes": 28672,
+      "sha256": "a080e995a80cb1578a04ed6acb236c29fa70664be82307998c5f675bbad9099c"
+    },
+    {
+      "path": "i386-windows/rundll32.exe",
+      "bytes": 32768,
+      "sha256": "9d5ec50fd0e6e21820107ceab170cdcdd75fc2cff146646717506d5463eb0d32"
+    },
+    {
+      "path": "i386-windows/sc.exe",
+      "bytes": 36864,
+      "sha256": "684efdbe8152891aa059d10f61ebe0b4ba7d5cc460b29ca948655ce8f107b27b"
+    },
+    {
+      "path": "i386-windows/schtasks.exe",
+      "bytes": 49152,
+      "sha256": "a8e16c7fb2095f1171581abcd20b29b42f985299e63d0580c4581aeaf20f3f6d"
+    },
+    {
+      "path": "i386-windows/sdbinst.exe",
+      "bytes": 24576,
+      "sha256": "d819fc8a8e6a035abe379b26ba0e48105999fba2eeee52a9644b1f94c7a3c71f"
+    },
+    {
+      "path": "i386-windows/secedit.exe",
+      "bytes": 20480,
+      "sha256": "911f9ed0bf9cd8f7643d42129a1a36250fc43f95fe59ba4e66aa9ef55499c3f4"
+    },
+    {
+      "path": "i386-windows/servicemodelreg.exe",
+      "bytes": 24576,
+      "sha256": "581813c2137c4703fa4e3b23cf8dd2db5f425b34fe1c4e3307c545fc0e5c5866"
+    },
+    {
+      "path": "i386-windows/setx.exe",
+      "bytes": 28672,
+      "sha256": "ce051516093093d54293bdfc00b18c63cf1f8e408237e5d794b421a97d9d7293"
+    },
+    {
+      "path": "i386-windows/shutdown.exe",
+      "bytes": 24576,
+      "sha256": "cb5ce72bcb396070543b0445e1691382fc5bd06bc6d7c476c2ef0320a9acb508"
+    },
+    {
+      "path": "i386-windows/sort.exe",
+      "bytes": 32768,
+      "sha256": "5ca286ab30f03a5e5e0b9ad3e34c0669b605ded686376042076b0243e4515c1c"
+    },
+    {
+      "path": "i386-windows/sound-test-x86.exe",
+      "bytes": 103936,
+      "sha256": "d6663501aa50c64944b20028d38ca029f47d1610b2eea92760a15f022e8b2d9c"
+    },
+    {
+      "path": "i386-windows/start.exe",
+      "bytes": 147456,
+      "sha256": "e9d2e5bf64a62cfd58d386d92eb63ab8df3f0ef0e240ff0ee74da9150d946a7b"
+    },
+    {
+      "path": "i386-windows/subst.exe",
+      "bytes": 28672,
+      "sha256": "080e6e5fa49d38001678f668ebb5970a550aabce0e1104b110fe2b951ca29936"
+    },
+    {
+      "path": "i386-windows/svchost.exe",
+      "bytes": 32768,
+      "sha256": "ba6854a36572faec30411cd49fb74755a60a64ed8b79d8abe89f4683866061e9"
+    },
+    {
+      "path": "i386-windows/systeminfo.exe",
+      "bytes": 53248,
+      "sha256": "f6b12c0044c61b1ac4ebdcb6173713bed6cf3649c6f59370e19925aafdebc665"
+    },
+    {
+      "path": "i386-windows/taskkill.exe",
+      "bytes": 98304,
+      "sha256": "1ecce24e8df12dad1ccccbfbd858dc335a004020242ffb7cc5a18165213142e0"
+    },
+    {
+      "path": "i386-windows/tasklist.exe",
+      "bytes": 49152,
+      "sha256": "465d98bf3fa549bf621f48d22ef125d3187c0e915fa36fb6d0b4b16b74060b58"
+    },
+    {
+      "path": "i386-windows/taskmgr.exe",
+      "bytes": 782336,
+      "sha256": "2ef4dd7f6e62c155b339426e6e7cb7950218de351b2f653e221fa7d72a37b710"
+    },
+    {
+      "path": "i386-windows/timeout.exe",
+      "bytes": 28672,
+      "sha256": "f519954988fd273a68497de43b3980ad68b4171575862ad2b7cfe0393f949e86"
+    },
+    {
+      "path": "i386-windows/uninstaller.exe",
+      "bytes": 81920,
+      "sha256": "e603753310fffc38842cf3dfcd8cdc3e4e480c2e9e2435714a81180a5da0aa6c"
+    },
+    {
+      "path": "i386-windows/unlodctr.exe",
+      "bytes": 20480,
+      "sha256": "44c7183e700ce9d813b588a38bc514e202d4f7fc2e1ab0f4e730aac0b9e1e5b3"
+    },
+    {
+      "path": "i386-windows/video-test-x86.exe",
+      "bytes": 251904,
+      "sha256": "07274e4d7682ddf45f421bb3bb353aa3678339db165fc33def5bb56ed2fb1697"
+    },
+    {
+      "path": "i386-windows/view.exe",
+      "bytes": 45056,
+      "sha256": "5e5ea8dd88569e0a02f3e785c3075c4b2f536c43750d17e53372f9e0ccb7e22a"
+    },
+    {
+      "path": "i386-windows/wevtutil.exe",
+      "bytes": 24576,
+      "sha256": "6875172adc9c56ab38807ae29db040ab6c045cf27b480e43ed6328ef0563b64a"
+    },
+    {
+      "path": "i386-windows/where.exe",
+      "bytes": 32768,
+      "sha256": "f18e74dd0fe9603095d3d064433c9bb54ea0e5c89938043ff3e87ec5d03971fb"
+    },
+    {
+      "path": "i386-windows/whoami.exe",
+      "bytes": 32768,
+      "sha256": "35a12b1548d49f64f826ec80dfb0451f5c047de684a966fa62428a3a05e68446"
+    },
+    {
+      "path": "i386-windows/winebrowser.exe",
+      "bytes": 14336,
+      "sha256": "98c76972c2fb5ef7860006cd908545461b874f80ea6df5a91d06f3cb1fa4604c"
+    },
+    {
+      "path": "i386-windows/winecfg.exe",
+      "bytes": 1036288,
+      "sha256": "9f545417e036b0c110daea412bbb0571c4b96e71198c9e28e036699d3c8186b2"
+    },
+    {
+      "path": "i386-windows/winefile.exe",
+      "bytes": 487424,
+      "sha256": "8a6bc38d3d51a7b821519b20e9bd050d9c162a0d9c8cb26b4e2d01cb67e200d2"
+    },
+    {
+      "path": "i386-windows/winemine.exe",
+      "bytes": 204800,
+      "sha256": "1b769cbba18be8897cdaff8056dc41147f7924bb5aaa4ae84e31063334624534"
+    },
+    {
+      "path": "i386-windows/winemsibuilder.exe",
+      "bytes": 32768,
+      "sha256": "aab41f74fa801fbffaf5d38b60ba9ffd72b138c2b930846ed3aa0286b152eefa"
+    },
+    {
+      "path": "i386-windows/winepath.exe",
+      "bytes": 32768,
+      "sha256": "5500e5012d836b064d83bed6e04bc81846108895ddb0d128a6322f4969e6c888"
+    },
+    {
+      "path": "i386-windows/winhlp32.exe",
+      "bytes": 315392,
+      "sha256": "84801017dd5bf19b97c444f2c5d16851670c6107916e2bcb375924a3dabc475a"
+    },
+    {
+      "path": "i386-windows/winmgmt.exe",
+      "bytes": 28672,
+      "sha256": "e56a99f423aac752b0c61568934e0300e8c8691944e8b783f7c2ea7fc2fbf1a9"
+    },
+    {
+      "path": "i386-windows/winver.exe",
+      "bytes": 24576,
+      "sha256": "7f86c1ea96b4c0689f960f253e7e645bb9d2464555f179254f8d52c104f58841"
+    },
+    {
+      "path": "i386-windows/wmic.exe",
+      "bytes": 57344,
+      "sha256": "4dfbdcd4aacd45edeb2281c76389c508fbaf2a1645ac63a8a2f816b0da5c0b47"
+    },
+    {
+      "path": "i386-windows/wmplayer.exe",
+      "bytes": 28672,
+      "sha256": "126eaf6d21faab9d1a010a71e2d49b8d06cb3d7935605d7d0f786a7cee8667c8"
+    },
+    {
+      "path": "i386-windows/wordpad.exe",
+      "bytes": 704512,
+      "sha256": "fa435a04ec8976587dec4cac185eae1b8ed2c41fbe9a881b54880135139b131d"
+    },
+    {
+      "path": "i386-windows/write.exe",
+      "bytes": 24576,
+      "sha256": "0c15a86304ba84be353c7c5537c40da25815467b97e080810565824f7d0b2118"
+    },
+    {
+      "path": "i386-windows/wscript.exe",
+      "bytes": 241664,
+      "sha256": "abeb16ac0a1c695c863bbbbc42bdf4c1d138c230fee03bd6a8fc35da42f9328f"
+    },
+    {
+      "path": "i386-windows/wusa.exe",
+      "bytes": 81920,
+      "sha256": "9970f62dcc0fbc2d43048883757965bafed963765c49c984e4c4691c64f904de"
+    },
+    {
+      "path": "i386-windows/xcopy.exe",
+      "bytes": 192512,
+      "sha256": "9ad6bc3a7a0ef777e0856ad20557c1512a60d1f5c9b2951d77e5df39ad74fdcd"
+    }
+  ]
+}

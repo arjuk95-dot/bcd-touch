@@ -1,0 +1,1 @@
+PASS: floating/hidden-idle movement, confirmed LT toggle, amber-state renderer exports, one RT per Aim-to-Attack slide including fast release, already-on latch, independent movement/fire, cancel/focus/pause/context clear, fixed-camera no-look and zero keyboard/mouse. Simulator engine-boundary spies, no guest or physical game test.

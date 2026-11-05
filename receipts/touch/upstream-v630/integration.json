@@ -62,5 +62,14 @@
   "buildRecipe": "20 new upstream build/check steps copied in order, updated Dock host build step; runtime staging pins v0.1.630",
   "phoneChanged": false,
   "physicallyTested": false,
-  "status": "SDK, simulator and full archive pending"
+  "status": "SDK, simulator and full archive pending",
+  "appSource": "8310e3f6dee672d5340006dc56ed25286d10e235",
+  "sdk": "passed",
+  "preview45": "passed",
+  "publisher": "passed including five fresh-process reservation cases",
+  "baseRuntime": "passed",
+  "appCodeIdenticalToPreviewAndPublisherSource": true,
+  "fullBuild": "running",
+  "fullBuildRun": "https://github.com/arjunkl/bcd-touch/actions/runs/42038316066",
+  "initialCheckFailure": "Old exact-line stock cleanup assertion; replaced by checks of retained stock release plus pack monitor cleanup; all stock behavior checks pass"
 }
