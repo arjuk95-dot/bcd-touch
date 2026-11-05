@@ -269,6 +269,8 @@ import UniformTypeIdentifiers
                            note: "How the screen turns while this game runs. Landscape keeps it in landscape however you hold the device, lying down, say; it goes back to following the device when the game ends. Settings has the choice for every game."),
             BCDGameSetting(id: "fps", title: "Frame-rate limit", kind: .choice(rates), value: String(entry.fpsMode), defaultValue: "1",
                            note: "The most frames a second the game shows. 30 and 40 keep the device cooler; No limit lets the game run as fast as it can."),
+            Self.line("gl-backend", "Desktop OpenGL", profile, [("", "Off (established Direct3D path)"), ("off", "Off"), ("zink", "Desktop OpenGL (Zink)")],
+                      note: "Optional Mesa/Zink → MoltenVK → Metal backend. Save and fully restart BCD after changing this. Noita needs desktop OpenGL. MetalFX and frame generation do not apply to GL frames."),
             Self.line("metalfx-upscale", "MetalFX upscaling", profile, Self.named(GameProfile.metalFXChoices, ["": "Off"]),
                       note: "Direct3D 11 and 12 games draw at the resolution above, and Apple's MetalFX enlarges the picture by this much. Pair it with a small resolution for more frames."),
         ]

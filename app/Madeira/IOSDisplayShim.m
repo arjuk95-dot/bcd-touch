@@ -191,6 +191,16 @@ static void my_release_metal_device(macdrv_metal_device d) {
 // We pack the layer pointer directly. `v` carries the swapchain's HWND
 // (see my_get_win_data). Desktop mode: per-window layer in the desktop
 // compositor. Game mode: the fullscreen singleton, exactly as before.
+CAMetalLayer *madeira_display_layer_for_hwnd(void *hwnd) {
+    winios_note_swapchain_hwnd(hwnd);
+    if (madeira_desktop_mode()) return winios_metal_layer_for_hwnd(hwnd);
+    pthread_mutex_lock(&g_lock);
+    CAMetalLayer *layer = g_layer;
+    pthread_mutex_unlock(&g_lock);
+    if (layer) winios_note_game_metal_hwnd(hwnd);
+    return layer;
+}
+
 static macdrv_metal_view my_view_create_metal_view(macdrv_view v, macdrv_metal_device d) {
     (void)d;
     winios_note_swapchain_hwnd((void *)v);

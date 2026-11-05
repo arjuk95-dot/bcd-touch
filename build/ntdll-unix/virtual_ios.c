@@ -12572,6 +12572,9 @@ extern const void *dwrite_unix_call_funcs[];
  * and Media Foundation's MP4 source; the wg_muxer entries return
  * STATUS_NOT_IMPLEMENTED. */
 extern const void *winegstreamer_unix_call_funcs[];
+/* WO-BCD-OPENGL-001: built from the same patched Wine as the PE DLLs. */
+extern const void *opengl32_unix_call_funcs[];
+extern const void *opengl32_unix_call_wow64_funcs[];
 
 /* MADEIRA 2026-10-22: winedmo's unix side (winedmo_unixlib_ios.c): the FFmpeg demuxer behind Wine's
  * ASF media source (mfasfsrcsnk.dll).  Only an opt-in game loads winedmo.dll at all (nothing shipped
@@ -12933,10 +12936,14 @@ static NTSTATUS load_builtin_unixlib( void *module, BOOL wow, const void **funcs
             funcs64 = funcs_wow64 = (const void *)ios_stub_unix_call_table;
         } else if (match && strstr(match, "opengl32")) {
             pthread_once( &ios_stub_tables_once, ios_init_stub_tables );
-            WARN_(module)("iOS: module %p (%s) -> GL-absent stub table (attach ok, wgl/gl NOT_SUPPORTED)\n",
-                          module, match);
-            libname = "opengl32 (GL-absent stub table)";
-            funcs64 = funcs_wow64 = (const void *)ios_gl_stub_unix_call_table;
+            if (getenv("MADEIRA_NO_GL") && strcmp(getenv("MADEIRA_NO_GL"), "0")) {
+                libname = "opengl32 (disabled)";
+                funcs64 = funcs_wow64 = (const void *)ios_gl_stub_unix_call_table;
+            } else {
+                libname = "opengl32 (winios desktop WGL)";
+                funcs64 = (const void *)opengl32_unix_call_funcs;
+                funcs_wow64 = (const void *)opengl32_unix_call_wow64_funcs;
+            }
         } else {
             pthread_once( &ios_stub_tables_once, ios_init_stub_tables );
             WARN_(module)("iOS: no unix .so for module %p (unix_path=%s, modname=%s, mapped=%s), using stub table\n",

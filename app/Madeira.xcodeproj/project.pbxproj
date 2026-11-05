@@ -8,6 +8,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E1710004A /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E1710004B /* IOSurface.framework */; };
+		E1710003A /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E1710003B /* OpenGLES.framework */; };
+		E1710002A /* gl in Resources */ = {isa = PBXBuildFile; fileRef = E1710002B /* gl */; };
+		E1710001A /* WiniosGL.m in Sources */ = {isa = PBXBuildFile; fileRef = E1710001B /* WiniosGL.m */; };
         BCD000000000000000000A08 /* BCDCursorPackSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD000000000000000000B08; };
         BCD000000000000000000A07 /* BCDNoitaPack.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD000000000000000000B07; };
         BCD000000000000000000A06 /* BCDCursorPack.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD000000000000000000B06; };
@@ -421,6 +425,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		E1710004B /* IOSurface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = "System/Library/Frameworks/IOSurface.framework"; sourceTree = SDKROOT; };
+		E1710003B /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = "System/Library/Frameworks/OpenGLES.framework"; sourceTree = SDKROOT; };
+		E1710002B /* gl */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "gl"; sourceTree = "<group>"; };
+		E1710001B /* WiniosGL.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "Winios/WiniosGL.m"; sourceTree = "<group>"; };
         BCD000000000000000000B08 /* BCDCursorPackSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDCursorPackSettings.swift; sourceTree = "<group>"; };
         BCD000000000000000000B07 /* BCDNoitaPack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDNoitaPack.swift; sourceTree = "<group>"; };
         BCD000000000000000000B06 /* BCDCursorPack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDCursorPack.swift; sourceTree = "<group>"; };
@@ -835,6 +843,8 @@
 				A1000042 /* libz.tbd in Frameworks */,
 				A1000051 /* libdxmt_combined.a in Frameworks */,
 				A1000052 /* Metal.framework in Frameworks */,
+				E1710004A /* IOSurface.framework in Frameworks */,
+				E1710003A /* OpenGLES.framework in Frameworks */,
 				A1000053 /* QuartzCore.framework in Frameworks */,
 				A1000054 /* MetalFX.framework in Frameworks */,
 				A1000055 /* libsqlite3.tbd in Frameworks */,
@@ -1228,6 +1238,10 @@
 				A2000041 /* PrefixExtractor.c */,
 				A2000043 /* PrefixExtractor.h */,
 				A2000050 /* IOSDisplayShim.m */,
+				E1710004B /* IOSurface.framework */,
+				E1710003B /* OpenGLES.framework */,
+				E1710002B /* gl */,
+				E1710001B /* WiniosGL.m */,
 				A2000056 /* IOSDisplayShim.h */,
 				A2000070 /* Winios/Winios.m */,
 				A2000071 /* Winios/Winios.h */,
@@ -1430,6 +1444,7 @@
 				A1000210 /* i386-windows in Resources */,
 				A10000D1 /* d3d12 in Resources */,
 				A10000D2 /* licenses in Resources */,
+				E1710002A /* gl in Resources */,
 				A1000081 /* x86_64-vcruntime in Resources */,
 				D3C0DE01 /* soundfont in Resources */,
 				A1000040 /* prefix-template.tar.gz in Resources */,
@@ -1787,6 +1802,7 @@
 				A1000033 /* wine_stubs.c in Sources */,
 				A1000041 /* PrefixExtractor.c in Sources */,
 				A1000050 /* IOSDisplayShim.m in Sources */,
+				E1710001A /* WiniosGL.m in Sources */,
 				A1000070 /* Winios/Winios.m in Sources */,
 				A1000247 /* PadOutput.m in Sources */,
 				A1000035 /* StikJITHelper.swift in Sources */,

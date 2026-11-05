@@ -64,7 +64,7 @@ enum BCDPauseLive {
     nonisolated(unsafe) private static var lastSeen = Date.distantPast
 
     static func gameIsDrawing() -> Bool {
-        let now = madeira_get_present_count()
+        let now = madeira_frame_count()
         defer { lastPresents = now }
         if now != lastPresents { lastSeen = Date(); return true }
         return Date().timeIntervalSince(lastSeen) < 3

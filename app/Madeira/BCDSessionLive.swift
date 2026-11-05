@@ -1012,7 +1012,7 @@ enum BCDLiveMenuWords {
         guard timer == nil else { return }
         // The classic overlay held the panel's rate for the limit in force when it appeared.
         ProMotionIntent.apply(mode: madeira_get_vsync_locked())
-        samples = [(CACurrentMediaTime(), madeira_get_present_count())]
+        samples = [(CACurrentMediaTime(), madeira_frame_count())]
         tick()
         let timer = Timer(timeInterval: 0.5, repeats: true) { [weak self] _ in MainActor.assumeIsolated { self?.tick() } }
         RunLoop.main.add(timer, forMode: .common)
@@ -1026,7 +1026,7 @@ enum BCDLiveMenuWords {
 
     private func tick() {
         let now = CACurrentMediaTime()
-        let count = madeira_get_present_count()
+        let count = madeira_frame_count()
         samples.append((now, count))
         if samples.count > 8 { samples.removeFirst(samples.count - 8) }
         let fps = BCDFrameRate.fps(samples)
@@ -1474,7 +1474,7 @@ struct BCDDeskStarting: View {
     /// The classic splash's rule, four times a second; the words once a second.
     private func check() {
         ticks += 1
-        if madeira_get_present_count() > 0 {
+        if madeira_frame_count() > 0 {
             framesSeen += 1
             if framesSeen >= 2 { BCDStartingHost.hide(); stop() }
             return

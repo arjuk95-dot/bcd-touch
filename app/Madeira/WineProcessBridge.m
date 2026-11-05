@@ -2021,6 +2021,24 @@ static void *wine_process_thread(void *arg) {
                         dprintf(STDERR_FILENO, "[steam-env] MADEIRA_STEAM_IDENTITY=none (from the game's file): no Steam game identity published\n");
                     }
                 }
+                {
+                    char backend[16] = "off";
+                    madeira_cfg_get("gl-backend", backend, sizeof backend);
+                    const char *override = getenv("MADEIRA_GL_BACKEND");
+                    if (override && *override) strlcpy(backend, override, sizeof backend);
+                    BOOL enabled = !strcmp(backend, "zink");
+                    if (getenv("MADEIRA_NO_GL") && strcmp(getenv("MADEIRA_NO_GL"), "0")) enabled = NO;
+                    NSString *gl = [[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent:@"gl"];
+                    BOOL bundled = [[NSFileManager defaultManager] fileExistsAtPath:[gl stringByAppendingPathComponent:@"libOSMesa.dylib"]] &&
+                                   [[NSFileManager defaultManager] fileExistsAtPath:[gl stringByAppendingPathComponent:@"libMoltenVK.dylib"]];
+                    setenv("MADEIRA_GL_DIR", gl.fileSystemRepresentation, 1);
+                    setenv("MADEIRA_GL_BACKEND", enabled ? "zink" : "off", 1);
+                    setenv("MADEIRA_NO_GL", enabled ? "0" : "1", 1);
+                    LOG("OpenGL selected=%{public}s dependencies=%d path=%{public}s; restart required to change backend",
+                        enabled ? "zink" : "off", bundled, gl.fileSystemRepresentation);
+                    if (enabled && !bundled) LOG("OpenGL ERROR: missing bundled desktop GL libraries; context creation will fail");
+                    if (enabled) LOG("OpenGL: MetalFX upscaling/frame generation do not apply to GL frames");
+                }
                 {   /* madeira-bcd (round 604): the in-game menu's Wine debug channels, for THIS start only (BCDDebugLive.swift, BCDDebugChannels.swift).
                      * The menu writes the text of the WINEDEBUG it wants into a file in the temporary folder; it is exported here, after the game's own
                      * lines, and the file is removed, so the start after this one runs as always. Anything but plain channel text is ignored. */

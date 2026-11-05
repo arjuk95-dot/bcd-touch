@@ -374,6 +374,10 @@ final class BCDHUDState: ObservableObject {
     /// ml1174, as the old overlay did: the GPU's busy time against the wall clock, and per frame.
     private func sampleGPU(now: Double) {
         let time = CACurrentMediaTime()
+        if madeira_gl_last_present_time() > time - 2 {
+            gpuPercent = nil; gpuFrameMs = 0
+            return // DXMT busy time cannot describe Mesa/MoltenVK GPU work.
+        }
         let count = madeira_get_present_count()
         let busy = madeira_gpu_meter_busy_seconds(), buffers = madeira_gpu_meter_cmdbufs()
         let used = max(0, busy - gpuBusy), dt = max(0.001, time - gpuTime)

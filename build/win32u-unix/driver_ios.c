@@ -2486,6 +2486,8 @@ static UINT nulldrv_VulkanInit( UINT version, void *vulkan_handle, const struct 
     return STATUS_NOT_IMPLEMENTED;
 }
 
+extern UINT winios_OpenGLInit(UINT, const struct opengl_funcs *, const struct opengl_driver_funcs **);
+
 static UINT nulldrv_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, const struct opengl_driver_funcs **driver_funcs )
 {
     return STATUS_NOT_IMPLEMENTED;
@@ -2645,6 +2647,7 @@ static void load_display_driver(void)
             dprintf( 2, "[winios] game mode: launcher / dialog windows are drawn over the game "
                         "(MADEIRA_GAME_WINDOWS=0 hides them)\n" );
         }
+        winios_user_driver.pOpenGLInit = winios_OpenGLInit;
         winios_user_driver.pUpdateDisplayDevices = winios_UpdateDisplayDevices;
         __wine_set_user_driver( &winios_user_driver, WINE_GDI_DRIVER_VERSION );
 #else

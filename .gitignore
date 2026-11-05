@@ -247,3 +247,8 @@ tools/touch-packs/__pycache__/
 touch-evidence/
 
 artifacts/
+
+# Source-built optional GL runtime outputs
+app/Madeira/gl/
+build/opengl-dependencies/
+build/mesa-ios/obj/

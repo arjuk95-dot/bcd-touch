@@ -1253,7 +1253,7 @@ final class LibraryModel: ObservableObject {
         if AutoTune.enabled { AutoTune.sessionBegan(entry, remember: remember, dockWithoutEntry: dock != nil && !remember) }
         LibraryController.shared.configure(enabled: true, ownsInput: false)
         Self.sessionsThisRun += 1
-        launchPresent = madeira_get_present_count(); launchStarted = Date(); launchSlow = false; launchVerySlow = false; launchLogs = entry.liveLogs
+        launchPresent = madeira_frame_count(); launchStarted = Date(); launchSlow = false; launchVerySlow = false; launchLogs = entry.liveLogs
         launchSurface = winios_surface_present_count()
         MetalBackedView.presentCountAtLaunch = launchPresent; laidOutAfterFirstPresent = false
         MetalBackedView.touchesSinceLaunch = 0   // round 625: the no-input hint counts this session's touches
@@ -1320,12 +1320,12 @@ final class LibraryModel: ObservableObject {
         if dockStart.active {
             // A Dock start: the desktop's own frames (explorer, the host's console window)
             // do not end this starting screen; the game's window does (DockStartScreen).
-            dockStart.poll(self, rendered: madeira_get_present_count() >= launchPresent + 3)
+            dockStart.poll(self, rendered: madeira_frame_count() >= launchPresent + 3)
         }
         if dockStart.holding {
             if launching && !launchSlow && Date().timeIntervalSince(launchStarted) > 30 { launchSlow = true }
         } else if launching {
-            if madeira_get_present_count() >= launchPresent + 3 {
+            if madeira_frame_count() >= launchPresent + 3 {
                 showGameView(reason: "present")
             } else if winios_surface_present_count() > launchSurface {
                 showGameView(reason: "surface")
@@ -1348,7 +1348,7 @@ final class LibraryModel: ObservableObject {
             watchDesktopExits()
         } else if sawProcess && wineserver_is_running() == 0 { finish() }
         // The first frame gives Aspect and Fill height the drawable's shape.
-        if current != nil, !laidOutAfterFirstPresent, madeira_get_present_count() != MetalBackedView.presentCountAtLaunch {
+        if current != nil, !laidOutAfterFirstPresent, madeira_frame_count() != MetalBackedView.presentCountAtLaunch {
             laidOutAfterFirstPresent = true
             MetalBackedView.refreshDisplayMode(reason: "first-present")
         }
@@ -1364,7 +1364,7 @@ final class LibraryModel: ObservableObject {
     private var noInputHintFor: UUID?
     private func watchNoInputHint() {
         guard !launching, let id = current, noInputHintFor != id, Date().timeIntervalSince(launchStarted) > 45,
-              madeira_get_present_count() > launchPresent + 60 else { return }
+              madeira_frame_count() > launchPresent + 60 else { return }
         noInputHintFor = id
         let touch = TouchControlsModel.shared
         let pads = GCController.controllers().count, keyboard = GCKeyboard.coalesced != nil, mice = GCMouse.mice().count
@@ -1392,7 +1392,7 @@ final class LibraryModel: ObservableObject {
     private var windowedHintFor: UUID?
     private var windowedSince: Date?
     private func watchWindowedHint() {
-        guard !launching, let id = current, windowedHintFor != id, madeira_get_present_count() > launchPresent + 60 else { return }
+        guard !launching, let id = current, windowedHintFor != id, madeira_frame_count() > launchPresent + 60 else { return }
         var w: Int32 = 0, h: Int32 = 0, screenW: Int32 = 0, screenH: Int32 = 0
         guard winios_windowed_too_big(&w, &h, &screenW, &screenH) != 0 else { windowedSince = nil; return }
         guard let since = windowedSince else { windowedSince = Date(); return }
@@ -1569,7 +1569,7 @@ final class LibraryModel: ObservableObject {
                           : DockGameEndRules.grace(MadeiraConfig.get("env.MADEIRA_DOCK_GAME_END_GRACE"))
         // Round 625 (N-S18): frames reached the screen in this session (the starting screen's own test); with
         // env.MADEIRA_DOCK_SHORT_EXIT_END = 0 the session is treated as rendered, so a short clean exit is left as before.
-        let rendered = !MadeiraConfig.flag("MADEIRA_DOCK_SHORT_EXIT_END") || madeira_get_present_count() >= launchPresent + 3
+        let rendered = !MadeiraConfig.flag("MADEIRA_DOCK_SHORT_EXIT_END") || madeira_frame_count() >= launchPresent + 3
         let verdict = DockGameEndRules.verdict(table, places: .standard, grace: grace, anyStatus: asked, rendered: rendered) {
             let report = MainActor.assumeIsolated { MadeiraDock.pollReport() }
             return DockHostState(gameRan: report.fields["launch-game-running"] == "1",
@@ -1801,7 +1801,7 @@ final class LibraryModel: ObservableObject {
         guard AutoTune.enabled else { return }
         var status: UInt32 = 0
         let crashed = wine_crash_exit_status(&status) != 0
-        let now = madeira_get_present_count()
+        let now = madeira_frame_count()
         AutoTune.sessionEnded(AutoTuneSessionEnd(sawProcess: sawProcess, quitRequested: quitRequested,
                                                  crashStatus: crashed ? status : nil,
                                                  presents: now >= launchPresent ? Int(now - launchPresent) : 0,
@@ -1909,7 +1909,7 @@ enum DesktopExitRules {
 
     /// What the session line says for an OpenGL program.
     static func openGLWords(_ exe: String) -> String {
-        "\(exe) needs OpenGL, which BCD does not have yet, so it closes. This is not a setting."
+        "\(exe) could not create its OpenGL context. Check this game's Desktop OpenGL setting and export the [winios-gl] diagnostics; fully restart BCD after changing backend."
     }
     /// What the session line says the first time the JIT pool refuses an image in a desktop session.
     static let poolWords = "The Windows desktop is out of room for programs: what runs on it now is too big for this device. "
