@@ -104,6 +104,7 @@ struct BCDControlPack: Codable, Equatable {
         var capabilityActions = Set<String>()
         if let cursor = cursorControls {
             try require(version >= 4 && inputMode == "keyboardMouse" && lookMode == "relativeMouse", "Cursor capability requires version 4 keyboard/mouse relative mode")
+            try require(Set(["onFoot","pointer"]).isSubset(of:Set(contexts)), "Cursor packs require explicit onFoot/pointer contexts")
             guard let move = digitalMovement else { throw Invalid.reason("Cursor capability requires digital movement") }
             capabilityActions = Set([cursor.fire,cursor.inventory,cursor.pause,cursor.throwAction,cursor.primaryClick,cursor.secondaryClick,move.left,move.right,move.up,move.down])
             try require(capabilityActions.isSubset(of: ids), "Unknown cursor/movement action")

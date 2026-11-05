@@ -206,7 +206,10 @@ import UniformTypeIdentifiers
             do { pack = try BCDPackAuthoring.merge(base: b, personal: personal.pack, baseline: personal.baseline) }
             catch { editFailure = "Personal edits need review · validated base active: \(error)" }
         }
-        if let p = pack { if !p.contexts.contains(context) { context = p.contexts[0] }; status = "Validated · playtest required" }
+        if let p = pack {
+            if !p.contexts.contains(context) { context = p.contexts[0] }
+            status = p.cursorControls != nil ? "Cursor pack · expected bindings need confirmation · playtest required" : "Validated · playtest required"
+        }
         else { status = "Stock fallback · pack pending"; prepare(entry) }
         if let editFailure { status = editFailure }
         for k in jobs.keys where jobs[k]?.state != "validated" { resume(k) }

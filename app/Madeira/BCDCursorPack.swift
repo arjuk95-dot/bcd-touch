@@ -214,7 +214,7 @@ final class BCDCursorPack {
         guard let f=fingers.removeValue(forKey:id) else { return };release(id)
         if f.role=="radial" {
             if cancelled { mode = .gameplay;return }
-            if !f.moved && time-f.began<0.28 { mode = .equipment;return }
+            if !f.moved { mode = time-f.began<0.28 ? .equipment:.gameplay;return }
             if let i=sector(p) { equip(i,time:time) } else { mode = .gameplay }
         }
     }
@@ -222,7 +222,7 @@ final class BCDCursorPack {
 
 #if canImport(UIKit)
 import UIKit
-extension BCDCursorPack {
+@MainActor extension BCDCursorPack {
     func drawOverlay(_ ctx: CGContext) {
         func text(_ s: String, _ p: CGPoint, size: CGFloat = 13) {
             let font=UIFont.systemFont(ofSize:size,weight:.regular)

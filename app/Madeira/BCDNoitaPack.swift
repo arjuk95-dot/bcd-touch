@@ -42,6 +42,9 @@ enum BCDNoitaPack {
         pack.aim.deadZone=0
         if !bindings.isEmpty {
             pack.evidence.append(.init(id:"installed-input-metadata",source:"Bounded installed Noita input configuration",detail:"Input attributes were read on-device and included in the identity digest. Unrecognized fields are evidence only; they are not guessed bindings. Inspect preparation metadata or confirm mappings in Noita before marking physical validation complete."))
+            for (index,item) in bindings.filter({$0.key.hasPrefix("noita/")}).sorted(by:{$0.key<$1.key}).enumerated() {
+                pack.evidence.append(.init(id:"noita-input-\(index)",source:item.key,detail:String(item.value.prefix(4000))))
+            }
         }
         return pack
     }

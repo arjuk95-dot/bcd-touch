@@ -1,0 +1,491 @@
+{
+  "actions" : [
+    {
+      "behavior" : "hold",
+      "contexts" : [
+        "onFoot",
+        "pointer"
+      ],
+      "evidence" : "requested-defaults",
+      "icon" : "arrow.left",
+      "id" : "move-left",
+      "label" : "Move left",
+      "output" : "key:65"
+    },
+    {
+      "behavior" : "hold",
+      "contexts" : [
+        "onFoot",
+        "pointer"
+      ],
+      "evidence" : "requested-defaults",
+      "icon" : "arrow.right",
+      "id" : "move-right",
+      "label" : "Move right",
+      "output" : "key:68"
+    },
+    {
+      "behavior" : "hold",
+      "contexts" : [
+        "onFoot",
+        "pointer"
+      ],
+      "evidence" : "requested-defaults",
+      "icon" : "chevron.up.2",
+      "id" : "levitate",
+      "label" : "Levitate",
+      "output" : "key:87"
+    },
+    {
+      "behavior" : "hold",
+      "contexts" : [
+        "onFoot",
+        "pointer"
+      ],
+      "evidence" : "requested-defaults",
+      "icon" : "arrow.down",
+      "id" : "down-eat",
+      "label" : "Down / Eat",
+      "output" : "key:83"
+    },
+    {
+      "behavior" : "hold",
+      "contexts" : [
+        "onFoot",
+        "pointer"
+      ],
+      "evidence" : "requested-defaults",
+      "icon" : "bcd.wand",
+      "id" : "use-selected",
+      "label" : "Fire / Use",
+      "output" : "mouse:left"
+    },
+    {
+      "behavior" : "hold",
+      "contexts" : [
+        "onFoot",
+        "pointer"
+      ],
+      "evidence" : "requested-defaults",
+      "icon" : "bcd.boot",
+      "id" : "kick",
+      "label" : "Kick",
+      "output" : "key:70"
+    },
+    {
+      "behavior" : "tap",
+      "contexts" : [
+        "onFoot",
+        "pointer"
+      ],
+      "evidence" : "requested-defaults",
+      "icon" : "bcd.interact",
+      "id" : "interact",
+      "label" : "Interact",
+      "output" : "key:69"
+    },
+    {
+      "behavior" : "tap",
+      "contexts" : [
+        "onFoot",
+        "pointer"
+      ],
+      "evidence" : "requested-defaults",
+      "icon" : "bcd.inventory",
+      "id" : "inventory",
+      "label" : "Inventory",
+      "output" : "key:9"
+    },
+    {
+      "behavior" : "tap",
+      "contexts" : [
+        "onFoot",
+        "pointer"
+      ],
+      "evidence" : "requested-defaults",
+      "icon" : "pause",
+      "id" : "pause",
+      "label" : "Pause",
+      "output" : "key:27"
+    },
+    {
+      "behavior" : "tap",
+      "contexts" : [
+        "onFoot",
+        "pointer"
+      ],
+      "evidence" : "requested-defaults",
+      "icon" : "arrow.up.forward",
+      "id" : "throw",
+      "label" : "Throw selected item",
+      "output" : "mouse:right"
+    },
+    {
+      "behavior" : "hold",
+      "contexts" : [
+        "onFoot",
+        "pointer"
+      ],
+      "evidence" : "requested-defaults",
+      "icon" : "cursorarrow",
+      "id" : "pointer-select",
+      "label" : "Select / drag",
+      "output" : "mouse:left"
+    },
+    {
+      "behavior" : "hold",
+      "contexts" : [
+        "onFoot",
+        "pointer"
+      ],
+      "evidence" : "requested-defaults",
+      "icon" : "cursorarrow.click.2",
+      "id" : "pointer-secondary",
+      "label" : "Secondary click",
+      "output" : "mouse:right"
+    },
+    {
+      "behavior" : "tap",
+      "contexts" : [
+        "onFoot"
+      ],
+      "evidence" : "requested-defaults",
+      "icon" : "bcd.wand",
+      "id" : "slot-1",
+      "label" : "Wand slot 1",
+      "output" : "key:49"
+    },
+    {
+      "behavior" : "tap",
+      "contexts" : [
+        "onFoot"
+      ],
+      "evidence" : "requested-defaults",
+      "icon" : "bcd.wand",
+      "id" : "slot-2",
+      "label" : "Wand slot 2",
+      "output" : "key:50"
+    },
+    {
+      "behavior" : "tap",
+      "contexts" : [
+        "onFoot"
+      ],
+      "evidence" : "requested-defaults",
+      "icon" : "bcd.wand",
+      "id" : "slot-3",
+      "label" : "Wand slot 3",
+      "output" : "key:51"
+    },
+    {
+      "behavior" : "tap",
+      "contexts" : [
+        "onFoot"
+      ],
+      "evidence" : "requested-defaults",
+      "icon" : "bcd.wand",
+      "id" : "slot-4",
+      "label" : "Wand slot 4",
+      "output" : "key:52"
+    },
+    {
+      "behavior" : "tap",
+      "contexts" : [
+        "onFoot"
+      ],
+      "evidence" : "requested-defaults",
+      "icon" : "bcd.inventory",
+      "id" : "slot-5",
+      "label" : "Item slot 5",
+      "output" : "key:53"
+    },
+    {
+      "behavior" : "tap",
+      "contexts" : [
+        "onFoot"
+      ],
+      "evidence" : "requested-defaults",
+      "icon" : "bcd.inventory",
+      "id" : "slot-6",
+      "label" : "Item slot 6",
+      "output" : "key:54"
+    },
+    {
+      "behavior" : "tap",
+      "contexts" : [
+        "onFoot"
+      ],
+      "evidence" : "requested-defaults",
+      "icon" : "bcd.inventory",
+      "id" : "slot-7",
+      "label" : "Item slot 7",
+      "output" : "key:55"
+    },
+    {
+      "behavior" : "tap",
+      "contexts" : [
+        "onFoot"
+      ],
+      "evidence" : "requested-defaults",
+      "icon" : "bcd.inventory",
+      "id" : "slot-8",
+      "label" : "Item slot 8",
+      "output" : "key:56"
+    }
+  ],
+  "aim" : {
+    "deadZone" : 0,
+    "fullSpeed" : 900,
+    "invertY" : false,
+    "sensitivity" : 1,
+    "vertical" : 1
+  },
+  "contexts" : [
+    "onFoot",
+    "pointer"
+  ],
+  "cursorControls" : {
+    "fire" : "use-selected",
+    "firingMultiplier" : 1,
+    "inventory" : "inventory",
+    "pause" : "pause",
+    "primaryClick" : "pointer-select",
+    "radialRadius" : 0.28,
+    "radialX" : 0.75,
+    "radialY" : 0.5,
+    "secondaryClick" : "pointer-secondary",
+    "throwAction" : "throw"
+  },
+  "digitalMovement" : {
+    "deadZone" : 0.18,
+    "down" : "down-eat",
+    "downThreshold" : 0.78,
+    "flightThreshold" : 0.35,
+    "hysteresis" : 0.06,
+    "left" : "move-left",
+    "right" : "move-right",
+    "up" : "levitate"
+  },
+  "evidence" : [
+    {
+      "detail" : "Expected defaults: A/D horizontal, W levitation, S down/eat, left mouse uses selected item, right mouse throws, F kick, E interact, Tab inventory, number keys 1–8 equipment, Escape pause. These expected defaults alone are not proof of installed remaps.",
+      "id" : "requested-defaults",
+      "source" : "Owner's Noita KB/M specification"
+    }
+  ],
+  "gestures" : [
+
+  ],
+  "id" : "noita-cursor-v4",
+  "identity" : {
+    "bindingDigest" : "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "build" : "unreported",
+    "edition" : "installed",
+    "executable" : "program files (x86)/steam/steamapps/common/noita",
+    "storeID" : "steam:881100"
+  },
+  "inputMode" : "keyboardMouse",
+  "lookMode" : "relativeMouse",
+  "pad" : {
+    "aimRect" : {
+      "height" : 0.88,
+      "width" : 0.58,
+      "x" : 0.42,
+      "y" : 0.12
+    },
+    "controls" : [
+      {
+        "action" : "move-left",
+        "hitRadius" : 0.12,
+        "id" : "move",
+        "labelPlacement" : "inside",
+        "opacity" : 0.75,
+        "radius" : 0.12,
+        "role" : "move",
+        "x" : 0.17,
+        "y" : 0.76
+      },
+      {
+        "action" : "inventory",
+        "hitRadius" : 0.042,
+        "id" : "inventory",
+        "labelPlacement" : "inside",
+        "opacity" : 0.75,
+        "radius" : 0.042,
+        "role" : "button",
+        "x" : 0.04,
+        "y" : 0.08
+      },
+      {
+        "action" : "pause",
+        "hitRadius" : 0.042,
+        "id" : "pause",
+        "labelPlacement" : "inside",
+        "opacity" : 0.75,
+        "radius" : 0.042,
+        "role" : "button",
+        "x" : 0.96,
+        "y" : 0.08
+      },
+      {
+        "action" : "use-selected",
+        "hitRadius" : 0.085,
+        "id" : "fire",
+        "labelPlacement" : "inside",
+        "opacity" : 0.75,
+        "radius" : 0.085,
+        "role" : "fireAim",
+        "x" : 0.91,
+        "y" : 0.74
+      },
+      {
+        "action" : "kick",
+        "hitRadius" : 0.065,
+        "id" : "kick",
+        "labelPlacement" : "inside",
+        "opacity" : 0.75,
+        "radius" : 0.065,
+        "role" : "button",
+        "x" : 0.83,
+        "y" : 0.47
+      },
+      {
+        "action" : "interact",
+        "hitRadius" : 0.067,
+        "id" : "interact",
+        "labelPlacement" : "inside",
+        "opacity" : 0.75,
+        "radius" : 0.067,
+        "role" : "button",
+        "x" : 0.95,
+        "y" : 0.4
+      },
+      {
+        "action" : "slot-1",
+        "hitRadius" : 0.068,
+        "id" : "equipment",
+        "labelPlacement" : "inside",
+        "opacity" : 0.75,
+        "radius" : 0.068,
+        "role" : "radial",
+        "x" : 0.79,
+        "y" : 0.9
+      }
+    ],
+    "movementRect" : {
+      "height" : 0.75,
+      "width" : 0.42,
+      "x" : 0,
+      "y" : 0.25
+    }
+  },
+  "phone" : {
+    "aimRect" : {
+      "height" : 0.88,
+      "width" : 0.58,
+      "x" : 0.42,
+      "y" : 0.12
+    },
+    "controls" : [
+      {
+        "action" : "move-left",
+        "hitRadius" : 0.145,
+        "id" : "move",
+        "labelPlacement" : "inside",
+        "opacity" : 0.75,
+        "radius" : 0.145,
+        "role" : "move",
+        "x" : 0.17,
+        "y" : 0.76
+      },
+      {
+        "action" : "inventory",
+        "hitRadius" : 0.042,
+        "id" : "inventory",
+        "labelPlacement" : "inside",
+        "opacity" : 0.75,
+        "radius" : 0.042,
+        "role" : "button",
+        "x" : 0.04,
+        "y" : 0.08
+      },
+      {
+        "action" : "pause",
+        "hitRadius" : 0.042,
+        "id" : "pause",
+        "labelPlacement" : "inside",
+        "opacity" : 0.75,
+        "radius" : 0.042,
+        "role" : "button",
+        "x" : 0.96,
+        "y" : 0.08
+      },
+      {
+        "action" : "use-selected",
+        "hitRadius" : 0.105,
+        "id" : "fire",
+        "labelPlacement" : "inside",
+        "opacity" : 0.75,
+        "radius" : 0.105,
+        "role" : "fireAim",
+        "x" : 0.9,
+        "y" : 0.74
+      },
+      {
+        "action" : "kick",
+        "hitRadius" : 0.065,
+        "id" : "kick",
+        "labelPlacement" : "inside",
+        "opacity" : 0.75,
+        "radius" : 0.065,
+        "role" : "button",
+        "x" : 0.83,
+        "y" : 0.47
+      },
+      {
+        "action" : "interact",
+        "hitRadius" : 0.067,
+        "id" : "interact",
+        "labelPlacement" : "inside",
+        "opacity" : 0.75,
+        "radius" : 0.067,
+        "role" : "button",
+        "x" : 0.95,
+        "y" : 0.4
+      },
+      {
+        "action" : "slot-1",
+        "hitRadius" : 0.068,
+        "id" : "equipment",
+        "labelPlacement" : "inside",
+        "opacity" : 0.75,
+        "radius" : 0.068,
+        "role" : "radial",
+        "x" : 0.73,
+        "y" : 0.9
+      }
+    ],
+    "movementRect" : {
+      "height" : 0.75,
+      "width" : 0.42,
+      "x" : 0,
+      "y" : 0.25
+    }
+  },
+  "radial" : [
+    "slot-1",
+    "slot-2",
+    "slot-3",
+    "slot-4",
+    "slot-5",
+    "slot-6",
+    "slot-7",
+    "slot-8"
+  ],
+  "title" : "Noita",
+  "unresolved" : [
+    "Installed binding file and Noita controller-detection setting need verification.",
+    "Actual Noita cursor, scrolling-camera and inventory drag behavior require an on-device test."
+  ],
+  "version" : 4
+}
