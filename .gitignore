@@ -254,3 +254,5 @@ build/opengl-dependencies/
 build/mesa-ios/obj/
 app/Madeira/arm64ec-windows/bcd-opengl-smoke-*.exe
 app/Madeira/i386-windows/bcd-opengl-smoke-*.exe
+
+app/Madeira/gl-info/

@@ -347,7 +347,8 @@ static BOOL present_slot(MadeiraGLPresenter *p, GLSlot *s, void *hwnd) {
     [enc endEncoding];
     [drawable addPresentedHandler:^(id<MTLDrawable> shown) {
         if (shown.presentedTime <= 0) return; // iOS can drop a submitted drawable.
-        atomic_fetch_add_explicit(&gl_present_count, 1, memory_order_relaxed);
+        if (atomic_fetch_add_explicit(&gl_present_count, 1, memory_order_relaxed) == 0)
+            GLLOG("first actual OpenGL present hwnd=%p time=%.6f", hwnd, shown.presentedTime);
         atomic_store(&gl_last_present_time, CACurrentMediaTime());
         bcd_frame_ring_push();
     }];

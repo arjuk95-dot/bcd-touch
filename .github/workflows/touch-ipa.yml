@@ -1043,6 +1043,8 @@ jobs:
         path: .
         run-id: ${{ inputs.gl_dependency_run }}
         github-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Validate dependency source pins and hashes; stage GL metadata
+      run: python3 tools/opengl/stage-app.py
     - name: Verify staged GL dependency architecture and load commands
       run: python3 tools/opengl/inspect-dependencies.py
     - name: Generate complete config catalog against the pinned engine sources

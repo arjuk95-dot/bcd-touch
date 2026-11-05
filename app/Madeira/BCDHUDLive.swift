@@ -292,7 +292,10 @@ final class BCDHUDState: ObservableObject {
             d.cpuTotal = cpu?.total
             d.cpuTop = cpu?.top
         }
-        if gpuOn { sampleGPU(now: now); d.gpuPercent = gpuPercent; d.gpuMs = gpuFrameMs }
+        if gpuOn {
+            sampleGPU(now: now); d.gpuPercent = gpuPercent
+            d.gpuMs = madeira_gl_last_present_time() > now - 2 ? nil : gpuFrameMs
+        }
         if needs.contains(.gpuMemory) {
             if metal == nil { metal = MTLCreateSystemDefaultDevice() }
             if let metal {

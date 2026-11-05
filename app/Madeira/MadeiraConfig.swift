@@ -17,7 +17,7 @@ enum MadeiraConfig {
     /// Describes the built capability and current setting; a bundled library
     /// does not prove successful context creation or hardware rendering.
     static var desktopGLAdvice: String {
-        let gl = Bundle.main.bundleURL.appendingPathComponent("gl")
+        let gl = Bundle.main.bundleURL.appendingPathComponent("Frameworks")
         let have = ["libOSMesa.dylib", "libMoltenVK.dylib"].allSatisfy {
             FileManager.default.fileExists(atPath: gl.appendingPathComponent($0).path)
         }

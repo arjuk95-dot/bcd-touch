@@ -19,7 +19,7 @@ No donor binaries, LuaJIT substitutions, memory reservations, short-map fallback
 
 All three opengl32 PE DLLs (ARM64EC, ARM64, i386) and native dispatch tables build from the same patched BCD Wine source. Generated WoW64 thunks distinguish guest pointers, handles and bound-buffer offsets. Explicit `mov xN,x18` TEB reads use BCD's existing safe TLS rewrite, avoiding donor stack-saving trampolines that conflict with BCD's ARM64EC SP-alignment fix.
 
-Native opengl32 objects are in libntdll_unix.a. Win32u registers winios_OpenGLInit from opengl_ios.c. Desktop GL loads bundled OSMesa/Zink → MoltenVK → Metal. This does not enable Windows Vulkan games. Actual renderer strings reject software fallback; donor GL4.1/GLSL410 version inflation and implicit GLES fallback are removed.
+Native opengl32 objects are in libntdll_unix.a. Win32u registers winios_OpenGLInit from opengl_ios.c. Native libraries are embedded and signed under Frameworks; provenance is bundled under gl-info. Desktop GL loads bundled OSMesa/Zink → MoltenVK → Metal. This does not enable Windows Vulkan games. Actual renderer strings reject software fallback; donor GL4.1/GLSL410 version inflation and implicit GLES fallback are removed.
 
 WiniosGL.m shares BCD's existing fullscreen/per-window CAMetalLayer. Three BGRA IOSurfaces use explicit CPU locks, GL finish and Metal completion waits before reuse/resize/destruction. Bottom-up orientation is handled by the presentation shader. Background gating waits at GL presentation/context boundaries; physical interruption tests are still required.
 
@@ -36,3 +36,5 @@ Update existing BCD with the same SideStore account; do not uninstall/deactivate
 Host policy checks cover disable/software rejection/frame caps. Windows smoke programs, compiled for x86 and x64, exercise GL3 context/share/make-current/delete, missing procedure, textured shader scene, FBO/readback, repeated presents, resize, intervals and cleanup. `--disabled` expects context failure. Compilation does not mean hardware execution.
 
 Pending physical gates: installed Noita PE architecture and actual settings; hardware smoke; Noita playable mines/effects/cursor/movement/flight/casting/inventory/transitions/save/relaunch; logs/capture/FPS/frame time/memory/thermal; background/orientation; matched Dread Delusion and another available Direct3D path; GL Off comparison and launcher/touch regression.
+
+Repository transfer verified: https://github.com/arjuk95-dot/bcd-touch (same repository ID 1441826178 and all original branches).

@@ -8,6 +8,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E1710012A = {isa = PBXBuildFile; fileRef = E1710012B; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		E1710011A = {isa = PBXBuildFile; fileRef = E1710011B; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		E1710004A /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E1710004B /* IOSurface.framework */; };
 		E1710003A /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E1710003B /* OpenGLES.framework */; };
 		E1710002A /* gl in Resources */ = {isa = PBXBuildFile; fileRef = E1710002B /* gl */; };
@@ -390,6 +392,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+        E1710010 = {isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = ""; dstSubfolderSpec = 10;
+            files = (E1710011A, E1710012A, ); name = "Embed OpenGL Libraries"; runOnlyForDeploymentPostprocessing = 0; };
 		B3000002 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -425,9 +429,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		E1710012B = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = "gl/libMoltenVK.dylib"; sourceTree = "<group>"; };
+		E1710011B = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = "gl/libOSMesa.dylib"; sourceTree = "<group>"; };
 		E1710004B /* IOSurface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = "System/Library/Frameworks/IOSurface.framework"; sourceTree = SDKROOT; };
 		E1710003B /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = "System/Library/Frameworks/OpenGLES.framework"; sourceTree = SDKROOT; };
-		E1710002B /* gl */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "gl"; sourceTree = "<group>"; };
+		E1710002B /* gl */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "gl-info"; sourceTree = "<group>"; };
 		E1710001B /* WiniosGL.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "Winios/WiniosGL.m"; sourceTree = "<group>"; };
         BCD000000000000000000B08 /* BCDCursorPackSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDCursorPackSettings.swift; sourceTree = "<group>"; };
         BCD000000000000000000B07 /* BCDNoitaPack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDNoitaPack.swift; sourceTree = "<group>"; };
@@ -1241,6 +1247,8 @@
 				E1710004B /* IOSurface.framework */,
 				E1710003B /* OpenGLES.framework */,
 				E1710002B /* gl */,
+				E1710012B,
+				E1710011B,
 				E1710001B /* WiniosGL.m */,
 				A2000056 /* IOSDisplayShim.h */,
 				A2000070 /* Winios/Winios.m */,
@@ -1361,6 +1369,7 @@
 				A30000E2 /* Bundle Wine Mono */,
 				B3000003 /* Embed JIT Helper */,
 				B3000007 /* Embed StikJIT */,
+				E1710010 /* Embed OpenGL Libraries */,
 				A30000D1 /* Sign bundled dylibs */,
 				36C67A194E1AE021D3C5121B /* Embed Foundation Extensions */,
 			);

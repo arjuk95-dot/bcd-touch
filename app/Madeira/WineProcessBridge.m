@@ -2028,7 +2028,7 @@ static void *wine_process_thread(void *arg) {
                     if (override && *override) strlcpy(backend, override, sizeof backend);
                     BOOL enabled = !strcmp(backend, "zink");
                     if (getenv("MADEIRA_NO_GL") && strcmp(getenv("MADEIRA_NO_GL"), "0")) enabled = NO;
-                    NSString *gl = [[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent:@"gl"];
+                    NSString *gl = [[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent:@"Frameworks"];
                     BOOL bundled = [[NSFileManager defaultManager] fileExistsAtPath:[gl stringByAppendingPathComponent:@"libOSMesa.dylib"]] &&
                                    [[NSFileManager defaultManager] fileExistsAtPath:[gl stringByAppendingPathComponent:@"libMoltenVK.dylib"]];
                     setenv("MADEIRA_GL_DIR", gl.fileSystemRepresentation, 1);

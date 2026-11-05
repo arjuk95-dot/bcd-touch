@@ -788,15 +788,6 @@ static BOOL zink_init(void)
     setenv( "ZINK_VULKAN_LIBRARY", path, 1 );
     setenv( "GALLIUM_DRIVER", "zink", 1 );
     setenv( "MVK_CONFIG_LOG_LEVEL", "1", 0 );   /* MoltenVK: errors only */
-    /* Metal has no geometry shaders, so Zink on MoltenVK honestly reports at
-     * most OpenGL 3.1 -- 3.2 core requires them -- and every 3.3 core request
-     * fails. Advertise 4.1 (what macOS ships, what GL games target on Apple)
-     * with GLSL 4.10, the same trade PojavLauncher makes on iOS: games that
-     * never use geometry shaders run; one that does gets a shader or pipeline
-     * error instead of no context at all. The override keeps each context's
-     * profile ("X.Y" without FC/COMPAT). overwrite=0: madeira.cfg env.* lines
-     * or the environment can set other values. Read once, at the first
-     * context, so it has to be set here. */
     /* BCD never claims geometry shader support via a version override. */
 
     snprintf( path, sizeof(path), "%s/libOSMesa.dylib", dir );
