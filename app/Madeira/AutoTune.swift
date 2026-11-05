@@ -427,7 +427,10 @@ struct AutoTuneOffer: Equatable {
                 }
                 text += c.isEmpty ? "The next start runs the same settings once more: a first failure after an update often clears on its own."
                                  : "The next start tries: " + c.joined(separator: "; ") + "."
-                if let reason { text += " " + reason }
+                if let reason {
+                    text += " " + reason
+                    if reason.contains("OpenGL") { text += " " + MadeiraConfig.desktopGLAdvice }
+                }
                 text += " Restart BCD and play again."
             }
         }

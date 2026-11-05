@@ -15,3 +15,4 @@ make -C "$B" -j"$(sysctl -n hw.ncpu)" dlls/opengl32/aarch64-windows/opengl32.dll
 "$TC/aarch64-w64-mingw32-strip" --strip-debug "$B/dlls/opengl32/aarch64-windows/opengl32.dll"
 cp "$B/dlls/opengl32/aarch64-windows/opengl32.dll" app/Madeira/aarch64-windows/opengl32.dll
 python3 tools/opengl/verify-runtime.py --built
+bash tools/opengl/build-smoke.sh

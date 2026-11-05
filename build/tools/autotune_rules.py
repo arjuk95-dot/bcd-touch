@@ -4257,7 +4257,7 @@ RULES = [
         # HotlineGL.exe+0x590aa4): exit c0000005 after 0 s of play. Without this rule the app's verdict was mono-child-tls-null (the launcher is
         # a 32-bit Wine Mono program and HotlineGL.exe a second 32-bit window with a NULL-page fault), a retry that cannot help.
         "all": [s("[unixlib] opengl32 (GL-absent stub table)"), s("[guest-log]", "glMapBufferRange not supported")],
-        "reason": "This is the OpenGL version of a GameMaker Studio game, and BCD has no OpenGL yet. If the game's launcher offers a "
+        "reason": "This is the OpenGL version of a GameMaker Studio game, and its selected OpenGL backend failed. If the game's launcher offers a "
                   "Direct3D version (Hotline Miami's launcher: \"Original\"), choose that one.",
         "evidence": ["hotline-miami-gog-hotlinegl-opengl-2026-10-29 (Send Logs ACQX6S = 87GYEH, build 623)", "docs/OPENGL.md"],
     },
@@ -4357,7 +4357,7 @@ RULES = [
         # Dash, Noita, Stardew Valley, LEGO Builder's Journey, Cry of Fear, gmod patch tool). Only from the last launch on: in KJTS7S (build
         # 614) Ultimate Chicken Horse drew with Direct3D 11 and then The Binding of Isaac, in the same app run, found no OpenGL.
         "none": [s("[present] ml1175", since_launch=True)],
-        "reason": "This game draws with OpenGL, and BCD has no OpenGL yet: the game cannot make its window and stops. This is not a setting; "
+        "reason": "This game draws with OpenGL, and the selected OpenGL backend could not create its window/context; "
                   "Direct3D games are not affected.",
         "evidence": ["gp-bikes-opengl-2026-10-23 (Send Log CCKWDR, build 592)", "gravity-circuit-love-opengl-2026-10-23 (Send Log HESXRX, build 592)",
                      "geometry-dash-opengl-2026-10-23 (Send Log 1H4EFS, build 592)", "cry-of-fear-opengl-2026-10-23 (Send Log RT4TB5, build 592)",
@@ -4391,8 +4391,8 @@ RULES = [
         # replaced: a 4.3+ game whose Direct3D 12 start failed for a reason a line can fix is not taken for this one.
         "all": [s("[win-name] #", "Unable to initialize Vulkan video driver"), s("VulkanContext::", "vulkan_context.cpp"),
                 s("[unixlib] opengl32 (GL-absent stub table)")],
-        "reason": "This game's engine (Godot 4.0 to 4.2) draws only with Vulkan or OpenGL, and BCD has neither yet: the game cannot start "
-                  "its renderer. This is not a setting; games made with Godot 4.3 or later can use Direct3D 12.",
+        "reason": "This game's engine (Godot 4.0 to 4.2) draws only with Vulkan or OpenGL, and Windows Vulkan is unsupported and its selected OpenGL backend failed to start "
+                  "its renderer; games made with Godot 4.3 or later can use Direct3D 12.",
         "evidence": ["buckshot-roulette-godot-vulkan-2026-10-20 (Send Log T9R22Z, build 574)", "docs/OPENGL.md"],
     },
     {
@@ -5929,7 +5929,7 @@ RULES = [
         "all": [s("wined3d_adapter_gl_init Failed to get a GL context")],
         "any": [s("[win-name] #", "3D graphics hardware"), s("Can't create D3DX context", "[win-name] #"),
                 s("Can't create D3DX context", "[msgbox-origin] box")],
-        "reason": "This game draws with Direct3D 7, which needs OpenGL in Wine, and BCD has no OpenGL yet; no setting changes it.",
+        "reason": "This game draws with Direct3D 7, which needs OpenGL in Wine, and its selected OpenGL backend failed to initialize.",
         "evidence": ["porsche-unleashed-d3d7-2026-10-28 (Send Log R6ZKTW, build 622)", "ZQNYQR (build 622)",
                      "gothic-2-d3d7-d3dx-context-2026-11-01 (Send Log A6WWNQ, build 625)"],
     },
@@ -6746,7 +6746,7 @@ RULES = [
         # and then met the Direct3D 7 / OpenGL stop (d3d7-needs-opengl-box). Behind both stops the game needs Direct3D 7.
         "all": [s("You have DirectX 0. Please install DirectX 7.", "set3d.c")],
         "reason": "The game could not pick a 3D driver (its start-up says \"You have DirectX 0\"), and behind that it draws with Direct3D 7, "
-                  "which needs OpenGL in Wine; BCD has no OpenGL yet. No setting changes it.",
+                  "which needs OpenGL in Wine; its selected OpenGL backend failed to initialize.",
         "evidence": ["porsche-unleashed-set3d-2026-10-31 (Send Log 6QXWP8 = EZ4B8W, build 625; KY9RX0 = 5VSPEM, build 626)"],
     },
     {
@@ -6926,7 +6926,7 @@ RULES = [
         # GLFW30: the game draws with OpenGL or Vulkan only), then the game's own fatal dialog, TaskDialogIndirect, which the 64-bit
         # comctl32.dll lacks ("to unimplemented function COMCTL32.dll.345"); the process stays alive and idle.
         "all": [s("class='GLFW30'", "[win-name]"), s("to unimplemented function COMCTL32.dll.345")],
-        "reason": "This game draws with OpenGL or Vulkan only, and BCD has neither yet (docs/OPENGL.md); no setting changes that.",
+        "reason": "This game draws with OpenGL or Vulkan only, and Windows Vulkan is unsupported. The optional desktop OpenGL backend must satisfy its requirements (OPENGL-PORT.md).",
         "evidence": ["nms-needs-opengl-or-vulkan-2026-11-02 (Send Log FE2GHX, build 626)", "docs/OPENGL.md"],
     },
     {

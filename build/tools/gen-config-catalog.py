@@ -1451,11 +1451,11 @@ OVERLAY = {
     "env.MADEIRA_D3D9_X64": {"category": "Direct3D 9/10/11 (DXMT)", "title": "Direct3D 9 for 64-bit games",
                 "kind": "choice", "default": "",
                 "choices": [("", "Automatic (DXMT when the game's folder shows a 64-bit Direct3D 9 program and no Direct3D 11, DXGI or 12)"),
-                            ("dxmt", "DXMT's Direct3D 9 (Metal)"), ("wined3d", "Wine's (needs OpenGL, which BCD lacks)")],
+                            ("dxmt", "DXMT's Direct3D 9 (Metal)"), ("wined3d", "Wine's (needs optional desktop OpenGL)")],
                 "sources": ["app/Madeira/WineProcessBridge.m", "tools/build-d3d9-x64-dll.sh", "app/Madeira/BCDGraphicsDefaults.swift"],
                 "note": "dxmt: a 64-bit game's d3d9.dll is d3d9-dxmt.dll, DXMT's Direct3D 9 frontend compiled for ARM64EC (the frontend the "
                         "32-bit games already use) instead of Wine's, which draws through wined3d's OpenGL backend: BCD has no "
-                        "OpenGL, so Direct3DCreate9 fails (\"wined3d_adapter_gl_init Failed to get a GL context\", \"d3d9_init FAILED\") "
+                        "OpenGL is off by default, so without a usable GL backend Direct3DCreate9 fails (\"wined3d_adapter_gl_init Failed to get a GL context\", \"d3d9_init FAILED\") "
                         "and the game blames its resolution (Darksiders II Deathinitive Edition, PICO PARK). Unset (default, build 602): "
                         "BCD looks at the game's folder and uses DXMT's only when a 64-bit program there shows Direct3D 9 and nothing in "
                         "the folder shows Direct3D 11, DXGI or Direct3D 12 (Cult of the Lamb, Graveyard Keeper, Moonlighter, Counter-Strike 2 "
@@ -1466,11 +1466,11 @@ OVERLAY = {
     # madeira-bcd (round 602): crosire's d3d8to9 as a 32-bit game's d3d8.dll (tools/build-d3d8to9-dll.sh, BCDGraphicsRoutes.c).
     "env.MADEIRA_D3D8": {"category": "Direct3D 9/10/11 (DXMT)", "title": "Direct3D 8 for 32-bit games",
                 "kind": "choice", "default": "",
-                "choices": [("", "Wine's (default; needs OpenGL, which BCD lacks)"), ("d3d9", "d3d8to9: Direct3D 8 on Direct3D 9 (DXMT, Metal)")],
+                "choices": [("", "Wine's (default; needs optional desktop OpenGL)"), ("d3d9", "d3d8to9: Direct3D 8 on Direct3D 9 (DXMT, Metal)")],
                 "sources": ["app/Madeira/BCDGraphicsRoutes.c", "tools/build-d3d8to9-dll.sh"],
                 "note": "d3d9: a 32-bit game's d3d8.dll is d3d8to9.dll (crosire's d3d8to9, BSD-2-Clause), which implements Direct3D 8 on "
                         "Direct3D 9; in a 32-bit session Direct3D 9 is DXMT's, so the game draws through Metal. Wine's d3d8.dll draws "
-                        "through wined3d's OpenGL backend: BCD has no OpenGL, so Direct3DCreate8 returns nothing (\"wined3d_adapter_gl_init "
+                        "through wined3d's OpenGL backend: when desktop OpenGL is off, Direct3DCreate8 returns nothing (\"wined3d_adapter_gl_init "
                         "Failed to get a GL context\") and the game stops (GTA III, POSTAL 2, Hotline Miami, Max Payne 2). Unset (default): "
                         "Wine's d3d8.dll, as before. Set it in the game's own file, not for every game; read at session start. A 64-bit "
                         "game is not affected. The log shows the [WineProc] link line; auto-tune adds the line after the OpenGL failure of "

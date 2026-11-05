@@ -14,6 +14,20 @@ import Foundation
 /// ml1095 one file per switch, madeira-<key>.txt) until BCD took its own name
 /// (2026-10-18). Every device installs BCD fresh, so neither old name is read.
 enum MadeiraConfig {
+    /// Describes the built capability and current setting; a bundled library
+    /// does not prove successful context creation or hardware rendering.
+    static var desktopGLAdvice: String {
+        let gl = Bundle.main.bundleURL.appendingPathComponent("gl")
+        let have = ["libOSMesa.dylib", "libMoltenVK.dylib"].allSatisfy {
+            FileManager.default.fileExists(atPath: gl.appendingPathComponent($0).path)
+        }
+        if !have { return "This build lacks the desktop OpenGL libraries. Install a BCD build containing them." }
+        let backend = gameValue("gl-backend") ?? get("gl-backend") ?? "off"
+        if backend != "zink" {
+            return "Desktop OpenGL is off. Select Desktop OpenGL (Zink) in this game's Display settings, then fully restart BCD."
+        }
+        return "Desktop OpenGL (Zink) is selected. Export the [winios-gl] diagnostics to check context creation and the actual renderer."
+    }
     static let fileName = "bcd.cfg"
 
     static var documents: URL? {

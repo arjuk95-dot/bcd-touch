@@ -346,6 +346,7 @@ static BOOL present_slot(MadeiraGLPresenter *p, GLSlot *s, void *hwnd) {
     [enc drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3];
     [enc endEncoding];
     [drawable addPresentedHandler:^(id<MTLDrawable> shown) {
+        if (shown.presentedTime <= 0) return; // iOS can drop a submitted drawable.
         atomic_fetch_add_explicit(&gl_present_count, 1, memory_order_relaxed);
         atomic_store(&gl_last_present_time, CACurrentMediaTime());
         bcd_frame_ring_push();
@@ -457,7 +458,11 @@ static BOOL zink_slots_create(MadeiraGLPresenter *p, int w, int h) {
 static void *zink_slot_lock(GLSlot *s, int *row_pixels) {
     if (s->last) [s->last waitUntilCompleted];   // Metal may still be reading it
     if (!s->locked) {
-        IOSurfaceLock(s->surface, 0, NULL);
+        IOReturn result = IOSurfaceLock(s->surface, 0, NULL);
+        if (result != kIOReturnSuccess) {
+            GLLOG("IOSurfaceLock failed: %#x", result);
+            return NULL;
+        }
         s->locked = YES;
     }
     *row_pixels = (int)(IOSurfaceGetBytesPerRow(s->surface) / 4);

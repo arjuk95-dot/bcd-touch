@@ -253,7 +253,7 @@ enum BCDPreviewSessionSamples {
     /// (BCDSessionLive.swift) and DesktopExitRules (Library.swift), both in engine-bound files the preview does not build.
     static let desktopHint = "The Windows desktop starts empty. To play a game, add it to the library or sign in to Steam. To run a program yourself: "
         + "Start, Run, Browse, then pick its .exe (your files are on the drive named C:)."
-    static let desktopOpenGLWords = "GeometryDash.exe needs OpenGL, which BCD does not have yet, so it closes. This is not a setting."
+    static let desktopOpenGLWords = "GeometryDash.exe could not create its OpenGL context. Check this game's Desktop OpenGL setting and export the [winios-gl] diagnostics; fully restart BCD after changing backend."
     static let desktopPoolWords = "The Windows desktop is out of room for programs: what runs on it now is too big for this device. "
         + "Close a program, or start the game from BCD's library."
 

@@ -312,7 +312,7 @@ let gd = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Geometry Dash\\Geom
         // ---- the OpenGL notice: VDFZHN, and what must not get it
         let v = end(gd, 1, lived: 2.1, gl: true)
         require(D.needsOpenGL(v), "VDFZHN: Geometry Dash asked for OpenGL and ended with 1 after 2.1 s: the notice")
-        require(D.openGLWords(v.fileName) == "GeometryDash.exe needs OpenGL, which BCD does not have yet, so it closes. This is not a setting.",
+        require(D.openGLWords(v.fileName) == "GeometryDash.exe could not create its OpenGL context. Check this game's Desktop OpenGL setting and export the [winios-gl] diagnostics; fully restart BCD after changing backend.",
                 "its words")
         require(D.needsOpenGL(end(gd, 0xFF, lived: 59.9, gl: true)) && D.needsOpenGL(end(gd, 0x8007054F, lived: 1, gl: true)),
                 "an error box first (up to 60 s) and another code of its own: the notice")

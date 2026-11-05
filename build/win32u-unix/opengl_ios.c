@@ -593,6 +593,8 @@ static BOOL zink_context_create( int format, void *share, const int *attribs, vo
     const struct ios_format *f = format_from_index( format );
     int major = 0, minor = 0, profile = 0, a[20], n = 0;
 
+    if (!f || !context) return FALSE;
+
     for (; attribs && attribs[0]; attribs += 2)
     {
         switch (attribs[0])

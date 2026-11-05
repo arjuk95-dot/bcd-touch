@@ -27,7 +27,7 @@ check('called once a poll, right after the Dock watcher, while the Wine process 
       src.count('watchNoInputHint()') == 2 and '            watchDockGameEnd()\n            watchNoInputHint()\n' in src)
 check('once per game start (noInputHintFor), after 45 s and 60 presents, not while launching',
       'guard !launching, let id = current, noInputHintFor != id, Date().timeIntervalSince(launchStarted) > 45,' in fn
-      and 'madeira_get_present_count() > launchPresent + 60 else { return }' in fn and 'noInputHintFor = id' in fn)
+      and 'madeira_frame_count() > launchPresent + 60 else { return }' in fn and 'noInputHintFor = id' in fn)
 check('only with no pad, no keyboard, no mouse and no touch control',
       'guard pads == 0, !keyboard, mice == 0, touch.controls.isEmpty else { return }' in fn
       and 'GCController.controllers().count' in fn and 'GCKeyboard.coalesced != nil' in fn and 'GCMouse.mice().count' in fn)

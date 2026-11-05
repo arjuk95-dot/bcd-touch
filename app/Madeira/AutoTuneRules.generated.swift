@@ -7958,7 +7958,7 @@ enum AutoTuneBuiltInRules {
   "lines": [],
   "noFix": true,
   "priority": 1,
-  "reason": "This is the OpenGL version of a GameMaker Studio game, and BCD has no OpenGL yet. If the game's launcher offers a Direct3D version (Hotline Miami's launcher: \"Original\"), choose that one."
+  "reason": "This is the OpenGL version of a GameMaker Studio game, and its selected OpenGL backend failed. If the game's launcher offers a Direct3D version (Hotline Miami's launcher: \"Original\"), choose that one."
  },
  {
   "all": [
@@ -8174,7 +8174,7 @@ enum AutoTuneBuiltInRules {
    }
   ],
   "priority": 2,
-  "reason": "This game draws with OpenGL, and BCD has no OpenGL yet: the game cannot make its window and stops. This is not a setting; Direct3D games are not affected."
+  "reason": "This game draws with OpenGL, and the selected OpenGL backend could not create its window/context; Direct3D games are not affected."
  },
  {
   "all": [
@@ -8204,7 +8204,7 @@ enum AutoTuneBuiltInRules {
   "lines": [],
   "noFix": true,
   "priority": 2,
-  "reason": "This game's engine (Godot 4.0 to 4.2) draws only with Vulkan or OpenGL, and BCD has neither yet: the game cannot start its renderer. This is not a setting; games made with Godot 4.3 or later can use Direct3D 12."
+  "reason": "This game's engine (Godot 4.0 to 4.2) draws only with Vulkan or OpenGL, and Windows Vulkan is unsupported and its selected OpenGL backend failed to start its renderer; games made with Godot 4.3 or later can use Direct3D 12."
  },
  {
   "all": [
@@ -11505,7 +11505,7 @@ enum AutoTuneBuiltInRules {
   "lines": [],
   "noFix": true,
   "priority": 3,
-  "reason": "This game draws with Direct3D 7, which needs OpenGL in Wine, and BCD has no OpenGL yet; no setting changes it."
+  "reason": "This game draws with Direct3D 7, which needs OpenGL in Wine, and its selected OpenGL backend failed to initialize."
  },
  {
   "all": [
@@ -13069,7 +13069,7 @@ enum AutoTuneBuiltInRules {
   "lines": [],
   "noFix": true,
   "priority": 3,
-  "reason": "The game could not pick a 3D driver (its start-up says \"You have DirectX 0\"), and behind that it draws with Direct3D 7, which needs OpenGL in Wine; BCD has no OpenGL yet. No setting changes it."
+  "reason": "The game could not pick a 3D driver (its start-up says \"You have DirectX 0\"), and behind that it draws with Direct3D 7, which needs OpenGL in Wine; its selected OpenGL backend failed to initialize."
  },
  {
   "all": [
@@ -13453,7 +13453,7 @@ enum AutoTuneBuiltInRules {
   "lines": [],
   "noFix": true,
   "priority": 40,
-  "reason": "This game draws with OpenGL or Vulkan only, and BCD has neither yet (docs/OPENGL.md); no setting changes that."
+  "reason": "This game draws with OpenGL or Vulkan only, and Windows Vulkan is unsupported. The optional desktop OpenGL backend must satisfy its requirements (OPENGL-PORT.md)."
  },
  {
   "all": [

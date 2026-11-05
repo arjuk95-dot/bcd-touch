@@ -775,7 +775,7 @@ require('if DockGameEndRules.isCrash(status) {' in watch
         'a crash status ends the session as before; any other status (after Close) through the quit call, off the main queue')
 require('(the player had asked to close)' in watch, 'the [dock-game-end] line says the player had asked')
 # round 625 (N-S18): a short clean exit before any frame
-require('let rendered = !MadeiraConfig.flag("MADEIRA_DOCK_SHORT_EXIT_END") || madeira_get_present_count() >= launchPresent + 3' in watch
+require('let rendered = !MadeiraConfig.flag("MADEIRA_DOCK_SHORT_EXIT_END") || madeira_frame_count() >= launchPresent + 3' in watch
         and 'anyStatus: asked, rendered: rendered)' in watch,
         'the watch passes whether frames reached the screen (the starting screen\'s own test); the key off passes rendered = true')
 short_branch = watch[watch.index('if !asked && !DockGameEndRules.isCrash(status) {'):]
