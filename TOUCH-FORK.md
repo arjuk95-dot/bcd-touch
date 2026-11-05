@@ -1,5 +1,7 @@
 # WO-BCD-TOUCH-001 test fork
 
+**0.1.630 upgrade in progress:** branch `wo-bcd-touch-001-v630` merges upstream `53e7e8c73b62633b1d94c75b451fcc775928378f` while retaining the controls and saved-format code. The phone remains on the verified b78e960 build while the new branch is tested. [Upgrade notes](UPSTREAM-UPDATE.md).
+
 Base: BCD **v0.1.626**, `adc9cc742f52601a42f52ac6b4fbcc701bdb16ad`. The earlier local v0.1.623 checkout was clean and had no touch branch. Work continued in a separate checkout and the branch `wo-bcd-touch-001` at https://github.com/arjunkl/bcd-touch.
 
 **Installed 5 November:** USB verifies app source `b78e960`; the owner Tenebris preset and per-game launch selection are read back, with prior packs/edits preserved. The worker is resumed and the phone endpoint corrected for the hotspot. Physical behavior confirmation is pending. [Device receipt](receipts/touch/tenebris-installed-20261105/summary.json).

@@ -1,0 +1,66 @@
+{
+  "previousBase": "adc9cc742f52601a42f52ac6b4fbcc701bdb16ad",
+  "upstreamTag": "v0.1.630",
+  "upstreamCommit": "53e7e8c73b62633b1d94c75b451fcc775928378f",
+  "previousFork": "3a89fec",
+  "branch": "wo-bcd-touch-001-v630",
+  "releaseURL": "https://github.com/thebcd69/bcd-games/releases/tag/v0.1.630",
+  "runtimeIPA_SHA256": "21e3fbfdc4c4221a4295d35d28348e826226ff3f727a18f110d3617d371f83d2",
+  "sourcePreservation": [
+    {
+      "file": "app/Madeira/BCDMouseJoystick.swift",
+      "normalizedSHA256": "e89a0ec28c3e4c3c0769b61b5181d4ab6e1139281d5135b0e1324f31a5b81564",
+      "unchanged": true
+    },
+    {
+      "file": "app/Madeira/BCDControlPack.swift",
+      "normalizedSHA256": "90162c906c5f6e6c848f836a3bd238d85e38317c003c975b592fc94a6cbdd166",
+      "unchanged": true
+    },
+    {
+      "file": "app/Madeira/BCDControlPackAuthoring.swift",
+      "normalizedSHA256": "f3a788af9531ce08c2b92dd6a16d53da7348dcb82ff01f45908a8fe9066bb424",
+      "unchanged": true
+    },
+    {
+      "file": "app/Madeira/BCDControlPackLive.swift",
+      "normalizedSHA256": "46ef6fb397bf7252a214ac91942d196926b60b2efd3ee61388e10e4c8e439e9e",
+      "unchanged": true
+    },
+    {
+      "file": "app/Madeira/BCDControlPackSurface.swift",
+      "normalizedSHA256": "c1bcb59801d339b49fb788f6c21bfea54eca32e1caff45c0096da997b37d959c",
+      "unchanged": true
+    },
+    {
+      "file": "app/Madeira/TouchGamepad.swift",
+      "normalizedSHA256": "d8db4817052bc8fbed23108c6d39f0074c6158328efc426b4afdb86771960f79",
+      "unchanged": true
+    },
+    {
+      "file": "app/Madeira/BCDInputProfile.swift",
+      "normalizedSHA256": "96b6056d762d0488fb1155e1409ee84697ba29ca1345493e75155188f502eabe",
+      "unchanged": true
+    },
+    {
+      "file": "app/Madeira/BCDInputActions.swift",
+      "normalizedSHA256": "374083e613a6fdff1325bc580972788ca6490b7b761a65ce7883e6141eb919d2",
+      "unchanged": true
+    },
+    {
+      "file": "app/Madeira/BCDAimZone.swift",
+      "normalizedSHA256": "4b2e6e4ab2ab2b4cbe65e554f4e61ec31332912f891ab1a0befddd174697e88f",
+      "unchanged": true
+    },
+    {
+      "file": "app/Madeira/BCDTouchExtrasLive.swift",
+      "normalizedSHA256": "d587231fbbea6d18f53fe7c685fcfed0f38f23a39c70498cec2d01c46bf3483c",
+      "unchanged": true
+    }
+  ],
+  "mergeResolution": "GamepadInput.reserveSessionSlot keeps force and updateTimer, adds upstream per-game early-slot flag and diagnostic",
+  "buildRecipe": "20 new upstream build/check steps copied in order, updated Dock host build step; runtime staging pins v0.1.630",
+  "phoneChanged": false,
+  "physicallyTested": false,
+  "status": "SDK, simulator and full archive pending"
+}

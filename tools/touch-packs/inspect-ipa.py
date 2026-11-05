@@ -11,6 +11,7 @@ import zipfile
 p=argparse.ArgumentParser()
 p.add_argument('ipa',type=Path)
 p.add_argument('--expected-commit',required=True)
+p.add_argument('--expected-base',help='Require the packaged base runtime provenance to name this upstream commit')
 p.add_argument('--receipt',type=Path,required=True)
 a=p.parse_args()
 with zipfile.ZipFile(a.ipa) as z:
@@ -41,11 +42,16 @@ with zipfile.ZipFile(a.ipa) as z:
     provenance=json.loads(z.read(root+'d3d12/TOUCH-CONVERTER-PROVENANCE.json'))
     converter_sha=hashlib.sha256(z.read(root+'d3d12/libmetalirconverter.dylib')).hexdigest()
     runtime_provenance=json.loads(z.read(root+'arm64ec-windows/TOUCH-BASE-RUNTIME-PROVENANCE.json'))
+    base_commit=runtime_provenance.get('baseCommit')
+    if base_commit is None and '/v0.1.626/' in runtime_provenance.get('source',''):
+        base_commit='adc9cc742f52601a42f52ac6b4fbcc701bdb16ad'
+    if not base_commit or (a.expected_base and base_commit!=a.expected_base):
+        raise RuntimeError('Missing or unexpected upstream base provenance')
     if any(n.endswith('/TouchPacks/worker.json') or n.endswith('/pairing-token.txt') for n in names):
         raise RuntimeError('Personal worker configuration must not be bundled')
     receipt=dict(kind='IPA metadata inspection; no device execution or signature validation',
         ipa=a.ipa.name,bytes=a.ipa.stat().st_size,
-        base='adc9cc742f52601a42f52ac6b4fbcc701bdb16ad',appSource=info['MadeiraCommit'],
+        base=base_commit,appSource=info['MadeiraCommit'],
         bundleID=info['CFBundleIdentifier'],displayName=info['CFBundleDisplayName'],
         version=info['CFBundleShortVersionString'],build=info['CFBundleVersion'],built=info.get('MadeiraBuilt'),
         callbacks=schemes,architecture='arm64',helpers=nested,notices=licenses,

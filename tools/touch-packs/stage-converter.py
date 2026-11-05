@@ -10,8 +10,9 @@ import urllib.request
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
-URL = 'https://github.com/thebcd69/bcd-games/releases/download/v0.1.626/BCD.ipa'
-IPA_SHA = '0243bac423688aafa659a20c99489f9b107e9463e55120750c1eda5875c441ba'
+BASE = json.loads((Path(__file__).resolve().parent / 'base-release.json').read_text(encoding='utf-8'))
+URL = BASE['ipaURL']
+IPA_SHA = BASE['ipaSHA256']
 LIB_SHA = '073f903be98e973ff38f4d79f2c48d61ef938754a77b1caedda79c9f05a068c2'
 DEST = ROOT / 'app/Madeira/d3d12/libmetalirconverter.dylib'
 if DEST.exists() and hashlib.sha256(DEST.read_bytes()).hexdigest() == LIB_SHA:
@@ -23,7 +24,7 @@ else:
         with archive.open('rb') as stream:
             digest = hashlib.file_digest(stream, 'sha256').hexdigest()
         if digest != IPA_SHA:
-            raise RuntimeError('Upstream v0.1.626 IPA digest mismatch')
+            raise RuntimeError('Upstream ' + BASE['tag'] + ' IPA digest mismatch')
         with zipfile.ZipFile(archive) as z:
             candidates = [n for n in z.namelist() if n.endswith('/d3d12/libmetalirconverter.dylib')]
             if len(candidates) != 1:
@@ -40,7 +41,7 @@ else:
             if text.count(old) != 1:
                 raise RuntimeError('Unexpected upstream converter pin declaration')
             deps.write_text(text.replace(old, 'local ios_lib_sha="' + released_sha + '"'), encoding='utf-8')
-        provenance = dict(source=URL, release='v0.1.626', archiveSHA256=IPA_SHA,
+        provenance = dict(source=URL, release=BASE['tag'], baseCommit=BASE['commit'], archiveSHA256=IPA_SHA,
                           librarySHA256=released_sha, upstreamSourceFileSHA256=LIB_SHA,
                           note='Exact release dependency; source-file and release-file digests differ. No claim of byte identity to the absent source file.')
         DEST.parent.mkdir(parents=True, exist_ok=True)

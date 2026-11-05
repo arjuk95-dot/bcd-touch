@@ -4,6 +4,19 @@ import UIKit
     var body:some Scene {WindowGroup {Text("Production GamepadInput pipeline fixture · no guest").onAppear {run()}}}
     @MainActor func run() {
         guard UIApplication.shared.applicationState == .active else { DispatchQueue.main.asyncAfter(deadline:.now()+0.1){run()};return }
+        if let selected=ProcessInfo.processInfo.environment["RESERVATION_FIXTURE"],let index=Int(selected) {
+            let cases=[(false,false,true,0),(false,true,true,1),(true,false,true,1),(false,true,false,0),(true,false,false,0)]
+            let (force,game,touch,expected)=cases[index]
+            BCDGyroLive.padNeeded=false
+            MadeiraConfig.fixtureGameValues=game ? ["env.MADEIRA_PAD_EARLY_SLOT":"1"] : [:]
+            GamepadInput.shared.reserveSessionSlot(touchControls:touch,force:force)
+            DispatchQueue.main.asyncAfter(deadline:.now()+0.12) {
+                assert(PipelineSpy.read().0.connected==Int32(expected),"Merged per-game and forced-pack startup policy failed")
+                let file=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0].appendingPathComponent("reservation-\(index).txt")
+                try? Data("PASS: production reservation case \(index), connected=\(expected). Simulator engine spy; no guest.".utf8).write(to:file)
+            }
+            return
+        }
         let pad=GamepadInput.shared, move=UUID(), fire=UUID(), secondFire=UUID(), look=UUID()
         let c=BCDMouseJoystick.Calibration()
         pad.start()
@@ -32,7 +45,7 @@ import UIKit
                     DispatchQueue.main.asyncAfter(deadline:.now()+0.1) {
                         let s=PipelineSpy.read().0
                         assert(s.connected==1 && s.lx==0 && s.right_trigger==0 && s.rx==0 && s.ry==0)
-                        let receipt="PASS: production GamepadInput serial publisher observed simultaneous slot0 LS/RT/RS from a 40ms-old touch event using captured delivery time; stale aim neutralized; gyro stage saw held trigger; repeated configuration preserved movement/fire; stale keyboard focus did not erase pack input; independent fire release; explicit pack focus loss rejected delayed input. Engine-spy simulator fixture, no Wine guest or physical controller."
+                        let receipt="PASS: merged per-game/forced-pack/default-off startup reservations and no-source rejection; production GamepadInput serial publisher observed simultaneous slot0 LS/RT/RS from a 40ms-old touch event using captured delivery time; stale aim neutralized; gyro stage saw held trigger; repeated configuration preserved movement/fire; stale keyboard focus did not erase pack input; independent fire release; explicit pack focus loss rejected delayed input. Engine-spy simulator fixture, no Wine guest or physical controller."
                         let file=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0].appendingPathComponent("pipeline-receipt.txt")
                         try? Data(receipt.utf8).write(to:file)
                     }

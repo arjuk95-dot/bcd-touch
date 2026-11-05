@@ -1,0 +1,84 @@
+{
+  "source": "https://github.com/thebcd69/bcd-games/releases/download/v0.1.630/BCD.ipa",
+  "bytes": 185317150,
+  "sha256": "21e3fbfdc4c4221a4295d35d28348e826226ff3f727a18f110d3617d371f83d2",
+  "version": "0.1.630",
+  "appSource": null,
+  "members": [
+    {
+      "name": "Payload/Madeira.app/arm64ec-windows/qwave-optin.dll",
+      "bytes": 589824,
+      "sha256": "86f4eba3c907977d85057939aabab946c1e40a115dcd74351915107a927a2f99"
+    },
+    {
+      "name": "Payload/Madeira.app/arm64ec-windows/tbs-optin.dll",
+      "bytes": 589824,
+      "sha256": "e6d80d5a98e96844760496bc8e113cf91e6444e5f1a290c49a6a6dd176af9b4c"
+    },
+    {
+      "name": "Payload/Madeira.app/arm64ec-windows/msxml3.dll",
+      "bytes": 2752512,
+      "sha256": "32707111e715e9d4af64416642e270c95f870df2f1428ad9b4928fa4c476bcab"
+    },
+    {
+      "name": "Payload/Madeira.app/arm64ec-windows/msvfw32.dll",
+      "bytes": 655360,
+      "sha256": "7757888c3992707d9665d4d324d43ee29e92d14be906c2a294411175d5cff57d"
+    },
+    {
+      "name": "Payload/Madeira.app/arm64ec-windows/avifil32.dll",
+      "bytes": 786432,
+      "sha256": "f9f478aee1aba648a5f61d8e52933f306cdc05d90cc17de8709b63e6d150dd57"
+    },
+    {
+      "name": "Payload/Madeira.app/arm64ec-windows/kernelbase-optin.dll",
+      "bytes": 3473408,
+      "sha256": "4d53ed92f29eda8ff8e5d30a9fa3844e1e41793d16cce3587606c47d30d1256c"
+    },
+    {
+      "name": "Payload/Madeira.app/arm64ec-windows/xinputuap-optin.dll",
+      "bytes": 655360,
+      "sha256": "cb7bc1691f45bcd0a2a8eee2592b5c63d46cceeb095b4a3b86cedcd97d73561c"
+    },
+    {
+      "name": "Payload/Madeira.app/arm64ec-windows/oledlg-optin.dll",
+      "bytes": 786432,
+      "sha256": "e1223e250fcdd6a47fb1e97a3eaf9de952ba336f13310ad50e21340fd1f44424"
+    },
+    {
+      "name": "Payload/Madeira.app/arm64ec-windows/setupapi-optin.dll",
+      "bytes": 1179648,
+      "sha256": "29fc368a2218f66b2f31f232e91de8d16b43fb1905df9c0057609dfbbca03f86"
+    },
+    {
+      "name": "Payload/Madeira.app/arm64ec-windows/httpapi-optin.dll",
+      "bytes": 589824,
+      "sha256": "a6bdbbaf7f960c865038bbdabc2128957c2e679194c7742186571dc48b791a90"
+    },
+    {
+      "name": "Payload/Madeira.app/arm64ec-windows/msi-optin.dll",
+      "bytes": 1703936,
+      "sha256": "c99fcb604830198af8f7ba2d6fcc954eb96b9e1f34144a9f9fb461b02b2d1a06"
+    },
+    {
+      "name": "Payload/Madeira.app/i386-windows/msxml3.dll",
+      "bytes": 2727936,
+      "sha256": "1def9eb7ff7c995d2cbc7a4326dfcaf02f58874893d8d6a9665ca47c19ded55e"
+    },
+    {
+      "name": "Payload/Madeira.app/i386-windows/msvfw32.dll",
+      "bytes": 155648,
+      "sha256": "3d3b29f9b098e66963e602bb38a16372f5ffed8c77c32275fb62d095bbd6f080"
+    },
+    {
+      "name": "Payload/Madeira.app/i386-windows/avifil32.dll",
+      "bytes": 401408,
+      "sha256": "51548ae0d6c3c85d6d8c13be9f43f19cd56e4ffd55faa9a09c13c99dc8b7d921"
+    },
+    {
+      "name": "Payload/Madeira.app/d3d12/libmetalirconverter.dylib",
+      "bytes": 30154864,
+      "sha256": "4865c8ec999833d8df0df69b8a52eb819adf452b0b12df7651c409425d311e3b"
+    }
+  ]
+}

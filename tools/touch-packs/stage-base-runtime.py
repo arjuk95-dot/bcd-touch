@@ -12,13 +12,15 @@ import urllib.request
 import zipfile
 
 ROOT=Path(__file__).resolve().parents[2]
-URL='https://github.com/thebcd69/bcd-games/releases/download/v0.1.626/BCD.ipa'
-SHA='0243bac423688aafa659a20c99489f9b107e9463e55120750c1eda5875c441ba'
-required=['kernelbase-optin.dll','msi-optin.dll','oledlg-optin.dll','setupapi-optin.dll']
+BASE=json.loads((Path(__file__).resolve().parent/'base-release.json').read_text(encoding='utf-8'))
+URL=BASE['ipaURL']
+SHA=BASE['ipaSHA256']
+required=['kernelbase-optin.dll','msi-optin.dll','oledlg-optin.dll','setupapi-optin.dll',
+          'tbs-optin.dll','httpapi-optin.dll','qwave-optin.dll','xinputuap-optin.dll']
 optional=['avifil32.dll','msvfw32.dll','msxml3.dll']
 dest=ROOT/'app/Madeira/arm64ec-windows'
 missing=[n for n in required+optional if not (dest/n).exists()]
-receipt=dict(source=URL,archiveSHA256=SHA,scope='Only missing base runtime dependencies; existing source outputs retained',recovered=[])
+receipt=dict(source=URL,release=BASE['tag'],baseCommit=BASE['commit'],archiveSHA256=SHA,scope='Only missing base runtime dependencies; existing source outputs retained',recovered=[])
 baseline=(dest/'kernelbase.dll').read_bytes()
 baseline_pe=struct.unpack_from('<I',baseline,0x3c)[0]
 baseline_machine=struct.unpack_from('<H',baseline,baseline_pe+4)[0]

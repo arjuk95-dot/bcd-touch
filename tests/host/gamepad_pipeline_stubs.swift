@@ -23,7 +23,11 @@ func winios_hidpad_set_state(_ state:UnsafePointer<winios_hidpad>?) {}
 func madeira_pad_output_configure(_ x:Int32,_ h:Int32) {}
 func madeira_pad_output_set_active(_ x:Int32) {}
 func madeira_pad_output_set_slot(_ slot:Int32,_ controller:GCController?) {}
-enum MadeiraConfig {static func get(_ key:String)->String?{nil};static func gameValue(_ key:String)->String?{nil}}
+enum MadeiraConfig {
+    nonisolated(unsafe) static var fixtureGameValues: [String:String] = [:]
+    static func get(_ key:String)->String?{nil}
+    static func gameValue(_ key:String)->String?{fixtureGameValues[key]}
+}
 final class LogStore {static let shared=LogStore();func log(_ text:String){print(text)}}
 enum SystemGestures {static func beginSession(enabled:Bool){};static func apply(_ c:[GCController]){}}
 struct PadBindings {}

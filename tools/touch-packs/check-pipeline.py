@@ -24,8 +24,18 @@ with tempfile.TemporaryDirectory(prefix='touch-pipeline-') as tmp:
     (app/'Info.plist').write_bytes(plistlib.dumps(info))
     if device['state']!='Booted':subprocess.run(['xcrun','simctl','boot',uid],check=True)
     subprocess.run(['xcrun','simctl','bootstatus',uid,'-b'],check=True,timeout=360)
+    subprocess.run(['xcrun','simctl','uninstall',uid,'com.arjunkl.bcdtouch.pipeline'],check=False,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     subprocess.run(['xcrun','simctl','install',uid,str(app)],check=True,timeout=180)
-    subprocess.run(['xcrun','simctl','launch',uid,'com.arjunkl.bcdtouch.pipeline'],check=True,timeout=120)
+    folder=Path(run(['xcrun','simctl','get_app_container',uid,'com.arjunkl.bcdtouch.pipeline','data']))/'Documents'
+    for index in range(5):
+        subprocess.run(['xcrun','simctl','launch','--terminate-running-process',uid,'com.arjunkl.bcdtouch.pipeline'],env=dict(os.environ,SIMCTL_CHILD_RESERVATION_FIXTURE=str(index)),check=True,timeout=120)
+        receipt=folder/f'reservation-{index}.txt'
+        for _ in range(30):
+            if receipt.exists():break
+            time.sleep(1)
+        assert receipt.exists(),f'Production startup reservation case {index} did not pass'
+        (out/receipt.name).write_text(receipt.read_text())
+    subprocess.run(['xcrun','simctl','launch','--terminate-running-process',uid,'com.arjunkl.bcdtouch.pipeline'],check=True,timeout=120)
     data=Path(run(['xcrun','simctl','get_app_container',uid,'com.arjunkl.bcdtouch.pipeline','data']))/'Documents/pipeline-receipt.txt'
     for _ in range(30):
         if data.exists():break
