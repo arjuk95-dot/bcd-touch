@@ -112,7 +112,17 @@ struct BCDControlPack: Codable, Equatable {
             try require((0.05...0.6).contains(move.deadZone) && (0.15...0.9).contains(move.flightThreshold) && (0.4...1.5).contains(move.downThreshold) && (0.01...0.14).contains(move.hysteresis) && move.hysteresis < min(move.deadZone,move.flightThreshold), "Invalid digital movement thresholds")
             try require((0.1...3).contains(cursor.firingMultiplier) && (0...1).contains(cursor.radialX) && (0...1).contains(cursor.radialY) && (0.18...0.4).contains(cursor.radialRadius), "Invalid cursor/radial calibration")
             try require(radial.count == 8 && Set(radial).count == 8, "Equipment radial needs eight stable slots")
-            for id in [move.left,move.right,move.up,move.down] { try require(actions.first { $0.id == id }?.output.hasPrefix("key:") == true, "Digital movement must use keyboard keys") }
+            for id in [move.left,move.right,move.up,move.down] {
+                try require(actions.contains { $0.id == id && $0.output.hasPrefix("key:") && $0.behavior == "hold" }, "Digital movement must hold keyboard keys")
+            }
+            for id in [move.left,move.right,move.up,move.down,cursor.fire,cursor.inventory,cursor.pause,cursor.throwAction] + radial {
+                try require(actions.contains { $0.id == id && $0.contexts.contains("onFoot") }, "Cursor gameplay action unavailable on foot")
+            }
+            for id in [cursor.inventory,cursor.pause,cursor.primaryClick,cursor.secondaryClick] {
+                try require(actions.contains { $0.id == id && $0.contexts.contains("pointer") }, "Cursor UI action unavailable in pointer context")
+            }
+            for id in [cursor.inventory,cursor.pause,cursor.throwAction] { try require(actions.contains { $0.id == id && $0.behavior == "tap" }, "Cursor utility must be a tap action") }
+            for id in [cursor.primaryClick,cursor.secondaryClick] { try require(actions.contains { $0.id == id && $0.behavior == "hold" }, "Pointer drag buttons must hold") }
             try require(actions.first { $0.id == cursor.fire }?.output == "mouse:left" && actions.first { $0.id == cursor.fire }?.behavior == "hold", "Cursor fire must hold primary mouse")
             try require(actions.first { $0.id == cursor.primaryClick }?.output == "mouse:left" && actions.first { $0.id == cursor.secondaryClick }?.output == "mouse:right", "Pointer click bindings must use mouse buttons")
             try require(radial.allSatisfy { id in actions.contains { $0.id == id && $0.output.hasPrefix("key:") && $0.behavior == "tap" } }, "Equipment slots require direct tapped keys")

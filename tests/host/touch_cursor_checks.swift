@@ -128,6 +128,9 @@ func checkCursorPacks() throws {
     var invalid=pack;invalid.version=3;assert((try? invalid.validate())==nil)
     invalid=pack;invalid.cursorControls?.fire="missing";assert((try? invalid.validate())==nil)
     invalid=pack;invalid.digitalMovement?.downThreshold=0;assert((try? invalid.validate())==nil)
+    invalid=pack;invalid.actions[invalid.actions.firstIndex{$0.id=="use-selected"}!].contexts=["pointer"];assert((try? invalid.validate())==nil)
+    invalid=pack;invalid.actions[invalid.actions.firstIndex{$0.id=="pointer-select"}!].behavior="tap";assert((try? invalid.validate())==nil)
+    invalid=pack;invalid.actions[0].behavior="tap";assert((try? invalid.validate())==nil)
     // Personal calibration and regions survive regeneration and JSON round trips.
     var personal=pack;personal.cursorControls?.firingMultiplier=0.8;personal.digitalMovement?.downThreshold=1.1
     let merged=try BCDPackAuthoring.merge(base:pack,personal:personal,baseline:pack);assert(merged.cursorControls==personal.cursorControls && merged.digitalMovement==personal.digitalMovement)

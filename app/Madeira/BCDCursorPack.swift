@@ -196,7 +196,7 @@ final class BCDCursorPack {
         f.moved = f.moved || hypot(p.x-f.start.x,p.y-f.start.y)>8
         if f.role=="look" || f.role=="fireAim" || f.role=="pointerDrag" {
             pointerMove(f,to:p)
-            if mode == .gameplay && f.role=="look", let c=layout.controls.first(where:{$0.action==settings.fire && $0.role=="fireAim"}), hit(c,p) {
+            if mode == .gameplay && f.role=="look", let c=layout.controls.first(where:{$0.action==settings.fire && $0.role=="fireAim" && action($0.action)?.contexts.contains("onFoot")==true}), hit(c,p) {
                 f.role="fireAim";f.action=settings.fire;f.firing=true;hold(settings.fire,id)
             }
         }
