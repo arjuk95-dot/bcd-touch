@@ -1,0 +1,1 @@
+PASS: production reservation case 5, connected=0; cursor pack suppresses reserved XInput and configured DualSense HID. Simulator engine spy; no guest.

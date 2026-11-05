@@ -33,3 +33,18 @@ After installation, open Noita's Game Touch Pack page and choose Prepare Control
 Focused production-engine tests cover cursor continuity/stationary/retouch, direct/slide fire, independent owners, movement/flight/deep-down thresholds, unrelated boundary crossing, radial cancel/select/fire quarantine, explicit pointer dragging, pause/focus-style cancellation, 60/120 Hz fractional motion and render scales. Slot pulses are checked against representative 30/60 FPS sampling clocks. UIKit fixtures exercise actual routing, rendering and release observers. The publisher fixture separately checks cursor-only XInput/HID isolation and retained controller-pack behavior.
 
 Simulator exports are implementation UI on blank backgrounds, clearly labelled **no game**. iPad images use offscreen iPad geometry in an iPhone simulator. They are not screenshots of Noita gameplay or a physical iPad. Guest/SDL cursor delivery, camera-scrolling behavior, single shots, sustained fire, equipment safety, inventory dragging, signing/JIT and physical feel still need on-device testing.
+
+
+Verified app source: `6a9905306e474c9fd38292ac06c327e56bd96228`, based on upstream v0.1.630 `53e7e8c73b62633b1d94c75b451fcc775928378f`.
+
+- [Final Swift/SDK, stock controls/share and worker checks](https://github.com/arjunkl/bcd-touch/actions/runs/42081512449): passed, including incompatible cursor context/behavior rejection.
+- [Production UI/store/interruption fixtures](https://github.com/arjunkl/bcd-touch/actions/runs/42077315515): passed, 55 images including 10 Noita exports. The renderer is unchanged at the final source; the later change rejects invalid action metadata and guards its fire boundary.
+- [Production publisher fixtures](https://github.com/arjunkl/bcd-touch/actions/runs/42075299015): passed, including KB/M-only XInput/HID suppression. The publisher source is unchanged at the final app revision.
+- [Complete native macOS/Xcode archive](https://github.com/arjunkl/bcd-touch/actions/runs/42081514633): passed.
+
+[Detailed test receipts and labelled UI exports](receipts/touch/noita-v4/). These checks do not establish Noita guest/SDL delivery, actual installed remaps or physical device feel.
+
+
+Verified existing-slot test IPA: `BCD-Touch-Noita-6a99053.ipa`, 186,199,125 bytes, SHA-256 `954552f65c6c8724a41f800d926d591d85a77aa42dd9cebebc5c32d92f2ead5b`. [Native packaging run](https://github.com/arjunkl/bcd-touch/actions/runs/42092423497), [package receipt](receipts/touch/noita-v4/existing-update-package.json). It retains `com.thebcd69.bcd`, its two helper IDs and both BCD callbacks. Native packaging and local CRC/hash/compiled-capability inspections passed. Personal SideStore signing and device installation are still required.
+
+To repeat that packaging exactly: source run `42081514633`, source commit `6a9905306e474c9fd38292ac06c327e56bd96228`, raw IPA SHA-256 `ee6b1cb55260aadc048a35909ed8067050daffc2c58af8121f0a691bcbd03b93`. The sideload workflow defaults now point to those verified inputs.

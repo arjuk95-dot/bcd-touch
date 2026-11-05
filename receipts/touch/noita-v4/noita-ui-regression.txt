@@ -1,0 +1,1 @@
+PASS: production UIKit cursor pack rendered idle/active movement+flight+fire, equipment, utilities, pointer and editor; actual activation regions; rotation and clear release outputs. iPhone simulator with offscreen phone/iPad geometry and engine spies, no running Noita or physical device.

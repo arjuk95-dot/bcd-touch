@@ -1,0 +1,21 @@
+{
+  "kind": "Desktop validator; no guest",
+  "cases": [
+    {
+      "name": "hidden-fire",
+      "rejected": true
+    },
+    {
+      "name": "tap-drag",
+      "rejected": true
+    },
+    {
+      "name": "tap-move",
+      "rejected": true
+    },
+    {
+      "name": "missing-pointer-context",
+      "rejected": true
+    }
+  ]
+}
