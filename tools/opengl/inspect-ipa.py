@@ -1,5 +1,6 @@
 """Inspect the actual exported IPA, not just a developer staging directory."""
 import argparse,hashlib,json,pathlib,plistlib,struct,zipfile
+from pe_image import inspect_image
 p=argparse.ArgumentParser();p.add_argument('ipa',type=pathlib.Path);p.add_argument('--source',required=True);p.add_argument('--receipt',type=pathlib.Path,required=True);a=p.parse_args()
 def sha(b):return hashlib.sha256(b).hexdigest()
 def pe(b):
@@ -42,10 +43,12 @@ with zipfile.ZipFile(a.ipa) as z:
   assert m['installName']=='@rpath/'+name and m['codeSignature'],(name,m)
   for dep in m['dependencies']:assert dep.startswith(('/System/Library/','/usr/lib/','@rpath/libMoltenVK.dylib')),dep
   result['libraries'][name]={**m,'bytes':len(b),'packagedSHA256':sha(b),'sourceArtifactSHA256':built['libraries'][name]['sha256'],'signatureNote':'Xcode/ad-hoc signing may change the whole-file hash'}
- for farm,machine in [('arm64ec-windows',0xa641),('aarch64-windows',0xaa64),('i386-windows',0x14c)]:
-  b=z.read(root+farm+'/opengl32.dll');assert pe(b)==machine
+ for farm,machine in [('arm64ec-windows',0x8664),('aarch64-windows',0xaa64),('i386-windows',0x14c)]:
+  b=z.read(root+farm+'/opengl32.dll');parsed=inspect_image(b)
+  if farm=='arm64ec-windows':assert parsed['architecture']=='arm64ec-hybrid' and parsed['explicitTEBMoves']>0 and not parsed['directTEBStores'],parsed
+  else:assert pe(b)==machine
   assert sha(b)==wine['pe'][farm]['sha256'],farm
-  result['pe'][farm]={'machine':hex(machine),'sha256':sha(b)}
+  result['pe'][farm]={**parsed,'sha256':sha(b)}
  for farm,suffix,machine in [('arm64ec-windows','x64',0x8664),('i386-windows','x86',0x14c)]:
   b=z.read(root+farm+'/bcd-opengl-smoke-'+suffix+'.exe');assert pe(b)==machine and b'240 textured shader frames' in b
  for name in ['Mesa-license.rst','MoltenVK-Apache-2.0.txt','SPIRV-Cross-Apache-2.0.txt','SPIRV-Tools-Apache-2.0.txt','cereal-BSD-3-Clause.txt']:

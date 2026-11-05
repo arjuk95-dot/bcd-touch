@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+    - name: Check real Wine ARM64EC hybrid metadata and native ARM64 headers
+      run: python3 tests/opengl/check-pe.py
     - run: cc -Wall -Werror -fsanitize=address,undefined tests/opengl/policy.c -o /tmp/gl-policy && /tmp/gl-policy
     - run: sudo apt-get update -qq && sudo apt-get install -y gcc-mingw-w64-i686 gcc-mingw-w64-x86-64
     - name: Compile real Windows GL smoke programs (not executed on host)

@@ -38,3 +38,5 @@ Host policy checks cover disable/software rejection/frame caps. Windows smoke pr
 Pending physical gates: installed Noita PE architecture and actual settings; hardware smoke; Noita playable mines/effects/cursor/movement/flight/casting/inventory/transitions/save/relaunch; logs/capture/FPS/frame time/memory/thermal; background/orientation; matched Dread Delusion and another available Direct3D path; GL Off comparison and launcher/touch regression.
 
 Repository transfer verified: https://github.com/arjuk95-dot/bcd-touch (same repository ID 1441826178 and all original branches).
+
+Wine ARM64EC DLLs have AMD64 (`0x8664`) PE headers with CHPE metadata and mixed ARM64EC/AMD64 code ranges. The gate checks that metadata and audits TEB instructions only in native ranges; a header-only ARM64EC assumption is incorrect. The per-game picker persistence test executes production row construction, the routing branch, setLine and GameProfile storage against unique test files, verifying cold read, export/reset and other-game isolation.
