@@ -1,6 +1,9 @@
 name: BCD OpenGL source dependencies
 on:
   workflow_dispatch:
+  push:
+    branches: [wo-bcd-opengl-001]
+    paths: ['.github/workflows/opengl-dependencies.yml', 'tools/opengl/build-dependencies.sh', 'build/mesa-ios/**', 'build/moltenvk-ios/**']
 jobs:
   dependencies:
     runs-on: macos-15-intel
