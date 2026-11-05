@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Relative cursor packs: deterministic touch ownership, no game-state inference.
 import Foundation
+import CoreGraphics
 
 final class BCDCursorPack {
     enum Mode: String { case gameplay, equipment, utilities, pointer, paused }
@@ -32,14 +33,14 @@ final class BCDCursorPack {
     func drain() -> [Event] { defer { events.removeAll() }; return events }
     func center(_ c: BCDControlPack.Control) -> CGPoint {
         let frame=c.coordinateSpace == "screen" ? bounds : safe
-        return CGPoint(x:frame.minX+c.x*frame.width,y:frame.minY+c.y*frame.height)
+        return CGPoint(x:frame.minX+CGFloat(c.x)*frame.width,y:frame.minY+CGFloat(c.y)*frame.height)
     }
     func rect(_ r: BCDControlPack.Layout.Rect, screen: Bool = false) -> CGRect {
         let b=screen ? bounds : safe
-        return CGRect(x:b.minX+r.x*b.width,y:b.minY+r.y*b.height,width:r.width*b.width,height:r.height*b.height)
+        return CGRect(x:b.minX+CGFloat(r.x)*b.width,y:b.minY+CGFloat(r.y)*b.height,width:CGFloat(r.width)*b.width,height:CGFloat(r.height)*b.height)
     }
     func hit(_ c: BCDControlPack.Control, _ point: CGPoint) -> Bool {
-        hypot(point.x-center(c).x,point.y-center(c).y) <= c.hitRadius*unit
+        hypot(point.x-center(c).x,point.y-center(c).y) <= CGFloat(c.hitRadius)*unit
     }
     private func action(_ id: String) -> BCDControlPack.Action? { pack.actions.first { $0.id == id } }
     private func leaves(_ id: String) -> [String] {
@@ -84,15 +85,17 @@ final class BCDCursorPack {
     func openInventory(time: Double) { switchMode(.pointer);pulse(settings.inventory,time:time) }
     func pause(time: Double) { switchMode(.paused);pulse(settings.pause,time:time) }
     private func pointerMove(_ f: Finger, to p: CGPoint) {
-        let gain=pack.aim.sensitivity*(f.firing ? settings.firingMultiplier : 1)
+        let gain=CGFloat(pack.aim.sensitivity*(f.firing ? settings.firingMultiplier : 1))
+        let vertical=CGFloat(pack.aim.vertical)*(pack.aim.invertY ? -1:1)
         carry.x += (p.x-f.last.x)*gain*guest.width/max(1,viewport.width)
-        carry.y += (p.y-f.last.y)*gain*pack.aim.vertical*(pack.aim.invertY ? -1:1)*guest.height/max(1,viewport.height)
+        carry.y += (p.y-f.last.y)*gain*vertical*guest.height/max(1,viewport.height)
         let dx=Int32(max(-30000,min(30000,carry.x))),dy=Int32(max(-30000,min(30000,carry.y)))
-        carry.x-=CGFloat(dx);carry.y-=CGFloat(dy)
+        // Preserve fractions; discard any saturated integer excess immediately.
+        carry.x-=carry.x.rounded(.towardZero);carry.y-=carry.y.rounded(.towardZero)
         if dx != 0 || dy != 0 { events.append(.motion(dx,dy)) }
     }
     private func moveKeys(_ f: Finger, owner: AnyHashable) {
-        let radius=unit*(layout.controls.first { $0.role == "move" }?.radius ?? 0.14)
+        let radius=unit*CGFloat(layout.controls.first { $0.role == "move" }?.radius ?? 0.14)
         let x=Double((f.last.x-f.start.x)/max(1,radius)), y=Double((f.start.y-f.last.y)/max(1,radius))
         func on(_ id: String) -> Bool { leaves(id).contains { holds[$0]?.contains(owner) == true } }
         let m=movement
@@ -110,15 +113,15 @@ final class BCDCursorPack {
         for id in desired { hold(id,owner) }
     }
     var radialFrame: CGRect {
-        let r=min(unit*settings.radialRadius,min(safe.width,safe.height)/2-30)
-        let x=max(safe.minX+r+4,min(safe.maxX-r-4,safe.minX+safe.width*settings.radialX))
-        let y=max(safe.minY+r+4,min(safe.maxY-r-34,safe.minY+safe.height*settings.radialY))
+        let r=min(unit*CGFloat(settings.radialRadius),min(safe.width,safe.height)/2-30)
+        let x=max(safe.minX+r+4,min(safe.maxX-r-4,safe.minX+safe.width*CGFloat(settings.radialX)))
+        let y=max(safe.minY+r+4,min(safe.maxY-r-34,safe.minY+safe.height*CGFloat(settings.radialY)))
         return CGRect(x:x-r,y:y-r,width:r*2,height:r*2)
     }
     func sector(_ point: CGPoint) -> Int? {
         let r=radialFrame;let dx=point.x-r.midX,dy=point.y-r.midY
         guard hypot(dx,dy)>r.width*0.18 && hypot(dx,dy)<=r.width*0.58 else { return nil }
-        let angle=(atan2(dy,dx)+.pi/2+.pi/8+2 * .pi).truncatingRemainder(dividingBy:2 * .pi)
+        let angle=(atan2(dy,dx) + .pi/2 + .pi/8 + 2 * .pi).truncatingRemainder(dividingBy:2 * .pi)
         return Int(angle/(2 * .pi)*8)%8
     }
     var moreFrame: CGRect { let r=radialFrame;return CGRect(x:r.midX-46,y:r.maxY+3,width:92,height:30) }

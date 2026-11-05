@@ -23,7 +23,7 @@ from dread_bindings import apply_dread_bindings
 if not __debug__:
     raise RuntimeError('Run the validator without Python optimization (-O/PYTHONOPTIMIZE)')
 OUTPUTS = {'A','B','X','Y','LB','RB','LT','RT','L3','R3','Menu','View','D↑','D↓','D←','D→','LS','RS'}
-CUSTOM_ICONS = {'bcd.sword','bcd.interact','bcd.inventory','bcd.run'}
+CUSTOM_ICONS = {'bcd.sword','bcd.interact','bcd.inventory','bcd.run','bcd.wand','bcd.boot'}
 
 def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode()
@@ -57,6 +57,18 @@ def validate(pack, identity=None, personal=False):
     assert look!='mouseJoystick' or pack['inputMode']=='controller'
     assert look!='relativeMouse' or pack['inputMode']=='keyboardMouse'
     actions = {a['id']:a for a in pack['actions']}
+    cursor=pack.get('cursorControls');move=pack.get('digitalMovement');capability=set()
+    if cursor is not None:
+        assert pack['version']>=4 and pack['inputMode']=='keyboardMouse' and look=='relativeMouse' and move is not None, 'Cursor capability requires V4 KB/M and digital movement'
+        capability={cursor[k] for k in ['fire','inventory','pause','throwAction','primaryClick','secondaryClick']} | {move[k] for k in ['left','right','up','down']}
+        assert capability<=set(actions), 'Unknown cursor/movement action'
+        assert move['hysteresis']<min(move['deadZone'],move['flightThreshold']), 'Invalid movement hysteresis'
+        assert len(pack['radial'])==8 and len(set(pack['radial']))==8, 'Equipment needs eight stable sectors'
+        assert all(actions[move[k]]['output'].startswith('key:') for k in ['left','right','up','down']), 'Digital movement needs keys'
+        assert actions[cursor['fire']]['output']=='mouse:left' and actions[cursor['fire']]['behavior']=='hold', 'Cursor fire must hold primary mouse'
+        assert actions[cursor['primaryClick']]['output']=='mouse:left' and actions[cursor['secondaryClick']]['output']=='mouse:right', 'Invalid pointer click bindings'
+        assert all(id in actions and actions[id]['output'].startswith('key:') and actions[id]['behavior']=='tap' for id in pack['radial']), 'Slots need tapped direct keys'
+    else: assert move is None, 'Digital movement requires cursor capability'
     assert len(actions) == len(pack['actions']), 'Duplicate action'
     evidence = {e['id'] for e in pack['evidence']}
     assert len(evidence) == len(pack['evidence']), 'Duplicate evidence'
@@ -90,15 +102,15 @@ def validate(pack, identity=None, personal=False):
             if not personal:
                 assert c.get('coordinateSpace','safe')=='safe', 'Generated controls must use safe-area anchors'
                 h=c['hitRadius']
-                assert look=='none' or c['x']+h <= r['x'] or c['x']-h >= r['x']+r['width'] or c['y']+h <= r['y'] or c['y']-h >= r['y']+r['height'], 'Control overlaps reserved swipe rectangle'
-            if c['role'] == 'move': assert actions[c['action']]['output'] == 'LS'
+                assert cursor is not None or look=='none' or c['x']+h <= r['x'] or c['x']-h >= r['x']+r['width'] or c['y']+h <= r['y'] or c['y']-h >= r['y']+r['height'], 'Control overlaps reserved swipe rectangle'
+            if c['role'] == 'move': assert c['action']==move['left'] if cursor else actions[c['action']]['output']=='LS'
             if c['role'] == 'fireAim': assert actions[c['action']]['behavior'] == 'hold'
             if 'slideToAction' in c:
                 source=actions.get(c['action']);target=actions.get(c['slideToAction'])
                 assert pack['version']>=3 and c['role']=='button' and source and source['behavior']=='toggle' and target and target['behavior']=='tap' and target['id']!=source['id'], 'Invalid directed slide'
                 assert any(t['action']==target['id'] and t['role']=='button' for t in layout['controls']), 'Slide target must have a visible button'
                 assert set(source['contexts'])<=set(target['contexts']), 'Slide target unavailable in source contexts'
-        reachable={c['action'] for c in layout['controls'] if c['role']!='radial'} | set(pack['radial']) | {g['action'] for g in pack['gestures']}
+        reachable={c['action'] for c in layout['controls'] if c['role']!='radial'} | set(pack['radial']) | {g['action'] for g in pack['gestures']} | capability
         missing=[k for k,a in actions.items() if k not in reachable and not (pack['inputMode']=='controller' and look!='none' and a['output']=='RS')]
         assert not missing, 'Add controls or radial references for these action IDs in BOTH layouts: '+','.join(missing)
         for c in layout['controls']:

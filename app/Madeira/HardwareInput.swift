@@ -1735,6 +1735,15 @@ final class HardwareInput: ObservableObject {
         bumpTicker()
     }
 
+    /// Touch cursor packs use Wine's existing cursor, including on a desktop.
+    /// Unlike FPS/physical-mouse routing this must never synchronize an estimated
+    /// MetalBackedView cursor or issue an absolute move on the first swipe.
+    /// The guest accumulates these relative MOUSEEVENTF_MOVE deltas itself.
+    func postCursorPackRelative(_ dx: Int32, _ dy: Int32) {
+        guard dx != 0 || dy != 0 else { return }
+        winios_pointer(dx,dy,Self.moveFlag,0)
+    }
+
     /// Desktop session only: relative motion moves nothing that the drawn
     /// arrow follows (winios_pointer draws only absolute positions). Keep
     /// MetalBackedView's trackpad cursor, which is also the touch trackpad's

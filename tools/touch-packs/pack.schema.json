@@ -6,7 +6,8 @@
       "enum": [
         1,
         2,
-        3
+        3,
+        4
       ]
     },
     "id": {
@@ -298,8 +299,7 @@
                 "enum": [
                   "safe",
                   "screen"
-                ],
-                "description": "Optional personal display anchor. Omission preserves existing safe-area anchors; generated packs use safe."
+                ]
               },
               "slideToAction": {
                 "type": "string",
@@ -313,6 +313,9 @@
                   "inside",
                   "below"
                 ]
+              },
+              "showLabel": {
+                "type": "boolean"
               }
             },
             "required": [
@@ -461,8 +464,7 @@
                 "enum": [
                   "safe",
                   "screen"
-                ],
-                "description": "Optional personal display anchor. Omission preserves existing safe-area anchors; generated packs use safe."
+                ]
               },
               "slideToAction": {
                 "type": "string",
@@ -476,6 +478,9 @@
                   "inside",
                   "below"
                 ]
+              },
+              "showLabel": {
+                "type": "boolean"
               }
             },
             "required": [
@@ -635,6 +640,140 @@
         "mouseJoystick",
         "relativeMouse"
       ]
+    },
+    "digitalMovement": {
+      "type": "object",
+      "properties": {
+        "left": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x1f]+$"
+        },
+        "right": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x1f]+$"
+        },
+        "up": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x1f]+$"
+        },
+        "down": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x1f]+$"
+        },
+        "deadZone": {
+          "type": "number",
+          "minimum": 0.05,
+          "maximum": 0.6
+        },
+        "flightThreshold": {
+          "type": "number",
+          "minimum": 0.15,
+          "maximum": 0.9
+        },
+        "downThreshold": {
+          "type": "number",
+          "minimum": 0.4,
+          "maximum": 1.5
+        },
+        "hysteresis": {
+          "type": "number",
+          "minimum": 0.01,
+          "maximum": 0.14
+        }
+      },
+      "required": [
+        "left",
+        "right",
+        "up",
+        "down",
+        "deadZone",
+        "flightThreshold",
+        "downThreshold",
+        "hysteresis"
+      ],
+      "additionalProperties": false
+    },
+    "cursorControls": {
+      "type": "object",
+      "properties": {
+        "fire": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x1f]+$"
+        },
+        "inventory": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x1f]+$"
+        },
+        "pause": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x1f]+$"
+        },
+        "throwAction": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x1f]+$"
+        },
+        "primaryClick": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x1f]+$"
+        },
+        "secondaryClick": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x1f]+$"
+        },
+        "firingMultiplier": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 3
+        },
+        "radialX": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "radialY": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "radialRadius": {
+          "type": "number",
+          "minimum": 0.18,
+          "maximum": 0.4
+        }
+      },
+      "required": [
+        "fire",
+        "inventory",
+        "pause",
+        "throwAction",
+        "primaryClick",
+        "secondaryClick",
+        "firingMultiplier",
+        "radialX",
+        "radialY",
+        "radialRadius"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [
@@ -654,7 +793,6 @@
     "unresolved"
   ],
   "additionalProperties": false,
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "allOf": [
     {
       "if": {
@@ -671,8 +809,12 @@
               "controls": {
                 "items": {
                   "not": {
-                    "required": [
-                      "coordinateSpace"
+                    "anyOf": [
+                      {
+                        "required": [
+                          "coordinateSpace"
+                        ]
+                      }
                     ]
                   }
                 }
@@ -684,8 +826,12 @@
               "controls": {
                 "items": {
                   "not": {
-                    "required": [
-                      "coordinateSpace"
+                    "anyOf": [
+                      {
+                        "required": [
+                          "coordinateSpace"
+                        ]
+                      }
                     ]
                   }
                 }
@@ -707,86 +853,185 @@
         }
       },
       "then": {
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "lookMode"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "properties": {
+              "phone": {
+                "properties": {
+                  "controls": {
+                    "items": {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "required": [
+                              "slideToAction"
+                            ]
+                          },
+                          {
+                            "required": [
+                              "labelPlacement"
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "pad": {
+                "properties": {
+                  "controls": {
+                    "items": {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "required": [
+                              "slideToAction"
+                            ]
+                          },
+                          {
+                            "required": [
+                              "labelPlacement"
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "properties": {
+              "actions": {
+                "items": {
+                  "properties": {
+                    "behavior": {
+                      "type": "string",
+                      "enum": [
+                        "hold",
+                        "tap",
+                        "release"
+                      ]
+                    },
+                    "icon": {
+                      "not": {
+                        "pattern": "^bcd\\."
+                      }
+                    }
+                  }
+                }
+              },
+              "phone": {
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "movementRect"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "pad": {
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "movementRect"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
         "properties": {
-          "actions": {
-            "items": {
-              "properties": {
-                "behavior": {
-                  "enum": [
-                    "hold",
-                    "tap",
-                    "release"
+          "version": {
+            "enum": [
+              1,
+              2,
+              3
+            ]
+          }
+        }
+      },
+      "then": {
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "digitalMovement"
                   ]
                 },
-                "icon": {
-                  "not": {
-                    "pattern": "^bcd\\."
-                  }
+                {
+                  "required": [
+                    "cursorControls"
+                  ]
                 }
-              }
+              ]
             }
           },
-          "phone": {
-            "not": {
-              "required": [
-                "movementRect"
-              ]
-            },
+          {
             "properties": {
-              "controls": {
-                "items": {
-                  "not": {
-                    "anyOf": [
-                      {
-                        "required": [
-                          "slideToAction"
-                        ]
-                      },
-                      {
-                        "required": [
-                          "labelPlacement"
+              "phone": {
+                "properties": {
+                  "controls": {
+                    "items": {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "required": [
+                              "showLabel"
+                            ]
+                          }
                         ]
                       }
-                    ]
+                    }
                   }
                 }
-              }
-            }
-          },
-          "pad": {
-            "not": {
-              "required": [
-                "movementRect"
-              ]
-            },
-            "properties": {
-              "controls": {
-                "items": {
-                  "not": {
-                    "anyOf": [
-                      {
-                        "required": [
-                          "slideToAction"
-                        ]
-                      },
-                      {
-                        "required": [
-                          "labelPlacement"
+              },
+              "pad": {
+                "properties": {
+                  "controls": {
+                    "items": {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "required": [
+                              "showLabel"
+                            ]
+                          }
                         ]
                       }
-                    ]
+                    }
                   }
                 }
               }
             }
           }
-        },
-        "not": {
-          "required": [
-            "lookMode"
-          ]
-        }
+        ]
       }
     }
-  ]
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
 }

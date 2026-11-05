@@ -23,7 +23,7 @@ with tempfile.TemporaryDirectory(prefix='touch-preview-') as tmp:
     routing=(ROOT/'app/Madeira/ContentView.swift').read_text()
     window=tmp/'Window.swift';window.write_text('import UIKit\nfinal class ControlsWindow: UIWindow {'+routing.split('final class ControlsWindow: UIWindow {',1)[1].split('\nenum TouchControlsHost',1)[0])
     gate=tmp/'Gate.swift';gate.write_text('import UIKit\n@MainActor enum TouchMouseGate {'+routing.split('@MainActor enum TouchMouseGate {',1)[1].split('\n}\n',1)[0]+'\n}')
-    sources=[ROOT/'app/Madeira/BCDMouseJoystick.swift',ROOT/'app/Madeira/BCDControlPack.swift',ROOT/'app/Madeira/BCDControlPackAuthoring.swift',ROOT/'app/Madeira/BCDCursorPack.swift',ROOT/'app/Madeira/BCDNoitaPack.swift',state,window,gate,ROOT/'app/Madeira/BCDControlPackLive.swift',ROOT/'app/Madeira/BCDCursorPackSettings.swift',ROOT/'app/Madeira/BCDControlPackSurface.swift',ROOT/'tests/host/touch_pack_ui_stubs.swift',ROOT/'tests/host/touch_pack_preview.swift']
+    sources=[ROOT/'app/Madeira/BCDMouseJoystick.swift',ROOT/'app/Madeira/BCDControlPack.swift',ROOT/'app/Madeira/BCDControlPackAuthoring.swift',ROOT/'app/Madeira/BCDCursorPack.swift',ROOT/'app/Madeira/BCDNoitaPack.swift',state,window,gate,ROOT/'app/Madeira/BCDControlPackLive.swift',ROOT/'app/Madeira/BCDCursorPackSettings.swift',ROOT/'app/Madeira/BCDControlPackSurface.swift',ROOT/'tests/host/touch_pack_ui_stubs.swift',ROOT/'tests/host/touch_pack_preview.swift',ROOT/'tests/host/touch_noita_preview.swift']
     subprocess.run(['xcrun','swiftc','-target',os.uname().machine+'-apple-ios18.0-simulator','-sdk',sdk,'-parse-as-library',*map(str,sources),'-o',str(app/'TouchPreview')],check=True)
     info=dict(CFBundleIdentifier='com.arjunkl.bcdtouch.preview',CFBundleExecutable='TouchPreview',CFBundleName='Touch Preview',CFBundlePackageType='APPL',CFBundleVersion='1',CFBundleShortVersionString='1',MinimumOSVersion='18.0',LSRequiresIPhoneOS=True,UIDeviceFamily=[1,2],UIRequiresFullScreen=True,UISupportedInterfaceOrientations=['UIInterfaceOrientationLandscapeLeft','UIInterfaceOrientationLandscapeRight'])
     (app/'Info.plist').write_bytes(plistlib.dumps(info))
@@ -38,7 +38,7 @@ with tempfile.TemporaryDirectory(prefix='touch-preview-') as tmp:
     subprocess.run(['xcrun','simctl','launch','--terminate-running-process',uid,'com.arjunkl.bcdtouch.preview'],env=dict(os.environ,SIMCTL_CHILD_PACK_FIXTURES='1'),check=True,timeout=120)
     container=Path(run(['xcrun','simctl','get_app_container',uid,'com.arjunkl.bcdtouch.preview','data']))/'Documents'
     for _ in range(45):
-        if len(list(container.glob('*.png')))==45 and (container/'client-phase-1.txt').exists():break
+        if len(list(container.glob('*.png')))==55 and (container/'client-phase-1.txt').exists():break
         time.sleep(1)
     for p in container.glob('client-*.txt'):shutil.copyfile(p,out/p.name)
     for p in container.glob('*routing*.txt'):shutil.copyfile(p,out/p.name)
@@ -62,7 +62,7 @@ with tempfile.TemporaryDirectory(prefix='touch-preview-') as tmp:
     for evidence in container.glob('client-*.txt'):shutil.copyfile(evidence,out/evidence.name)
     if (container/'client-error.txt').exists():print((container/'client-error.txt').read_text()[:2000],flush=True)
     assert (container/'client-phase-2.txt').exists(),'Production Swift store restart fixture did not finish'
-    images=list(container.glob('*.png'));assert len(images)==45 and len(list(container.glob('template-*.png')))==20,'Renderer/editor/template/placement/owner fixture export did not complete'
+    images=list(container.glob('*.png'));assert len(images)==55 and len(list(container.glob('template-*.png')))==20,'Renderer/editor/template/placement/owner fixture export did not complete'
     for p in images:shutil.copyfile(p,out/p.name)
     for p in container.glob('*-swift-identity.txt'):shutil.copyfile(p,out/p.name)
     for p in container.glob('*-context-visibility.txt'):shutil.copyfile(p,out/p.name)

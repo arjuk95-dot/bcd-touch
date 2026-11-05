@@ -155,6 +155,7 @@ import UniformTypeIdentifiers
     }
     func prepare(_ entry: LibraryEntry, regenerate: Bool = false) {
         guard entry.desktop != true else { return }
+        if BCDNoitaPack.matches(request(entry).identity) { usePreset(entry);return }
         var req = request(entry)
         let key = Self.hash(Self.encoded(req.identity))
         if !regenerate, cached(key, identity: req.identity) != nil { status = "Validated cached pack"; return }

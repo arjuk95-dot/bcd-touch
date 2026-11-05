@@ -1,4 +1,5 @@
 import Foundation
+import CoreGraphics
 
 func checkCursorPacks() throws {
     let identity=BCDControlPack.Identity(executable:"program files (x86)/steam/steamapps/common/noita",storeID:"steam:881100",edition:"installed",build:"unreported",bindingDigest:"44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a")

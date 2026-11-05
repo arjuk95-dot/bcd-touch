@@ -139,8 +139,9 @@ final class BCDPackView: UIView {
         let changed = pack != p || self.context != context || self.editing != editing
         if changed { clear();cursorEngine = nil;cursorTimer?.invalidate();cursorTimer=nil }
         pack = p; self.context = context; self.debug = debug; self.editing = editing; setNeedsDisplay()
-        if p.cursorControls != nil && !editing && cursorEngine == nil {
+        if p.cursorControls != nil && p.contexts.contains(context) && !editing && cursorEngine == nil {
             cursorEngine = BCDCursorPack(pack:p,pad:pad)
+            if context == "pointer" { cursorEngine?.switchMode(.pointer) }
             let clock=Timer(timeInterval:1.0/120.0,repeats:true) { [weak self] _ in
                 MainActor.assumeIsolated { guard let self else{return};self.cursorEngine?.tick(ProcessInfo.processInfo.systemUptime);self.flushCursor() }
             }
@@ -197,7 +198,7 @@ final class BCDPackView: UIView {
         return CGRect(x: safe.minX, y: safe.minY + safe.height * 0.4,
                       width: safe.width * min(0.4, layout.aimRect.x), height: safe.height * 0.6)
     }
-    var activeTouchRoles: [String] { fingers.values.map(\.role).sorted() }
+    var activeTouchRoles: [String] { (fingers.values.map(\.role) + (cursorEngine?.fingers.values.map(\.role) ?? [])).sorted() }
     var toggledActionIDs: [String] { toggles.keys.sorted() }
     var movementVisual: (origin: CGPoint, thumb: CGPoint, radius: CGFloat)? {
         if let f=cursorEngine?.movementFinger {
@@ -248,7 +249,7 @@ final class BCDPackView: UIView {
     private func flushCursor() {
         for event in cursorEngine?.drain() ?? [] {
             switch event {
-            case .motion(let x,let y): HardwareInput.shared.postRelative(x,y)
+            case .motion(let x,let y): HardwareInput.shared.postCursorPackRelative(x,y)
             case .button(let output,let down):
                 if let key=BCDPackCatalog.keyCodes(output)?.first { winios_post_key(key,down ? 1:0) }
                 else { winios_pointer(0,0,output=="mouse:left" ? (down ? 2:4):(down ? 8:16),0) }

@@ -17,7 +17,7 @@ import UIKit
                 if ProcessInfo.processInfo.environment["PACK_FIXTURES"] == "1" {
                     captureFixtures()
                     Task { @MainActor in
-                        do { try await checkStoreClient() }
+                        do { try await checkStoreClient();try captureNoitaFixtures() }
                         catch {
                             let folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
                             try? Data(String(describing:error).utf8).write(to:folder.appendingPathComponent("client-error.txt"))
