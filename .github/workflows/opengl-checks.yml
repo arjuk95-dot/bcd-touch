@@ -1,6 +1,15 @@
 name: OpenGL boundary and source checks
 on: [push, workflow_dispatch]
 jobs:
+  native-presenter:
+    runs-on: macos-15-intel
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+      - name: Compile production GL presenter against device SDK (no hardware execution)
+        run: |
+          xcrun --sdk iphoneos clang -arch arm64 -miphoneos-version-min=17.0 -fobjc-arc -fmodules -Wall -c app/Madeira/Winios/WiniosGL.m -o /tmp/WiniosGL.o
   policy:
     runs-on: ubuntu-latest
     steps:
