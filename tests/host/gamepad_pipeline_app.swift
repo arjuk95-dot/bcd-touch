@@ -3,6 +3,9 @@ import UIKit
 @main struct PipelineApp:App {
     var body:some Scene {WindowGroup {Text("Production GamepadInput pipeline fixture · no guest").onAppear {run()}}}
     @MainActor func run() {
+        let startupFolder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
+        try! FileManager.default.createDirectory(at:startupFolder,withIntermediateDirectories:true)
+        try? Data("applicationState=\(UIApplication.shared.applicationState.rawValue)".utf8).write(to:startupFolder.appendingPathComponent("startup-state.txt"))
         guard UIApplication.shared.applicationState == .active else { DispatchQueue.main.asyncAfter(deadline:.now()+0.1){run()};return }
         if let selected=ProcessInfo.processInfo.environment["RESERVATION_FIXTURE"],let index=Int(selected) {
             let cases=[(false,false,true,0),(false,true,true,1),(true,false,true,1),(false,true,false,0),(true,false,false,0),(true,true,true,0)]
@@ -22,7 +25,7 @@ import UIKit
                 assert(PipelineSpy.read().0.connected==Int32(expected),"Merged per-game and forced-pack startup policy failed")
                 if index==5 {assert(PipelineSpy.disconnectedCount()>0,"KB/M isolation was never sampled")}
                 let file=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0].appendingPathComponent("reservation-\(index).txt")
-                try? Data("PASS: production reservation case \(index), connected=\(expected)\(index==5 ? "; cursor pack suppresses reserved XInput and configured DualSense HID":""). Simulator engine spy; no guest.".utf8).write(to:file)
+                try! Data("PASS: production reservation case \(index), connected=\(expected)\(index==5 ? "; cursor pack suppresses reserved XInput and configured DualSense HID":""). Simulator engine spy; no guest.".utf8).write(to:file)
             }
             return
         }

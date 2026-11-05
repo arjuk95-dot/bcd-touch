@@ -33,7 +33,16 @@ with tempfile.TemporaryDirectory(prefix='touch-pipeline-') as tmp:
         for _ in range(30):
             if receipt.exists():break
             time.sleep(1)
-        assert receipt.exists(),f'Production startup reservation case {index} did not pass'
+        if not receipt.exists():
+            for evidence in folder.glob('*.txt'):(out/evidence.name).write_bytes(evidence.read_bytes())
+            try:
+                diagnostic=subprocess.run(['xcrun','simctl','spawn',uid,'log','show','--style','compact','--last','5m','--predicate','process == "Pipeline"'],capture_output=True,text=True,timeout=20)
+                (out/'pipeline-simulator-app-log.txt').write_text((diagnostic.stdout+diagnostic.stderr)[-100000:])
+            except subprocess.TimeoutExpired:(out/'pipeline-simulator-app-log.txt').write_text('Simulator log query timed out')
+            reports=Path.home()/'Library/Logs/DiagnosticReports'
+            for report in sorted(reports.glob('Pipeline*.ips'),key=lambda p:p.stat().st_mtime)[-2:]:
+                if report.stat().st_size<=2*1024*1024:(out/report.name).write_bytes(report.read_bytes())
+        assert receipt.exists(),f'Production startup reservation case {index} did not pass; inspect preserved startup/log/crash evidence' 
         (out/receipt.name).write_text(receipt.read_text())
     subprocess.run(['xcrun','simctl','launch','--terminate-running-process',uid,'com.arjunkl.bcdtouch.pipeline'],check=True,timeout=120)
     data=Path(run(['xcrun','simctl','get_app_container',uid,'com.arjunkl.bcdtouch.pipeline','data']))/'Documents/pipeline-receipt.txt'

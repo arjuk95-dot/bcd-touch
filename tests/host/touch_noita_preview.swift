@@ -18,7 +18,7 @@ extension TouchPackPreview {
                 let image=UIGraphicsImageRenderer(size:size,format:format).image { context in
                     UIColor(red:0.07,green:0.08,blue:0.09,alpha:1).setFill();context.fill(CGRect(origin:.zero,size:size));view.draw(view.bounds)
                     let label="NOITA PACK · SIMULATOR PRODUCTION UI · \(isPad ? "iPad geometry":"phone geometry") · NO GAME"
-                    (label as NSString).draw(at:CGPoint(x:125,y:5),withAttributes:[.font:UIFont.systemFont(ofSize:10),.foregroundColor:UIColor.white])
+                    (label as NSString).draw(at:CGPoint(x:8,y:size.height-14),withAttributes:[.font:UIFont.systemFont(ofSize:10),.foregroundColor:UIColor.white])
                 }
                 try! image.pngData()!.write(to:folder.appendingPathComponent("noita-"+(isPad ? "pad-":"phone-")+name+".png"))
             }

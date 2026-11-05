@@ -241,7 +241,12 @@ import UIKit
                 let edge=angle-Double.pi/8
                 if selected==i {
                     ctx.saveGState();ctx.setFillColor(UIColor.systemTeal.withAlphaComponent(0.28).cgColor)
-                    ctx.move(to:center);ctx.addArc(center:center,radius:radius,startAngle:edge,endAngle:edge+Double.pi/4,clockwise:false);ctx.closePath();ctx.fillPath();ctx.restoreGState()
+                    ctx.move(to:CGPoint(x:center.x+cos(edge)*inner,y:center.y+sin(edge)*inner))
+                    ctx.addLine(to:CGPoint(x:center.x+cos(edge)*radius,y:center.y+sin(edge)*radius))
+                    ctx.addArc(center:center,radius:radius,startAngle:edge,endAngle:edge+Double.pi/4,clockwise:false)
+                    ctx.addLine(to:CGPoint(x:center.x+cos(edge+Double.pi/4)*inner,y:center.y+sin(edge+Double.pi/4)*inner))
+                    ctx.addArc(center:center,radius:inner,startAngle:edge+Double.pi/4,endAngle:edge,clockwise:true)
+                    ctx.closePath();ctx.fillPath();ctx.restoreGState()
                 }
                 ctx.move(to:CGPoint(x:center.x+cos(edge)*inner,y:center.y+sin(edge)*inner))
                 ctx.addLine(to:CGPoint(x:center.x+cos(edge)*radius,y:center.y+sin(edge)*radius));ctx.strokePath()

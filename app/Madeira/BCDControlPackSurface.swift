@@ -474,6 +474,7 @@ final class BCDPackView: UIView {
         }
         for c in layout.controls where visible(c) {
             if let engine=cursorEngine, [.pointer,.paused,.utilities].contains(engine.mode) { continue }
+            if cursorEngine?.mode == .equipment && c.role != "move" { continue }
             let p = center(c), r = c.radius * unit
             if c.role == "move", !editing {
                 if let stick = movementVisual {
