@@ -145,7 +145,7 @@ final class BCDPackView: UIView {
         if p.cursorControls != nil && p.contexts.contains(context) && !editing && cursorEngine == nil {
             cursorEngine = BCDCursorPack(pack:p,pad:pad)
             if context == "pointer" { cursorEngine?.switchMode(.pointer) }
-            else if BCDPackStore.shared.pack?.id == p.id { cursorEngine?.switchMode(BCDPackStore.shared.cursorMode) }
+            else if BCDPackStore.shared.pack?.id == p.id && BCDPackStore.shared.pack?.identity == p.identity { cursorEngine?.switchMode(BCDPackStore.shared.cursorMode) }
             let clock=Timer(timeInterval:1.0/120.0,repeats:true) { [weak self] _ in
                 MainActor.assumeIsolated { guard let self else{return};self.cursorEngine?.tick(ProcessInfo.processInfo.systemUptime);self.flushCursor() }
             }
@@ -251,7 +251,7 @@ final class BCDPackView: UIView {
         engine.guest=CGSize(width:width>0 ? Int(width):960,height:height>0 ? Int(height):540)
     }
     private func flushCursor(redraw: Bool = false) {
-        if let engine=cursorEngine,BCDPackStore.shared.pack?.id == pack?.id { BCDPackStore.shared.cursorMode=engine.mode }
+        if let engine=cursorEngine,BCDPackStore.shared.pack?.id == pack?.id,BCDPackStore.shared.pack?.identity == pack?.identity { BCDPackStore.shared.cursorMode=engine.mode }
         let events=cursorEngine?.drain() ?? []
         for event in events {
             switch event {

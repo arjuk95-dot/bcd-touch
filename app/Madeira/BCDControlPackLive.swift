@@ -204,7 +204,10 @@ import UniformTypeIdentifiers
         }
         sessionID = entry.id
         base = candidate; pack = base
-        personalKey = local.map { gameKey! + "." + $0.id } ?? gameKey
+        // The built-in cursor pack and its prepared/local form are the same
+        // profile. Switching that launch preference must retain its edits.
+        if let candidate,candidate.cursorControls != nil { personalKey=gameKey!+"."+candidate.id }
+        else { personalKey = local.map { gameKey! + "." + $0.id } ?? gameKey }
         undoHistory.removeAll()
         var editFailure: String?
         if let b = base, let personal = overrides[personalKey!] {

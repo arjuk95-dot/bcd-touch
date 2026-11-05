@@ -6,6 +6,15 @@ extension TouchPackPreview {
         let folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
         let identity=BCDControlPack.Identity(executable:"noita.exe",storeID:"steam:881100",edition:"fixture",build:"fixture",bindingDigest:"fixture")
         let original=BCDNoitaPack.make(identity:identity);try original.validate()
+        let store=BCDPackStore.shared
+        var entry=LibraryEntry();entry.title="Noita";entry.steamAppID=881100;entry.launchRelativePath="noita.exe";entry.relativePath="noita.exe"
+        store.applyLaunchPreference(entry);store.activate(entry)
+        var edited=store.pack!;edited.phone.controls[0].radius=0.16;edited.phone.controls[0].hitRadius=0.16
+        assert(store.saveEdits(edited));store.usePreset(entry);store.activate(nil)
+        store.applyLaunchPreference(entry);store.activate(entry);assert(store.pack!.phone.controls[0].radius==0.16)
+        store.setLaunchPreference(entry,generated:true);store.activate(nil);store.applyLaunchPreference(entry);store.activate(entry)
+        assert(store.pack!.phone.controls[0].radius==0.16,"Built-in/local cursor pack switch lost personal controls")
+        store.activate(nil)
         for isPad in [false,true] {
             let size=isPad ? CGSize(width:1180,height:820):CGSize(width:956,height:440)
             var p=original;if isPad {p.phone=p.pad}
