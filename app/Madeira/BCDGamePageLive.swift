@@ -948,7 +948,7 @@ import UniformTypeIdentifiers
         case "orientation":
             guard value.isEmpty || BCDOrientationChoice(rawValue: value) != nil else { return }
             change(game) { $0.orientationLock = value.isEmpty ? nil : value }
-        case "metalfx-upscale", "dxil-tess-max-factor", "async-submit", "fence-chain", GamepadInput.padModeKey, BCDGPUCards.key, BCDGPUCards.memoryKey:
+        case "gl-backend", "metalfx-upscale", "dxil-tess-max-factor", "async-submit", "fence-chain", GamepadInput.padModeKey, BCDGPUCards.key, BCDGPUCards.memoryKey:
             setLine(game, setting, value)
         case "framegen":
             if #available(iOS 26.0, *) {

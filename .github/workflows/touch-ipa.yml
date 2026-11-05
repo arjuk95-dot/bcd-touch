@@ -34,6 +34,8 @@ jobs:
     - name: Compile GL presenter before engine builds
       run: xcrun --sdk iphoneos clang -arch arm64 -miphoneos-version-min=17.0 -fobjc-arc -fmodules -Wall -c app/Madeira/Winios/WiniosGL.m
         -o /tmp/WiniosGL.o
+    - name: Check per-game OpenGL selection persists without changing other games
+      run: python3 tests/opengl/check-game-setting.py
     - name: Build number
       id: bn
       shell: bash
