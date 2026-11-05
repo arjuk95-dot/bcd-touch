@@ -1,0 +1,105 @@
+{
+  "source": "6c6de009bb34a1d78d78f3ad2f8646cbc1e04122",
+  "bundleID": "com.thebcd69.bcd",
+  "version": "0.1.630",
+  "libraries": {
+    "libOSMesa.dylib": {
+      "dependencies": [
+        "/usr/lib/libz.1.dylib",
+        "/usr/lib/libSystem.B.dylib",
+        "/usr/lib/libc++.1.dylib"
+      ],
+      "codeSignature": true,
+      "installName": "@rpath/libOSMesa.dylib",
+      "platform": 2,
+      "minimumOS": [
+        17,
+        0,
+        0
+      ],
+      "bytes": 14627312,
+      "packagedSHA256": "d5ee1cf5b97a6b1b8451176857f87e48d6d7f177520f68748a0f15c79477b01c",
+      "sourceArtifactSHA256": "aa60747bda065ad41257c4caf7106800aea493f78d0c2d773e93350c36c3db82",
+      "signatureNote": "Xcode/ad-hoc signing may change the whole-file hash"
+    },
+    "libMoltenVK.dylib": {
+      "dependencies": [
+        "/System/Library/Frameworks/IOSurface.framework/IOSurface",
+        "/System/Library/Frameworks/UIKit.framework/UIKit",
+        "/System/Library/Frameworks/Foundation.framework/Foundation",
+        "/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics",
+        "/System/Library/Frameworks/Metal.framework/Metal",
+        "/usr/lib/libc++.1.dylib",
+        "/System/Library/Frameworks/IOKit.framework/Versions/A/IOKit",
+        "/System/Library/Frameworks/QuartzCore.framework/QuartzCore",
+        "/usr/lib/libSystem.B.dylib",
+        "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation",
+        "/usr/lib/libobjc.A.dylib"
+      ],
+      "codeSignature": true,
+      "installName": "@rpath/libMoltenVK.dylib",
+      "platform": 2,
+      "minimumOS": [
+        15,
+        0,
+        0
+      ],
+      "bytes": 4873280,
+      "packagedSHA256": "6e1f5dbfee5ed888ac60f06c78e2931f0f56f543b02f127cf22fde249c54d5c9",
+      "sourceArtifactSHA256": "071749d4404fd3fb21a86d25e08e3c82cec31efe1621602cb87b7706b35f6642",
+      "signatureNote": "Xcode/ad-hoc signing may change the whole-file hash"
+    }
+  },
+  "pe": {
+    "arm64ec-windows": {
+      "machine": "0x8664",
+      "architecture": "arm64ec-hybrid",
+      "chpeVersion": 2,
+      "codeRanges": [
+        {
+          "rva": "0x10000",
+          "bytes": 619548,
+          "type": 1
+        },
+        {
+          "rva": "0xa8000",
+          "bytes": 38560,
+          "type": 2
+        }
+      ],
+      "explicitTEBMoves": 3112,
+      "directTEBStores": 0,
+      "sha256": "520615e1bdf622fd95e40ff3ecb73b531618500e92e1bf0f056394cd5660a541"
+    },
+    "aarch64-windows": {
+      "machine": "0xaa64",
+      "architecture": "arm64",
+      "sha256": "67fa294dc0e41d54754b180fdec3d9384c9c866cc163c5e5dd128928b7159e2d"
+    },
+    "i386-windows": {
+      "machine": "0x14c",
+      "architecture": "i386",
+      "sha256": "4e3a611f7d4259cb88dff228719a9ea3d29a318844751f3038bbd7b28efdf4d0"
+    }
+  },
+  "physicalChecks": "pending",
+  "dependencySources": {
+    "startingCommit": "352af1b5461efbeeca94bb1a1c322a6e394de02c",
+    "bcdBase": "53e7e8c73b62633b1d94c75b451fcc775928378f",
+    "wine": "469e08af66c2638b74422e3d068620d400272d55",
+    "porthole": "0786a24fa97647491c942db6279ad3610dcbb48a",
+    "madeiraOpenGLDonor": "a14444490087c9504a19b9a168482ab35df2fc6c",
+    "mesa": {
+      "version": "25.0.7",
+      "archiveSHA256": "592272df3cf01e85e7db300c449df5061092574d099da275d19e97ef0510f8a6"
+    },
+    "moltenVK": {
+      "version": "v1.4.2",
+      "commit": "db66022459ffb663aa2b50f6b018bc2e124f5edf"
+    },
+    "importedBinaries": false,
+    "scope": "Wine opengl32 patch from consolidated Porthole 0174; original donor iOS WGL driver, presenter and Mesa build patches; BCD adaptations. No whole consolidated engine patch applied."
+  },
+  "ipaSHA256": "9c8016b06f5d3de5f4dfa4f72387978925a2f7fbd64f82438c3c1f2137199d90",
+  "ipaBytes": 191851063
+}

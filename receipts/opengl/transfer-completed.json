@@ -1,0 +1,25 @@
+{
+  "verifiedUTC": "2026-11-05T22:20:49.417921+00:00",
+  "state": "accepted-and-verified",
+  "repository": {
+    "default_branch": "wo-bcd-touch-001",
+    "full_name": "arjuk95-dot/bcd-touch",
+    "html_url": "https://github.com/arjuk95-dot/bcd-touch",
+    "id": 1441826178,
+    "permissions": {
+      "admin": false,
+      "maintain": false,
+      "pull": true,
+      "push": true,
+      "triage": true
+    }
+  },
+  "origin": "https://github.com/arjuk95-dot/bcd-touch.git",
+  "preservedBranches": {
+    "main": "3dff91b305aa57c33101edd4ec23614c0b1c4399",
+    "wo-bcd-touch-001": "3a89fecb0e4879c2505319884e7d965ed42c0170",
+    "wo-bcd-touch-001-v630": "352af1b5461efbeeca94bb1a1c322a6e394de02c",
+    "wo-bcd-opengl-001": "6c6de009bb34a1d78d78f3ad2f8646cbc1e04122"
+  },
+  "credentialsSwitched": false
+}

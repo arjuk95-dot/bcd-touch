@@ -12,12 +12,12 @@ The native archive and existing-slot packaging passed for app source **80c702a3d
 
 Automated evidence:
 
-- [SDK, worker, stock layout and stock sharing](https://github.com/arjunkl/bcd-touch/actions/runs/42037408518): passed.
-- [45 simulator HUD/editor/store/restart exports](https://github.com/arjunkl/bcd-touch/actions/runs/42036500923): passed.
-- [Production GamepadInput publisher and five startup-reservation cases](https://github.com/arjunkl/bcd-touch/actions/runs/42036506630): passed.
-- [Pinned 0.1.630 runtime recovery](https://github.com/arjunkl/bcd-touch/actions/runs/42036512547): passed.
-- [Complete macOS/Xcode archive and Wine/FEX runtime checks](https://github.com/arjunkl/bcd-touch/actions/runs/42039500455): passed.
-- [Native existing-slot packaging and instruction/signature checks](https://github.com/arjunkl/bcd-touch/actions/runs/42064363458): passed.
+- [SDK, worker, stock layout and stock sharing](https://github.com/arjuk95-dot/bcd-touch/actions/runs/42037408518): passed.
+- [45 simulator HUD/editor/store/restart exports](https://github.com/arjuk95-dot/bcd-touch/actions/runs/42036500923): passed.
+- [Production GamepadInput publisher and five startup-reservation cases](https://github.com/arjuk95-dot/bcd-touch/actions/runs/42036506630): passed.
+- [Pinned 0.1.630 runtime recovery](https://github.com/arjuk95-dot/bcd-touch/actions/runs/42036512547): passed.
+- [Complete macOS/Xcode archive and Wine/FEX runtime checks](https://github.com/arjuk95-dot/bcd-touch/actions/runs/42039500455): passed.
+- [Native existing-slot packaging and instruction/signature checks](https://github.com/arjuk95-dot/bcd-touch/actions/runs/42064363458): passed.
 
 The app source is identical between the simulator, SDK and final archive revisions; intervening commits update tests, documentation and CI. Simulator publisher tests use engine spies, not a running Windows game. iPad preview images use iPad geometry in an iPhone simulator, not a physical iPad. All 0.1.630 installation, signing, JIT, guest and physical playtests remain pending. The previous installed version's physical results do not establish those results for this update.
 

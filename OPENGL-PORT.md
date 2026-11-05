@@ -1,6 +1,6 @@
 # Optional desktop OpenGL — WO-BCD-OPENGL-001
 
-Implementation and native builds in progress. Hardware/Noita/Direct3D regression acceptance remain pending.
+Implemented, built and exported for the existing BCD slot. Hardware OpenGL, Noita gameplay and Direct3D device regression acceptance remain pending.
 
 ## Base and donors
 
@@ -15,9 +15,13 @@ Unchanged gitlinks: Wine `469e08af66c2638b74422e3d068620d400272d55`, FEX `d4f2e6
 
 No donor binaries, LuaJIT substitutions, memory reservations, short-map fallbacks, audio changes, SDL hints, FEX/DXMT/Dock replacements or input changes are imported. Heavy builds run on macOS CI.
 
+The inherited BCD build retains its hash-pinned upstream v0.1.630 converter and unchanged optional runtime DLL recovery. Those inputs are recorded in the raw IPA inspection receipt. The new OpenGL dispatch, Windows DLLs, Mesa and MoltenVK are built from the documented sources.
+
 ## Integration map
 
 All three opengl32 PE DLLs (ARM64EC, ARM64, i386) and native dispatch tables build from the same patched BCD Wine source. Generated WoW64 thunks distinguish guest pointers, handles and bound-buffer offsets. Explicit `mov xN,x18` TEB reads use BCD's existing safe TLS rewrite, avoiding donor stack-saving trampolines that conflict with BCD's ARM64EC SP-alignment fix.
+
+The existing WineProcessBridge startup refreshes system32, sysx64, sysaa64 and syswow64 links from the current bundle each session, including after an app update changes its bundle path. This port retains that mechanism; it does not require rebuilding the prefix or copying replacement DLLs into the game's directory. Actual guest-loaded DLL and executable architecture must still be confirmed in device logs.
 
 Native opengl32 objects are in libntdll_unix.a. Win32u registers winios_OpenGLInit from opengl_ios.c. Native libraries are embedded and signed under Frameworks; provenance is bundled under gl-info. Desktop GL loads bundled OSMesa/Zink → MoltenVK → Metal. This does not enable Windows Vulkan games. Actual renderer strings reject software fallback; donor GL4.1/GLSL410 version inflation and implicit GLES fallback are removed.
 
@@ -29,11 +33,41 @@ GL drawable callbacks feed the launch/frame counters and frame-time ring once. D
 
 Select Xcode26.3. `bash tools/opengl/build-dependencies.sh` builds pinned sources; no donor graphics binaries. Run established touch-ipa.yml with successful `gl_dependency_run`. Matching native/PE dispatch, architecture, load-command and hash gates precede archive. Existing Touch sideload packaging preserves the app identity and signing process.
 
+From a Windows checkout authenticated with `gh`, the established CI entry points are:
+
+```powershell
+gh workflow run opengl-dependencies.yml --repo arjuk95-dot/bcd-touch --ref wo-bcd-opengl-001
+# Wait for that run to succeed, then substitute its run ID below.
+gh workflow run touch-ipa.yml --repo arjuk95-dot/bcd-touch --ref wo-bcd-opengl-001 -f runner=macos-15-intel -f gl_dependency_run=DEPENDENCY_RUN_ID
+```
+
+Use the dependency run belonging to the selected source pins and recipes. The verified dependency run for this handoff is [42111988021](https://github.com/arjuk95-dot/bcd-touch/actions/runs/42111988021). It rebuilt Mesa and MoltenVK from source and records source revisions, submodule revisions, patch/recipe hashes, toolchain versions and output hashes. Artifact retention is finite: rerun the dependency workflow when its artifact expires.
+
+The archive produces `BCD-Touch-Lab-build`. Inspect its source stamp and SHA-256 before invoking `touch-sideload-packages.yml` with explicit `source_run`, `source_commit` and `source_sha256`. For the installed BCD slot use the resulting `BCD-Touch-existing-update` artifact. The separate-app artifact is optional and consumes another app slot.
+
+Verified app source: `6c6de009bb34a1d78d78f3ad2f8646cbc1e04122`. [Full native archive 42113758205](https://github.com/arjuk95-dot/bcd-touch/actions/runs/42113758205) and [native sideload packaging 42127319446](https://github.com/arjuk95-dot/bcd-touch/actions/runs/42127319446) succeeded. Version/build: 0.1.630 / 630.
+
+Existing-slot export: **BCD-OpenGL-6c6de00.ipa**, 191,851,063 bytes. SHA-256:
+
+```text
+9c8016b06f5d3de5f4dfa4f72387978925a2f7fbd64f82438c3c1f2137199d90
+```
+
+It retains base ID `com.thebcd69.bcd`, both helper IDs, the `bcd` callback and the three established sideload entitlements. Native signing/verification and unchanged main/helper instruction checks passed. The IPA is ad-hoc signed for packaging; SideStore must still apply the owner's personal signing. Installation and app-data preservation have not been verified on the phone for this export.
+
 Update existing BCD with the same SideStore account; do not uninstall/deactivate/reset library, onboarding or JIT. Save/close the game first. Game details → Display → Desktop OpenGL (Zink). Fully close/restart BCD, enable JIT normally, then launch. Exportable per-game config: `gl-backend = zink`. Rollback: `gl-backend = off` and full app restart. Default Off preserves existing Direct3D routing. No game files, remaps or saves are changed.
+
+The Display picker updates only the GL key in that game's profile. The two exported CFG files contain only that setting; retain the other lines in an existing profile when applying it manually.
 
 ## Verification distinctions
 
 Host policy checks cover disable/software rejection/frame caps. Windows smoke programs, compiled for x86 and x64, exercise GL3 context/share/make-current/delete, missing procedure, textured shader scene, FBO/readback, repeated presents, resize, intervals and cleanup. `--disabled` expects context failure. Compilation does not mean hardware execution.
+
+For implementation source `6c6de009bb34a1d78d78f3ad2f8646cbc1e04122`, [OpenGL boundary checks](https://github.com/arjuk95-dot/bcd-touch/actions/runs/42113757795) and [existing touch checks](https://github.com/arjuk95-dot/bcd-touch/actions/runs/42113757852) passed. These include the production presenter compiled against the iPhoneOS SDK, real per-game picker persistence and isolation, sanitized production policy checks, actual Wine hybrid metadata checks, both Windows smoke program builds, and the existing touch-pack/worker checks. Noita pack source files match the starting commit.
+
+Local inspection of both actual exported IPAs passed ZIP CRC, source/base stamps, ARM64/iOS/minimum-OS/load-command checks, signed Frameworks library presence, source receipts, all three matching OpenGL DLL hashes, hybrid TEB checks, both Windows smoke programs, notices and compiled Noita markers. Library hashes before and after signing are recorded separately in `receipts/opengl/existing-gl-ipa.json`.
+
+The committed settings catalog is the exact file generated and compiled by the full CI archive against all pinned/patched engine sources. It retains all 783 previous keys and adds 14, for 797 total. Seven Noita/shared control-pack files are byte-equivalent to the starting Git blobs after line-ending normalization; hashes are in `receipts/opengl/catalog-and-noita-preservation.json`.
 
 Pending physical gates: installed Noita PE architecture and actual settings; hardware smoke; Noita playable mines/effects/cursor/movement/flight/casting/inventory/transitions/save/relaunch; logs/capture/FPS/frame time/memory/thermal; background/orientation; matched Dread Delusion and another available Direct3D path; GL Off comparison and launcher/touch regression.
 

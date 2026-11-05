@@ -1,0 +1,158 @@
+{
+  "conclusion": "success",
+  "headSha": "6c6de009bb34a1d78d78f3ad2f8646cbc1e04122",
+  "jobs": [
+    {
+      "completedAt": "2026-11-05T21:34:30Z",
+      "conclusion": "success",
+      "databaseId": 127547822770,
+      "name": "policy",
+      "startedAt": "2026-11-05T21:33:46Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-05T21:33:48Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-05T21:33:47Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-05T21:34:05Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-05T21:33:48Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-05T21:34:05Z",
+          "conclusion": "success",
+          "name": "Check real Wine ARM64EC hybrid metadata and native ARM64 headers",
+          "number": 3,
+          "startedAt": "2026-11-05T21:34:05Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-05T21:34:06Z",
+          "conclusion": "success",
+          "name": "Run cc -Wall -Werror -fsanitize=address,undefined tests/opengl/policy.c -o /tmp/gl-policy && /tmp/gl-policy",
+          "number": 4,
+          "startedAt": "2026-11-05T21:34:05Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-05T21:34:27Z",
+          "conclusion": "success",
+          "name": "Run sudo apt-get update -qq && sudo apt-get install -y gcc-mingw-w64-i686 gcc-mingw-w64-x86-64",
+          "number": 5,
+          "startedAt": "2026-11-05T21:34:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-05T21:34:27Z",
+          "conclusion": "success",
+          "name": "Compile real Windows GL smoke programs (not executed on host)",
+          "number": 6,
+          "startedAt": "2026-11-05T21:34:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-05T21:34:29Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 7,
+          "startedAt": "2026-11-05T21:34:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-05T21:34:29Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 14,
+          "startedAt": "2026-11-05T21:34:29Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-05T21:34:29Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 15,
+          "startedAt": "2026-11-05T21:34:29Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/arjuk95-dot/bcd-touch/actions/runs/42113757795/job/127547822770"
+    },
+    {
+      "completedAt": "2026-11-05T21:35:05Z",
+      "conclusion": "success",
+      "databaseId": 127547823306,
+      "name": "native-presenter",
+      "startedAt": "2026-11-05T21:33:48Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-05T21:33:50Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-05T21:33:49Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-05T21:34:17Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-11-05T21:33:50Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-05T21:34:17Z",
+          "conclusion": "success",
+          "name": "Run sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer",
+          "number": 3,
+          "startedAt": "2026-11-05T21:34:17Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-05T21:34:39Z",
+          "conclusion": "success",
+          "name": "Compile production GL presenter against device SDK (no hardware execution)",
+          "number": 4,
+          "startedAt": "2026-11-05T21:34:17Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-05T21:35:01Z",
+          "conclusion": "success",
+          "name": "Run real per-game GL picker persistence check",
+          "number": 5,
+          "startedAt": "2026-11-05T21:34:39Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-05T21:35:02Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 10,
+          "startedAt": "2026-11-05T21:35:01Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-05T21:35:02Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 11,
+          "startedAt": "2026-11-05T21:35:02Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/arjuk95-dot/bcd-touch/actions/runs/42113757795/job/127547823306"
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/arjuk95-dot/bcd-touch/actions/runs/42113757795"
+}
