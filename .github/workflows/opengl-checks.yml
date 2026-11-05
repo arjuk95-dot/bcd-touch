@@ -1,0 +1,19 @@
+name: OpenGL boundary and source checks
+on: [push, workflow_dispatch]
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cc -Wall -Werror -fsanitize=address,undefined tests/opengl/policy.c -o /tmp/gl-policy && /tmp/gl-policy
+      - run: sudo apt-get update -qq && sudo apt-get install -y gcc-mingw-w64-i686 gcc-mingw-w64-x86-64
+      - name: Compile real Windows GL smoke programs (not executed on host)
+        run: |
+          mkdir -p build-out
+          i686-w64-mingw32-gcc -std=c11 -Wall -O2 tests/opengl/smoke.c -o build-out/bcd-opengl-smoke-x86.exe -lopengl32 -lgdi32 -luser32
+          x86_64-w64-mingw32-gcc -std=c11 -Wall -O2 tests/opengl/smoke.c -o build-out/bcd-opengl-smoke-x64.exe -lopengl32 -lgdi32 -luser32
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OpenGL-Windows-smoke-programs
+          path: build-out/*.exe
+          retention-days: 14

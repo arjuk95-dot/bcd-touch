@@ -39,6 +39,7 @@
 
 #include "../IOSDisplayShim.h"
 #include "../BCDFrameRing.h"
+#include "../../../build/win32u-unix/gl_policy.h"
 
 #define GL_RING 3
 
@@ -292,11 +293,8 @@ void madeira_gl_pace(int interval) {
     int mode = madeira_get_vsync_locked();
     const char *hz = getenv("BCD_SESSION_HZ");
     double display = hz ? atof(hz) : 60;
-    if (display < 30 || display > 120) display = 60;
-    double cap = mode == 1 ? 60 : mode == 3 ? 30 : mode == 4 ? 40 : mode == 0 ? display : 0;
     const char *override = getenv("MADEIRA_FPS_CAP");
-    if (override && atof(override) >= 10 && atof(override) <= 120) cap = atof(override);
-    if (interval > 0 && (cap == 0 || cap > display / interval)) cap = display / interval;
+    double cap = bcd_gl_cap(mode, display, interval, override ? atof(override) : 0);
     double now = CACurrentMediaTime(), delay = cap > 0 ? previous + 1.0 / cap - now : 0;
     if (delay > 0 && delay < 0.2) [NSThread sleepForTimeInterval:delay];
     previous = CACurrentMediaTime();

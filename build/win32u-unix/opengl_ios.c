@@ -39,6 +39,7 @@
 
 #include <dlfcn.h>
 #include <pthread.h>
+#include "gl_policy.h"
 
 #include "ntstatus.h"
 #include "ntgdi_private.h"
@@ -840,8 +841,7 @@ static BOOL zink_init(void)
     renderer = (const char *)pz_glGetString( GL_RENDERER );
     version = (const char *)pz_glGetString( GL_VERSION );
     ERR( "[winios-gl] zink: test context says %s | %s\n", renderer ? renderer : "(null)", version ? version : "(null)" );
-    BOOL hardware = renderer && strstr(renderer, "zink") && !strstr(renderer, "softpipe") &&
-                    !strstr(renderer, "llvmpipe") && !strstr(renderer, "SwiftShader");
+    BOOL hardware = bcd_gl_hardware(renderer);
     ERR("[winios-gl] vendor=%s renderer=%s version=%s GLSL=%s hardware=%d\n",
         pz_glGetString(GL_VENDOR), renderer ? renderer : "null", version ? version : "null",
         pz_glGetString(GL_SHADING_LANGUAGE_VERSION), hardware);
@@ -868,8 +868,7 @@ UINT winios_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs,
     }
 
     *driver_funcs = NULL;
-    if ((getenv("MADEIRA_NO_GL") && strcmp(getenv("MADEIRA_NO_GL"), "0")) ||
-        !backend || strcmp(backend, "zink")) {
+    if (!bcd_gl_enabled(backend, getenv("MADEIRA_NO_GL"))) {
         ERR("[winios-gl] disabled or unsupported backend: %s\n", backend ? backend : "off");
         return STATUS_NOT_SUPPORTED;
     }
