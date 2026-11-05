@@ -1,0 +1,138 @@
+{
+  "kind": "Actual native-build IPA inspection, not a release fixture",
+  "appSource": "80c702a3dc1558c8ef8ab654070f845b97ec47b2",
+  "ipaSHA256": "841eac67019bee81c0920d314464e8d2900f48350302f80090240e6b59463a84",
+  "tools": [
+    {
+      "name": "attrib.exe",
+      "bytes": 73728,
+      "sha256": "242d220abfda12e221246979575a7e7db4eee376634077dc015ff0075d235814"
+    },
+    {
+      "name": "cacls.exe",
+      "bytes": 24576,
+      "sha256": "78327162e785cb9110b42a4dc75145f82fb05065412b4bbc4288ee874a7c1d85"
+    },
+    {
+      "name": "cscript.exe",
+      "bytes": 241664,
+      "sha256": "4aec240fe7c84317bc3638128aaa1580efa3f2110a9f82e8248986cb409f3154"
+    },
+    {
+      "name": "expand.exe",
+      "bytes": 20480,
+      "sha256": "95f511c571499ca9262beecc249580fd8bc9c7a78dd93710e7aef1de2bd20cd5"
+    },
+    {
+      "name": "fc.exe",
+      "bytes": 32768,
+      "sha256": "b1751d8a09ac8daec4370140c1c693c4420364f61f16feb54054b118580bd541"
+    },
+    {
+      "name": "find.exe",
+      "bytes": 36864,
+      "sha256": "d0b83593f5ac46e8fc7dc5e07096401fff5d29f842cf0148b99f8715385bf7c1"
+    },
+    {
+      "name": "findstr.exe",
+      "bytes": 36864,
+      "sha256": "8e58f8f35b8157c228750f021d3549a40ba7794e8d044d56e3f0d3857ba25fbf"
+    },
+    {
+      "name": "hostname.exe",
+      "bytes": 36864,
+      "sha256": "8de8422a99f3582728e46c18bf5b191ea01fe86c3d480bfd48bdb8bbc06d0b75"
+    },
+    {
+      "name": "icacls.exe",
+      "bytes": 24576,
+      "sha256": "97e01e514d8d09e861ee82fbc9a2a6cd5086b6ff88e1b2075abd7db539102f48"
+    },
+    {
+      "name": "ipconfig.exe",
+      "bytes": 57344,
+      "sha256": "f7dadb9963e818648e9204b137ccdfd9316068c22dd0abe1e183771f55087547"
+    },
+    {
+      "name": "ping.exe",
+      "bytes": 32768,
+      "sha256": "18f44ba354689016a930f9838aa945f301596ed2faa5cec770b83d02c8f9857e"
+    },
+    {
+      "name": "reg.exe",
+      "bytes": 421888,
+      "sha256": "c8f6f65ea8fbc45a821eba5f491e2b7126a0f203ddc033535f4af8b4b30771ce"
+    },
+    {
+      "name": "robocopy.exe",
+      "bytes": 28672,
+      "sha256": "12af2e0ab11247d2c1f382ab7fcf95ef8f56ebf3a9a8ba5b036c9ec5de99dc6b"
+    },
+    {
+      "name": "sdbinst.exe",
+      "bytes": 24576,
+      "sha256": "16c8dbf37383ced9caea135d70483a892bb8f2ad1eb051ca90857b971fd3d8a4"
+    },
+    {
+      "name": "setx.exe",
+      "bytes": 28672,
+      "sha256": "7456af77b63292ab43000d6c10e297dc9c1a12dc793c9e815665ae4c38f4b914"
+    },
+    {
+      "name": "sort.exe",
+      "bytes": 32768,
+      "sha256": "a3a591fd56fb1ac6f336d093e9fb3b41c8fb623d5a0e2071dcdc5c65c5ce9e18"
+    },
+    {
+      "name": "subst.exe",
+      "bytes": 28672,
+      "sha256": "d64ba2d868b627ffb649405b065ae56022c253eb04094f8ffdf9babf829769ca"
+    },
+    {
+      "name": "systeminfo.exe",
+      "bytes": 53248,
+      "sha256": "bc8117765e2419a72f3a12f00afb92bedbdc6ac236db6be106889e2ac6cd43a8"
+    },
+    {
+      "name": "taskkill.exe",
+      "bytes": 98304,
+      "sha256": "9723029c9e173cf15085a178ad460a9910f3b101cf6563c28e56199ab8ddb0b5"
+    },
+    {
+      "name": "tasklist.exe",
+      "bytes": 49152,
+      "sha256": "346d211dcc4f620fce03c894faedfe9c508d0542c7e8022b003a10705b5a350a"
+    },
+    {
+      "name": "timeout.exe",
+      "bytes": 28672,
+      "sha256": "3cc9609b53c0c336fe62e9b6e0649f6736962346654c1b75d62471541cf751e4"
+    },
+    {
+      "name": "where.exe",
+      "bytes": 32768,
+      "sha256": "9305cc223c871c37ad6f3354772f34fca423f407824c32df739355905d8253f4"
+    },
+    {
+      "name": "whoami.exe",
+      "bytes": 32768,
+      "sha256": "d54da4469b9e065d094eb95c97c4315ba933d8f7b60e49216c29c2628ce1409e"
+    },
+    {
+      "name": "wmic.exe",
+      "bytes": 57344,
+      "sha256": "16a3e5c30626801a3b1388effe6aa7deb3c59c9b3eb93ddd2eee587f640e8cc8"
+    },
+    {
+      "name": "wscript.exe",
+      "bytes": 241664,
+      "sha256": "da896416475e32f313cffcd2db7fa5c4aa172d96009b719cc40ee9515d71d58f"
+    },
+    {
+      "name": "xcopy.exe",
+      "bytes": 192512,
+      "sha256": "15dd5563f345aa946d93b77632899c89eac30008c39144194f587878c7251e8b"
+    }
+  ],
+  "passed": true
+}

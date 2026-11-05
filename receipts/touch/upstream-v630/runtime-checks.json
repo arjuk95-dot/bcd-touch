@@ -1,0 +1,53 @@
+{
+  "run": "https://github.com/arjunkl/bcd-touch/actions/runs/42039500455",
+  "checks": [
+    {
+      "name": "Build xtajit64.dll (FEX fixes, AVX opt-in)",
+      "result": "success"
+    },
+    {
+      "name": "Build extra Wine DLLs for arm64ec",
+      "result": "success"
+    },
+    {
+      "name": "Verify committed PE DLLs",
+      "result": "success"
+    },
+    {
+      "name": "Patch wine text-log mirror to drop account names",
+      "result": "success"
+    },
+    {
+      "name": "Patch wine to hide the host's version file from Windows programs",
+      "result": "success"
+    },
+    {
+      "name": "Patch wine xaudio2 engine callbacks (opt-in)",
+      "result": "success"
+    },
+    {
+      "name": "Patch wine vkd3d-shader to read point as a name",
+      "result": "success"
+    },
+    {
+      "name": "Patch wine with the fault-safe orphan-lock reads",
+      "result": "success"
+    },
+    {
+      "name": "Patch DXMT D3D9 SM3 vertex interface",
+      "result": "success"
+    },
+    {
+      "name": "Check LSE atomics on aliased pages",
+      "result": "success"
+    },
+    {
+      "name": "Check the thread registry reuses ended threads' slots",
+      "result": "success"
+    },
+    {
+      "name": "Check a later desktop window never takes the input desktop",
+      "result": "success"
+    }
+  ]
+}
