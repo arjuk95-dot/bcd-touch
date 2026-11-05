@@ -1,0 +1,11 @@
+{
+  "startingCommit": "352af1b5461efbeeca94bb1a1c322a6e394de02c",
+  "bcdBase": "53e7e8c73b62633b1d94c75b451fcc775928378f",
+  "wine": "469e08af66c2638b74422e3d068620d400272d55",
+  "porthole": "0786a24fa97647491c942db6279ad3610dcbb48a",
+  "madeiraOpenGLDonor": "a14444490087c9504a19b9a168482ab35df2fc6c",
+  "mesa": {"version": "25.0.7", "archiveSHA256": "592272df3cf01e85e7db300c449df5061092574d099da275d19e97ef0510f8a6"},
+  "moltenVK": {"version": "v1.4.2", "commit": "db66022459ffb663aa2b50f6b018bc2e124f5edf"},
+  "importedBinaries": false,
+  "scope": "Wine opengl32 patch from consolidated Porthole 0174; original donor iOS WGL driver, presenter and Mesa build patches; BCD adaptations. No whole consolidated engine patch applied."
+}

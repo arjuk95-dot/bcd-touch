@@ -1,0 +1,27 @@
+name: BCD OpenGL source dependencies
+on:
+  workflow_dispatch:
+jobs:
+  dependencies:
+    runs-on: macos-15-intel
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+      - run: brew install bison flex
+      - run: echo "$(brew --prefix bison)/bin:$(brew --prefix flex)/bin" >> "$GITHUB_PATH"
+      - name: Build MoltenVK and Mesa from pinned sources
+        run: bash tools/opengl/build-dependencies.sh 2>&1 | tee opengl-dependencies.log; exit ${PIPESTATUS[0]}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: opengl-source-dependencies
+          path: |
+            app/Madeira/gl/
+            app/Madeira/licenses/*Mesa*
+            app/Madeira/licenses/*MoltenVK*
+            app/Madeira/licenses/*SPIRV*
+            app/Madeira/licenses/*cereal*
+            opengl-dependencies.log
+            build/mesa-ios/obj/meson-logs/
+          retention-days: 14
