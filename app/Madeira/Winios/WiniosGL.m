@@ -459,8 +459,8 @@ static BOOL zink_slots_create(MadeiraGLPresenter *p, int w, int h) {
 static void *zink_slot_lock(GLSlot *s, int *row_pixels) {
     if (s->last) [s->last waitUntilCompleted];   // Metal may still be reading it
     if (!s->locked) {
-        IOReturn result = IOSurfaceLock(s->surface, 0, NULL);
-        if (result != kIOReturnSuccess) {
+        kern_return_t result = IOSurfaceLock(s->surface, 0, NULL);
+        if (result != KERN_SUCCESS) {
             GLLOG("IOSurfaceLock failed: %#x", result);
             return NULL;
         }
