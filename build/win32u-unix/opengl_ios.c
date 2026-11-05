@@ -39,6 +39,7 @@
 
 #include <dlfcn.h>
 #include <pthread.h>
+#include <stdio.h>
 #include "gl_policy.h"
 
 #include "ntstatus.h"
@@ -544,6 +545,7 @@ static const struct opengl_driver_funcs ios_driver_funcs =
 #define OSMESA_CONTEXT_MINOR_VERSION 0x37
 
 static void *osmesa_handle;
+static void *moltenvk_handle;
 static void *(*pOSMesaCreateContextAttribs)( const int *attribs, void *share );
 static void (*pOSMesaDestroyContext)( void *ctx );
 static GLboolean (*pOSMesaMakeCurrent)( void *ctx, void *buffer, GLenum type, GLsizei width, GLsizei height );
@@ -563,6 +565,7 @@ struct zink_surface
 
 /* the drawable bound to this thread's current OSMesa context */
 static __thread struct zink_surface *zink_current;
+static __thread void *zink_logged_context;
 
 static struct zink_surface *zink_from_drawable( struct opengl_drawable *base )
 {
@@ -636,6 +639,7 @@ static BOOL zink_context_create( int format, void *share, const int *attribs, vo
 
 static BOOL zink_context_destroy( void *context )
 {
+    if (zink_logged_context == context) zink_logged_context = NULL;
     pOSMesaDestroyContext( context );
     return TRUE;
 }
@@ -643,9 +647,23 @@ static BOOL zink_context_destroy( void *context )
 /* Point OSMesa at `buffer` (the locked IOSurface slot) for `surface`. */
 static BOOL zink_attach( struct zink_surface *surface, void *context, void *buffer, int row_pixels )
 {
+    madeira_gl_wait_active();
     if (!pOSMesaMakeCurrent( context, buffer, GL_UNSIGNED_BYTE, surface->width, surface->height )) return FALSE;
     pOSMesaPixelStore( OSMESA_ROW_LENGTH, row_pixels );
     pOSMesaPixelStore( OSMESA_Y_UP, 1 );   /* bottom row first, as the present shader expects */
+    if (zink_logged_context != context)
+    {
+        const char *renderer = (const char *)pz_glGetString(GL_RENDERER);
+        ERR("[winios-gl] created-context=%p vendor=%s renderer=%s GL=%s GLSL=%s\n", context,
+            pz_glGetString(GL_VENDOR), renderer ? renderer : "null", pz_glGetString(GL_VERSION),
+            pz_glGetString(GL_SHADING_LANGUAGE_VERSION));
+        if (!bcd_gl_hardware(renderer))
+        {
+            ERR("[winios-gl] rejecting software/unknown renderer in game context\n");
+            return FALSE;
+        }
+        zink_logged_context = context;
+    }
     zink_current = surface;
     return TRUE;
 }
@@ -672,6 +690,11 @@ static BOOL zink_make_current( struct opengl_drawable *draw, struct opengl_drawa
         return pOSMesaMakeCurrent( NULL, NULL, 0, 0, 0 );
     }
     if (!draw) return FALSE;
+    if (read && read != draw)
+    {
+        ERR("[winios-gl] separate WGL read/draw surfaces are unsupported\n");
+        return FALSE;
+    }
     /* OSMesa has no separate read surface; reads come from the draw buffer. */
     return zink_bind( zink_from_drawable( draw ), context );
 }
@@ -785,6 +808,12 @@ static BOOL zink_init(void)
         return FALSE;
     }
     snprintf( path, sizeof(path), "%s/libMoltenVK.dylib", dir );
+    if (!(moltenvk_handle = dlopen(path, RTLD_NOW | RTLD_LOCAL)))
+    {
+        ERR("[winios-gl] cannot load MoltenVK %s: %s\n", path, dlerror());
+        return FALSE;
+    }
+    ERR("[winios-gl] loaded MoltenVK %s\n", path);
     setenv( "ZINK_VULKAN_LIBRARY", path, 1 );
     setenv( "GALLIUM_DRIVER", "zink", 1 );
     setenv( "MVK_CONFIG_LOG_LEVEL", "1", 0 );   /* MoltenVK: errors only */
@@ -795,6 +824,17 @@ static BOOL zink_init(void)
     {
         ERR( "[winios-gl] zink: cannot load %s: %s\n", path, dlerror() );
         return FALSE;
+    }
+    ERR("[winios-gl] loaded OSMesa %s\n", path);
+    for (unsigned int i = 0; i < 2; ++i)
+    {
+        const char *name = i ? "libMoltenVK.version" : "libOSMesa.version";
+        char version[128] = "unavailable";
+        snprintf(path, sizeof(path), "%s/../gl-info/%s", dir, name);
+        FILE *file = fopen(path, "r");
+        if (file) { if (!fgets(version, sizeof(version), file)) version[0] = 0; fclose(file); }
+        version[strcspn(version, "\r\n")] = 0;
+        ERR("[winios-gl] source-version %s=%s\n", name, version);
     }
 #define LOAD_FUNCPTR( name ) \
     if (!(p##name = dlsym( osmesa_handle, #name ))) \
