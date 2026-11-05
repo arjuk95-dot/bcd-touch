@@ -1235,6 +1235,7 @@ final class LibraryModel: ObservableObject {
             BCDPackStore.shared.applyLaunchPreference(entry)
             BCDPackStore.shared.activate(entry)
             GamepadInput.packControllerSession = BCDPackStore.shared.enabled && BCDPackStore.shared.pack?.inputMode == "controller"
+            GamepadInput.packKeyboardMouseSession = BCDPackStore.shared.enabled && BCDPackStore.shared.pack?.cursorControls != nil
             GamepadInput.shared.configurePack(enabled: GamepadInput.packControllerSession, accepting: false, calibration: BCDPackStore.shared.pack?.aim ?? BCDMouseJoystick.Calibration())
             return BCDPackStore.shared.pack != nil
         }

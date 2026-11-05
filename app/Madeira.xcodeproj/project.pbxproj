@@ -8,6 +8,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+        BCD000000000000000000A08 /* BCDCursorPackSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD000000000000000000B08; };
+        BCD000000000000000000A07 /* BCDNoitaPack.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD000000000000000000B07; };
+        BCD000000000000000000A06 /* BCDCursorPack.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD000000000000000000B06; };
         BCD000000000000000000A05 /* BCDControlPackAuthoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD000000000000000000B05; };
 		BCD000000000000000000A03 /* BCDControlPackSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD000000000000000000B03; };
 		BCD000000000000000000A02 /* BCDControlPackLive.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD000000000000000000B02; };
@@ -418,6 +421,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+        BCD000000000000000000B08 /* BCDCursorPackSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDCursorPackSettings.swift; sourceTree = "<group>"; };
+        BCD000000000000000000B07 /* BCDNoitaPack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDNoitaPack.swift; sourceTree = "<group>"; };
+        BCD000000000000000000B06 /* BCDCursorPack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDCursorPack.swift; sourceTree = "<group>"; };
         BCD000000000000000000B05 /* BCDControlPackAuthoring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDControlPackAuthoring.swift; sourceTree = "<group>"; };
 		BCD000000000000000000B03 /* BCDControlPackSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDControlPackSurface.swift; sourceTree = "<group>"; };
 		BCD000000000000000000B02 /* BCDControlPackLive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDControlPackLive.swift; sourceTree = "<group>"; };
@@ -1061,6 +1067,9 @@
 				A2000281 /* WiniosCursor.c */,
 				A2000243 /* GamepadInput.swift */,
 				BCD000000000000000000B05 /* BCDControlPackAuthoring.swift */,
+                BCD000000000000000000B08 /* BCDCursorPackSettings.swift */,
+                BCD000000000000000000B07 /* BCDNoitaPack.swift */,
+                BCD000000000000000000B06 /* BCDCursorPack.swift */,
                 BCD000000000000000000B03 /* BCDControlPackSurface.swift */,
 				BCD000000000000000000B02 /* BCDControlPackLive.swift */,
 				BCD000000000000000000B01 /* BCDControlPack.swift */,
@@ -1653,6 +1662,9 @@
 				A1000281 /* WiniosCursor.c in Sources */,
 				A1000243 /* GamepadInput.swift in Sources */,
 				BCD000000000000000000A05 /* BCDControlPackAuthoring.swift in Sources */,
+                BCD000000000000000000A08 /* BCDCursorPackSettings.swift in Sources */,
+                BCD000000000000000000A07 /* BCDNoitaPack.swift in Sources */,
+                BCD000000000000000000A06 /* BCDCursorPack.swift in Sources */,
                 BCD000000000000000000A03 /* BCDControlPackSurface.swift in Sources */,
 				BCD000000000000000000A02 /* BCDControlPackLive.swift in Sources */,
 				BCD000000000000000000A01 /* BCDControlPack.swift in Sources */,

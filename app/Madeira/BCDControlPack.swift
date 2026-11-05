@@ -23,6 +23,7 @@ struct BCDControlPack: Codable, Equatable {
         var coordinateSpace: String? = nil
         var slideToAction: String? = nil
         var labelPlacement: String? = nil
+        var showLabel: Bool? = nil
     }
     struct Layout: Codable, Equatable {
         struct Rect: Codable, Equatable { var x: Double; var y: Double; var width: Double; var height: Double }
@@ -46,6 +47,22 @@ struct BCDControlPack: Codable, Equatable {
     var evidence: [Evidence]
     var unresolved: [String]
     var lookMode: String? = nil
+    /// Version 4 is opt-in. Older packs retain their original touch routing.
+    struct DigitalMovement: Codable, Equatable {
+        var left: String; var right: String; var up: String; var down: String
+        var deadZone: Double = 0.18
+        var flightThreshold: Double = 0.35
+        var downThreshold: Double = 0.78
+        var hysteresis: Double = 0.06
+    }
+    struct CursorControls: Codable, Equatable {
+        var fire: String; var inventory: String; var pause: String; var throwAction: String
+        var primaryClick: String; var secondaryClick: String
+        var firingMultiplier: Double = 1
+        var radialX: Double = 0.75; var radialY: Double = 0.5; var radialRadius: Double = 0.28
+    }
+    var digitalMovement: DigitalMovement? = nil
+    var cursorControls: CursorControls? = nil
 
     static let padOutputs: Set<String> = ["A", "B", "X", "Y", "LB", "RB", "LT", "RT", "L3", "R3", "Menu", "View", "D↑", "D↓", "D←", "D→", "LS", "RS"]
     enum Invalid: Error, CustomStringConvertible {
@@ -56,7 +73,7 @@ struct BCDControlPack: Codable, Equatable {
     func validate(for expected: Identity? = nil, placement: Placement = .generated) throws {
         func require(_ ok: Bool, _ reason: String) throws { if !ok { throw Invalid.reason(reason) } }
         func text(_ s: String) -> Bool { !s.isEmpty && s.utf8.count <= 256 && !s.unicodeScalars.contains { $0.value < 32 } }
-        try require([1, 2, 3].contains(version), "Unsupported pack version")
+        try require([1, 2, 3, 4].contains(version), "Unsupported pack version")
         try require(text(id) && text(title), "Missing name")
         try require(expected == nil || identity == expected, "Game/build/bindings mismatch")
         for s in [identity.executable, identity.storeID, identity.edition, identity.build, identity.bindingDigest] { try require(text(s), "Incomplete identity") }
@@ -84,6 +101,21 @@ struct BCDControlPack: Codable, Equatable {
             try require(evidence.contains { $0.id == a.evidence }, "Binding has no evidence")
         }
         let ids = Set(actions.map(\.id))
+        var capabilityActions = Set<String>()
+        if let cursor = cursorControls {
+            try require(version >= 4 && inputMode == "keyboardMouse" && lookMode == "relativeMouse", "Cursor capability requires version 4 keyboard/mouse relative mode")
+            guard let move = digitalMovement else { throw Invalid.reason("Cursor capability requires digital movement") }
+            capabilityActions = Set([cursor.fire,cursor.inventory,cursor.pause,cursor.throwAction,cursor.primaryClick,cursor.secondaryClick,move.left,move.right,move.up,move.down])
+            try require(capabilityActions.isSubset(of: ids), "Unknown cursor/movement action")
+            try require([move.deadZone,move.flightThreshold,move.downThreshold,move.hysteresis,cursor.firingMultiplier,cursor.radialX,cursor.radialY,cursor.radialRadius].allSatisfy(\.isFinite), "Nonfinite cursor settings")
+            try require((0.05...0.6).contains(move.deadZone) && (0.15...0.9).contains(move.flightThreshold) && (0.4...1.5).contains(move.downThreshold) && (0.01...0.14).contains(move.hysteresis) && move.hysteresis < min(move.deadZone,move.flightThreshold), "Invalid digital movement thresholds")
+            try require((0.1...3).contains(cursor.firingMultiplier) && (0...1).contains(cursor.radialX) && (0...1).contains(cursor.radialY) && (0.18...0.4).contains(cursor.radialRadius), "Invalid cursor/radial calibration")
+            try require(radial.count == 8 && Set(radial).count == 8, "Equipment radial needs eight stable slots")
+            for id in [move.left,move.right,move.up,move.down] { try require(actions.first { $0.id == id }?.output.hasPrefix("key:") == true, "Digital movement must use keyboard keys") }
+            try require(actions.first { $0.id == cursor.fire }?.output == "mouse:left" && actions.first { $0.id == cursor.fire }?.behavior == "hold", "Cursor fire must hold primary mouse")
+            try require(actions.first { $0.id == cursor.primaryClick }?.output == "mouse:left" && actions.first { $0.id == cursor.secondaryClick }?.output == "mouse:right", "Pointer click bindings must use mouse buttons")
+            try require(radial.allSatisfy { id in actions.contains { $0.id == id && $0.output.hasPrefix("key:") && $0.behavior == "tap" } }, "Equipment slots require direct tapped keys")
+        } else { try require(digitalMovement == nil, "Digital movement requires cursor capability") }
         try require(radial.count <= 8 && radial.allSatisfy { ids.contains($0) }, "Unknown radial action")
         try require(gestures.count <= 4 && Set(gestures.map(\.kind)).count == gestures.count && gestures.allSatisfy { ["swipeUp", "swipeDown", "swipeLeft", "swipeRight"].contains($0.kind) && ids.contains($0.action) }, "Unknown gesture")
         for layout in [phone, pad] {
@@ -101,6 +133,7 @@ struct BCDControlPack: Codable, Equatable {
                 try require(c.coordinateSpace == nil || ["safe", "screen"].contains(c.coordinateSpace!), "Unknown coordinate space")
                 try require(c.coordinateSpace == nil || version >= 2, "Display anchors require pack version 2")
                 try require(c.labelPlacement == nil || (version >= 3 && ["inside", "below"].contains(c.labelPlacement!)), "Invalid label placement")
+                try require(c.showLabel == nil || version >= 4, "Optional labels require version 4")
                 if let targetID = c.slideToAction {
                     let source = actions.first { $0.id == c.action }
                     let target = actions.first { $0.id == targetID }
@@ -108,19 +141,21 @@ struct BCDControlPack: Codable, Equatable {
                     try require(layout.controls.contains { $0.action == targetID && $0.role == "button" }, "Slide target needs a visible button")
                     try require(Set(source?.contexts ?? []).isSubset(of: Set(target?.contexts ?? [])), "Slide target unavailable in source contexts")
                 }
-                if c.role == "move" { try require(actions.first { $0.id == c.action }?.output == "LS", "Movement must use LS") }
+                if c.role == "move" { try require(cursorControls != nil ? c.action == digitalMovement?.left : actions.first { $0.id == c.action }?.output == "LS", "Invalid movement action") }
                 if c.role == "fireAim" { try require(actions.first { $0.id == c.action }?.behavior == "hold", "Drag fire must hold") }
                 if ["button", "fireAim", "gesture"].contains(c.role) { try require(!["LS", "RS"].contains(actions.first { $0.id == c.action }?.output ?? ""), "Axes require continuous surfaces") }
                 if placement == .generated {
                     try require(c.coordinateSpace != "screen", "Generated controls must use safe-area anchors")
                     // Generation quality rule only. Personal layouts may overlap any region or control.
                     let h = c.hitRadius
-                    try require(lookMode == "none" || c.x + h <= r.x || c.x - h >= r.x + r.width || c.y + h <= r.y || c.y - h >= r.y + r.height, "Hit region intrudes into reserved swipe area")
+                    // Cursor packs have touch-down button priority inside the touchpad;
+                    // only their explicit fire region can acquire an existing swipe.
+                    try require(cursorControls != nil || lookMode == "none" || c.x + h <= r.x || c.x - h >= r.x + r.width || c.y + h <= r.y || c.y - h >= r.y + r.height, "Hit region intrudes into reserved swipe area")
                 }
             }
         }
         for layout in [phone, pad] {
-            let reachable = Set(layout.controls.filter { $0.role != "radial" }.map(\.action) + radial + gestures.map(\.action))
+            let reachable = Set(layout.controls.filter { $0.role != "radial" }.map(\.action) + radial + gestures.map(\.action)).union(capabilityActions)
             try require(actions.allSatisfy { reachable.contains($0.id) || (inputMode == "controller" && lookMode != "none" && $0.output == "RS") }, "Declared action has no reachable control")
         }
         try require(radial.allSatisfy { id in !["LS", "RS"].contains(actions.first { $0.id == id }?.output ?? "") } && gestures.allSatisfy { g in !["LS", "RS"].contains(actions.first { $0.id == g.action }?.output ?? "") }, "Axes cannot be pulsed")

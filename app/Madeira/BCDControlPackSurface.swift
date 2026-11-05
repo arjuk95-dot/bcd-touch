@@ -125,17 +125,27 @@ final class BCDPackView: UIView {
     private var epoch = UUID()
     private var pulses = Set<UUID>()
     private var pulseActions: [UUID: String] = [:]
+    private(set) var cursorEngine: BCDCursorPack?
+    private var cursorTimer: Timer?
     init() {
         super.init(frame: .zero); backgroundColor = .clear; isMultipleTouchEnabled = true
         NotificationCenter.default.addObserver(self, selector: #selector(interrupted), name: UIApplication.willResignActiveNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(interrupted), name: BCDPackFocus.didLoseFocus, object: nil)
     }
     required init?(coder: NSCoder) { fatalError() }
-    deinit { NotificationCenter.default.removeObserver(self) }
+    deinit { cursorTimer?.invalidate();NotificationCenter.default.removeObserver(self) }
     @objc private func interrupted() { clear() }
     func configure(_ p: BCDControlPack, context: String, debug: Bool, editing: Bool) {
-        if pack != p || self.context != context || self.editing != editing { clear() }
+        let changed = pack != p || self.context != context || self.editing != editing
+        if changed { clear();cursorEngine = nil;cursorTimer?.invalidate();cursorTimer=nil }
         pack = p; self.context = context; self.debug = debug; self.editing = editing; setNeedsDisplay()
+        if p.cursorControls != nil && !editing && cursorEngine == nil {
+            cursorEngine = BCDCursorPack(pack:p,pad:pad)
+            let clock=Timer(timeInterval:1.0/120.0,repeats:true) { [weak self] _ in
+                MainActor.assumeIsolated { guard let self else{return};self.cursorEngine?.tick(ProcessInfo.processInfo.systemUptime);self.flushCursor() }
+            }
+            RunLoop.main.add(clock,forMode:.common);cursorTimer=clock
+        }
     }
     override func didMoveToWindow() {
         super.didMoveToWindow()
@@ -175,7 +185,7 @@ final class BCDPackView: UIView {
         return action(c.action) != nil
     }
     private var movementControl: BCDControlPack.Control? {
-        guard pack?.inputMode == "controller" else { return nil }
+        guard pack?.inputMode == "controller" || pack?.digitalMovement != nil else { return nil }
         return layout?.controls.first { $0.role == "move" && visible($0) }
     }
     /// Reserve the lower left area before look acquisition; buttons keep priority.
@@ -190,6 +200,11 @@ final class BCDPackView: UIView {
     var activeTouchRoles: [String] { fingers.values.map(\.role).sorted() }
     var toggledActionIDs: [String] { toggles.keys.sorted() }
     var movementVisual: (origin: CGPoint, thumb: CGPoint, radius: CGFloat)? {
+        if let f=cursorEngine?.movementFinger {
+            let radius=max(CGFloat(1),unit*CGFloat(movementControl?.radius ?? 0.14))
+            let dx=f.last.x-f.start.x,dy=f.last.y-f.start.y,scale=max(1,hypot(dx,dy)/radius)
+            return (f.start,CGPoint(x:f.start.x+dx/scale,y:f.start.y+dy/scale),radius)
+        }
         guard let finger = fingers.values.first(where: { $0.role == "move" }) else { return nil }
         let radius = max(CGFloat(1), unit * CGFloat(finger.control?.radius ?? 0.14))
         let dx = finger.last.x - finger.start.x, dy = finger.last.y - finger.start.y
@@ -214,12 +229,33 @@ final class BCDPackView: UIView {
     }
     var radialLabelFrames: [CGRect] { fingers.values.filter { $0.role == "radial" }.flatMap { radialLabels($0).map { $0.frame } } }
     func clear() {
+        cursorEngine?.cancel();flushCursor()
         epoch = UUID()
         for f in fingers.values { release(f.owner) }
         for owner in pulses { release(owner) }; pulses.removeAll()
         pulseActions.removeAll()
         clearToggles()
         fingers.removeAll(); setNeedsDisplay()
+    }
+    private func cursorGeometry() {
+        guard let engine=cursorEngine else{return}
+        engine.bounds=bounds;engine.safe=safe
+        let host=MetalHostView.shared
+        engine.viewport=host.window != nil && host.bounds.width>0 ? host.bounds.size:safe.size
+        var width:Int32=0,height:Int32=0;winios_screen_size(&width,&height)
+        engine.guest=CGSize(width:width>0 ? Int(width):960,height:height>0 ? Int(height):540)
+    }
+    private func flushCursor() {
+        for event in cursorEngine?.drain() ?? [] {
+            switch event {
+            case .motion(let x,let y): HardwareInput.shared.postRelative(x,y)
+            case .button(let output,let down):
+                if let key=BCDPackCatalog.keyCodes(output)?.first { winios_post_key(key,down ? 1:0) }
+                else { winios_pointer(0,0,output=="mouse:left" ? (down ? 2:4):(down ? 8:16),0) }
+            case .customize: BCDPackStore.shared.editing=true
+            }
+        }
+        setNeedsDisplay()
     }
     private func clearToggles() {
         let owners = Array(toggles.values); toggles.removeAll()
@@ -288,6 +324,7 @@ final class BCDPackView: UIView {
     func beginTouch(_ identity: AnyHashable, at point: CGPoint, time: Double, receivedAt: Double? = nil) {
         guard UIApplication.shared.applicationState == .active, !LibraryModel.shared.blocksGameplayTouch,
               BCDPackFocus.shared.refresh(), let pack else { clear(); return }
+        if let engine=cursorEngine { cursorGeometry();engine.begin(identity,at:point,time:receivedAt ?? time);flushCursor();return }
         // Idempotent configuration keeps another finger's movement/fire held.
         GamepadInput.shared.configurePack(enabled: pack.inputMode == "controller", accepting: !editing, calibration: pack.aim)
         var control = layout?.controls.reversed().first { c in
@@ -333,6 +370,7 @@ final class BCDPackView: UIView {
     func moveTouch(_ identity: AnyHashable, to point: CGPoint, time: Double, receivedAt: Double? = nil) {
         guard UIApplication.shared.applicationState == .active, !LibraryModel.shared.blocksGameplayTouch,
               BCDPackFocus.shared.refresh() else { clear(); return }
+        if let engine=cursorEngine { cursorGeometry();engine.move(identity,to:point,time:receivedAt ?? time);flushCursor();return }
         guard var finger = fingers[identity], time > finger.time else { return }
         if finger.role == "look" || finger.role == "fireAim" {
             if pack?.inputMode == "controller" {
@@ -371,6 +409,10 @@ final class BCDPackView: UIView {
         }
     }
     func endTouch(_ identity: AnyHashable, at point: CGPoint, cancelled: Bool) {
+            if let engine=cursorEngine {
+                if LibraryModel.shared.blocksGameplayTouch || !BCDPackFocus.shared.refresh() { clear();return }
+                engine.end(identity,at:point,time:ProcessInfo.processInfo.systemUptime,cancelled:cancelled);flushCursor();return
+            }
             guard var f = fingers.removeValue(forKey: identity) else { return }
             release(f.owner)
             defer { setNeedsDisplay() }
@@ -410,6 +452,7 @@ final class BCDPackView: UIView {
     }
     override func draw(_ rect: CGRect) {
         guard let layout, let ctx = UIGraphicsGetCurrentContext() else { return }
+        cursorGeometry()
         if debug {
             let a = layout.aimRect
             if pack?.lookMode != "none" {
@@ -425,6 +468,7 @@ final class BCDPackView: UIView {
                 withAttributes: [.font:UIFont.monospacedSystemFont(ofSize:11, weight:.medium), .foregroundColor:UIColor.cyan])
         }
         for c in layout.controls where visible(c) {
+            if let engine=cursorEngine, [.pointer,.paused,.utilities].contains(engine.mode) { continue }
             let p = center(c), r = c.radius * unit
             if c.role == "move", !editing {
                 if let stick = movementVisual {
@@ -446,7 +490,7 @@ final class BCDPackView: UIView {
             let a = action(c.action)
             let toggled = toggles[c.action] != nil
             let tint = toggled ? UIColor(red:1,green:0.67,blue:0.18,alpha:1) : UIColor.white
-            let pressed = fingers.values.contains { $0.control?.id == c.id } || pulseActions.values.contains(c.action)
+            let pressed = fingers.values.contains { $0.control?.id == c.id } || pulseActions.values.contains(c.action) || cursorEngine?.fingers.values.contains { $0.action == c.action && $0.role != "ignore" } == true
             if pressed { ctx.setFillColor(tint.withAlphaComponent(0.08).cgColor); ctx.fillEllipse(in: circle) }
             ctx.setStrokeColor(tint.withAlphaComponent(toggled || pressed ? 0.95 : c.opacity * ((pack?.version ?? 1) >= 3 ? 0.9 : 0.65)).cgColor)
             ctx.setLineWidth(pressed ? 1.5 : 1); ctx.strokeEllipse(in: circle)
@@ -457,8 +501,10 @@ final class BCDPackView: UIView {
             } else {
                 ((a?.output ?? "…") as NSString).draw(at: CGPoint(x:p.x-r*0.5,y:p.y-8),withAttributes:[.font:UIFont.boldSystemFont(ofSize:14),.foregroundColor:UIColor.white])
             }
-            let label = (c.role == "radial" ? "Actions" : (a?.label ?? c.role)) + (editing ? " [\(a?.output ?? "") ]" : "")
-            if inside && !editing {
+            let label = (c.role == "radial" ? (pack?.cursorControls != nil ? "Equipment":"Actions") : (a?.label ?? c.role)) + (editing ? " [\(a?.output ?? "") ]" : "")
+            if c.showLabel == false && !editing {
+                // Icon-only personal control. Its actual hit region remains visible in debug.
+            } else if inside && !editing {
                 let font = UIFont.systemFont(ofSize: min(18,max(10,r*0.34)))
                 let width = (label as NSString).size(withAttributes:[.font:font]).width
                 (label as NSString).draw(at:CGPoint(x:p.x-width/2,y:p.y+r*0.28),withAttributes:[.font:font,.foregroundColor:tint.withAlphaComponent(c.opacity)])
@@ -475,5 +521,6 @@ final class BCDPackView: UIView {
                 (label.action.label as NSString).draw(at:label.frame.origin, withAttributes:[.font:UIFont.boldSystemFont(ofSize:12), .foregroundColor:f.selection == i ? UIColor.yellow : UIColor.white])
             }
         }
+        cursorEngine?.drawOverlay(ctx)
     }
 }

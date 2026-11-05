@@ -3,6 +3,7 @@ import Foundation
 @main struct TouchPackChecks {
     static func main() throws {
         try checkTouchAuthoring()
+        try checkCursorPacks()
         var records: [[String:Double]] = []
         let calibration = BCDMouseJoystick.Calibration()
         for hz in [60.0, 120.0] {

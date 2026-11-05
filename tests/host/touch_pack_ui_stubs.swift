@@ -18,7 +18,7 @@ struct LibraryEntry {
 @MainActor final class GamepadInput {
     static let shared = GamepadInput()
     static var sessionHIDKind:String?
-    static var packControllerSession=false
+    static var packControllerSession=false;static var packKeyboardMouseSession=false
     private var accepting=false
     private var holds:[UUID:GamepadSample]=[:]
     private(set) var lookOwner:UUID?
@@ -74,3 +74,6 @@ enum MadeiraConfig { static func gameValue(_ name:String)->String? { nil };stati
 }
 @MainActor func winios_post_key(_ key:Int32,_ down:Int32) { PackBoundarySpy.keyboardEvents += 1; PackBoundarySpy.keys.append((key,down)) }
 @MainActor func winios_pointer(_ x:Int32,_ y:Int32,_ flags:UInt32,_ wheel:UInt32) { PackBoundarySpy.mouseEvents += 1; PackBoundarySpy.mouse.append((flags,wheel)) }
+
+@MainActor final class MetalHostView:UIView { static let shared=MetalHostView() }
+@MainActor func winios_screen_size(_ w:UnsafeMutablePointer<Int32>,_ h:UnsafeMutablePointer<Int32>) {w.pointee=1408;h.pointee=648}

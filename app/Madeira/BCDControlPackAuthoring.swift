@@ -3,10 +3,11 @@
 import Foundation
 
 enum BCDPackCatalog {
-    static let customIconNames: Set<String> = ["bcd.sword", "bcd.interact", "bcd.inventory", "bcd.run"]
+    static let customIconNames: Set<String> = ["bcd.sword", "bcd.interact", "bcd.inventory", "bcd.run", "bcd.wand", "bcd.boot"]
     struct Icon: Identifiable { var id: String; var label: String }
     static let icons: [Icon] = [
         ("bcd.sword", "Sword outline"), ("bcd.interact", "Interact outline"), ("bcd.inventory", "Inventory outline"), ("bcd.run", "Run outline"),
+        ("bcd.wand", "Wand / use selected item"), ("bcd.boot", "Kick outline"),
         ("scope", "Aim"), ("burst", "Shoot"), ("figure.fencing", "Sword / attack"), ("capsule.portrait", "Ammunition"), ("bolt", "Attack"), ("shield", "Block / parry"),
         ("hand.tap", "Use"), ("bag", "Inventory"), ("map", "Map"), ("pause", "Pause"),
         ("arrow.up", "Jump"), ("figure.walk", "Move"), ("figure.run", "Sprint"), ("figure.stand", "Stance"),
@@ -110,6 +111,12 @@ import UIKit
                     line(points([(29,16),(24,27),(16,29),(9,38)]))
                     line(points([(24,27),(33,31),(29,41)]))
                     line(points([(5,12),(18,12)])); line(points([(3,17),(13,17)])); line(points([(4,23),(10,23)]))
+                case "bcd.wand":
+                    line(points([(9,39),(30,18),(34,22),(13,43)]),close:true)
+                    line(points([(34,7),(34,13)]));line(points([(40,16),(45,16)]));line(points([(23,7),(27,11)]));line(points([(40,25),(44,29)]))
+                case "bcd.boot":
+                    line(points([(22,6),(37,6),(35,26),(42,33),(42,41),(7,41),(7,34),(22,27)]),close:true)
+                    line(points([(9,36),(39,36)]))
                 default: break
                 }
             }.withRenderingMode(.alwaysTemplate)
@@ -262,6 +269,7 @@ enum BCDPackAuthoring {
                     if before == nil || c.opacity != before!.opacity { layout.controls[i].opacity = c.opacity }
                     if before == nil || c.slideToAction != before!.slideToAction { layout.controls[i].slideToAction = c.slideToAction }
                     if before == nil || c.labelPlacement != before!.labelPlacement { layout.controls[i].labelPlacement = c.labelPlacement }
+                    if before == nil || c.showLabel != before!.showLabel { layout.controls[i].showLabel = c.showLabel }
                     if let before {
                         if c.action != before.action { layout.controls[i].action = c.action }
                         if c.role != before.role { layout.controls[i].role = c.role }
@@ -292,6 +300,8 @@ enum BCDPackAuthoring {
             if personal.gestures != old.gestures { p.gestures = personal.gestures }
             if personal.contexts != old.contexts { p.contexts = personal.contexts }
             if personal.lookMode != old.lookMode { p.lookMode = personal.lookMode }
+            if personal.digitalMovement != old.digitalMovement { p.digitalMovement = personal.digitalMovement }
+            if personal.cursorControls != old.cursorControls { p.cursorControls = personal.cursorControls }
             if personal.aim.sensitivity != old.aim.sensitivity { p.aim.sensitivity = personal.aim.sensitivity }
             if personal.aim.vertical != old.aim.vertical { p.aim.vertical = personal.aim.vertical }
             if personal.aim.invertY != old.aim.invertY { p.aim.invertY = personal.aim.invertY }
@@ -300,7 +310,7 @@ enum BCDPackAuthoring {
             for e in personal.evidence where !p.evidence.contains(where: { $0.id == e.id }) { p.evidence.append(e) }
             p.version = max(p.version, personal.version)
             ensurePlayerEvidence(&p)
-        } else { p.aim = personal.aim }
+        } else { p.aim = personal.aim;if personal.cursorControls != nil { p.cursorControls=personal.cursorControls;p.digitalMovement=personal.digitalMovement } }
         try p.validate(for: base.identity, placement: .personal); return p
     }
 }

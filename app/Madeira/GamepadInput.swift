@@ -12,6 +12,9 @@ import SwiftUI
 final class GamepadInput: @unchecked Sendable {
     static let shared = GamepadInput()
     nonisolated(unsafe) static var packControllerSession = false
+    /// Explicit cursor packs isolate all virtual pads for this session. Selecting
+    /// stock/another profile restores the normal physical-controller path next launch.
+    nonisolated(unsafe) static var packKeyboardMouseSession = false
     @MainActor static let enabled: Bool = {
         let value = MadeiraConfig.get("env.MADEIRA_XINPUT")
             ?? ProcessInfo.processInfo.environment["MADEIRA_XINPUT"]
@@ -55,7 +58,7 @@ final class GamepadInput: @unchecked Sendable {
         // connected 0-5 s later): the switch is also read from the game's own file, so a list row can set it for one game, as
         // MADEIRA_PAD_MODE is (configuredPadMode). optIn itself stays bcd.cfg and the environment for its other callers.
         let gameSet = MadeiraConfig.gameValue("env.MADEIRA_PAD_EARLY_SLOT") == "1"
-        guard Self.enabled, force || gameSet || Self.optIn("MADEIRA_PAD_EARLY_SLOT") else { return }
+        guard Self.enabled, !Self.packKeyboardMouseSession, force || gameSet || Self.optIn("MADEIRA_PAD_EARLY_SLOT") else { return }
         let touch = touchControls && Self.touchEnabled
         let paired = !GCController.controllers().isEmpty
         guard touch || paired else {
@@ -123,6 +126,11 @@ final class GamepadInput: @unchecked Sendable {
         // An earlier session in this app run may have taken player 1 off XInput.
         queue.async { [self] in hidActive = false; hidKeepsXInput = false }
         Self.sessionHIDKind = nil
+        if Self.packKeyboardMouseSession {
+            beginPadOutput(xinput:false,hid:false,value:"cursor-pack")
+            LogStore.shared.log("[touch-cursor] KB/M-only session: XInput/HID hidden; game settings not modified")
+            return
+        }
         guard ["hid", "dualsense", "generic"].contains(mode.value) else {
             LogStore.shared.log("[hid-pad] ml2100 session mode=xinput source=\(mode.source)")
             beginPadOutput(xinput: output.xinput && Self.enabled, hid: false, value: output.value)
@@ -393,6 +401,12 @@ final class GamepadInput: @unchecked Sendable {
     }
 
     private func sample() {
+        if Self.packKeyboardMouseSession {
+            for i in profiles.indices { winios_gamepad_set_state(Int32(i),nil) }
+            if hidActive { winios_hidpad_set_state(nil) }
+            if keyboardMouse != nil && PadKeyboardMouse.shared.holding { PadKeyboardMouse.shared.releaseAll("cursor pack owns keyboard/mouse") }
+            return
+        }
         if !active || LibraryController.shared.ownsInput || !packState.acceptingInput {
             packState.clear(); packAim.reset(); packAimOwner = nil
         }

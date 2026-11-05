@@ -100,7 +100,7 @@ import UniformTypeIdentifiers
         let genre = BCDPackCatalog.genres.contains { $0.0 == proposed } ? proposed : "third-person"
         let choice = authoringChoice(entry, key: "mode")
         let mode = choice == "keyboardMouse" || (choice == "auto" && req.requirements["mode"]?.hasPrefix("keyboardMouse") == true) ? "keyboardMouse" : "controller"
-        let preset = BCDPackAuthoring.preset(identity: req.identity, title: entry.title, genre: genre, mode: mode)
+        let preset = BCDNoitaPack.matches(req.identity) ? BCDNoitaPack.make(identity:req.identity,bindings:req.bindings) : BCDPackAuthoring.preset(identity: req.identity, title: entry.title, genre: genre, mode: mode)
         do {
             try preset.validate(for: req.identity)
             let key = identityKey(entry)
@@ -125,6 +125,9 @@ import UniformTypeIdentifiers
     }
     func request(_ entry: LibraryEntry) -> Request {
         var bindings: [String: String] = [:]
+        if entry.steamAppID == 881100 || entry.title.caseInsensitiveCompare("Noita") == .orderedSame {
+            bindings.merge(BCDNoitaPack.inputMetadata(drive:LibraryEntry.hostDrive)) { first,_ in first }
+        }
         // Known input file only. Never forward full registry hives, saves, Steam accounts or credentials.
         if entry.title.localizedCaseInsensitiveContains("Chronicles of the Wolf") {
             let path = "users/mobile/AppData/Roaming/Chronicles of the Wolf/config"
@@ -189,7 +192,7 @@ import UniformTypeIdentifiers
             candidate.identity = req.identity // A player-selected template follows this installation; generated caches never bypass identity matching.
             if (try? candidate.validate(for: req.identity, placement: .personal)) != nil { local = candidate }
         }
-        let candidate = local ?? cached(key, identity: req.identity)
+        let candidate = local ?? (BCDNoitaPack.matches(req.identity) ? BCDNoitaPack.make(identity:req.identity,bindings:req.bindings) : cached(key, identity: req.identity))
         if sameSession, let current = pack, let candidate, current.inputMode != candidate.inputMode {
             status = "Prepared input mode saved · next launch"; return
         }
@@ -374,6 +377,9 @@ struct BCDPackInspector: View {
                     Slider(value: Binding(get: { c.radius }, set: { v in changeControl { $0.radius = v; $0.hitRadius = v } }), in: 0.035...0.2)
                     Text("Opacity").font(.caption)
                     Slider(value: Binding(get: { c.opacity }, set: { v in changeControl { $0.opacity = v } }), in: 0.1...1)
+                    if p.version >= 4 {
+                        Toggle("Show label",isOn:Binding(get:{ c.showLabel ?? true },set:{ on in changeControl { $0.showLabel=on } }))
+                    }
                     Toggle("Label inside button", isOn: Binding(get: { c.labelPlacement == "inside" }, set: { on in edit { value in
                         value.version = max(value.version,3)
                         if pad, let i = value.pad.controls.firstIndex(where: { $0.id == c.id }) { value.pad.controls[i].labelPlacement = on ? "inside" : "below" }
@@ -398,6 +404,7 @@ struct BCDPackInspector: View {
                     }
                 }
                 BCDPackActionEditor(preferredAction: (pad ? p.pad : p.phone).controls.first { $0.id == store.selectedControl }?.action ?? "")
+                if p.cursorControls != nil { BCDCursorPackSettings(pad:pad) }
                 Text(p.inputMode == "controller" ? "Swipe response \(p.aim.sensitivity, specifier: "%.2f")×" : "Mouse sensitivity \(p.aim.sensitivity, specifier: "%.2f")×")
                 Slider(value: Binding(get: { p.aim.sensitivity }, set: { v in edit { $0.aim.sensitivity = v } }), in: 0.1...8)
                 if p.inputMode == "controller" {
