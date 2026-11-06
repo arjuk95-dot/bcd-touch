@@ -1,0 +1,26 @@
+name: Dock network observation (host diagnostic)
+on:
+  workflow_dispatch:
+  push:
+    branches: [wo-bcd-noita-workshop-001]
+    paths:
+      - tests/host/observe-dock-network.py
+      - .github/workflows/dock-network-observation.yml
+      - app/Madeira/MadeiraDock.swift
+permissions:
+  contents: read
+jobs:
+  observe:
+    runs-on: macos-15-intel
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select existing Xcode toolchain
+        run: sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+      - name: Observe real production path code and Network.framework control
+        run: python3 tests/host/observe-dock-network.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Dock-network-observation-host-only
+          path: touch-evidence/dock-network-observation.json
+          retention-days: 14
