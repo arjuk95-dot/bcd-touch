@@ -798,7 +798,7 @@ check('if (winios_desktop_mode())       winios_user_driver.pSetCursor           
       'pSetCursor: compositor in the desktop session, direct-mode report otherwise')
 check('winios_user_driver.pSetCursorPos = winios_drv_set_cursor_pos;' in driver
       and re.search(r'static BOOL winios_drv_set_cursor_pos\( INT x, INT y \)\s*\{\s*'
-                    r'if \(!winios_direct_cursor_on\(\)\) return TRUE;\s*'
+                    r'if \(!winios_cursor_position_wanted\(\)\) return TRUE;\s*'
                     r'if \(winios_direct_cursor_warp\) winios_direct_cursor_warp\( x, y \);\s*'
                     r'else winios_direct_cursor_pos\( x, y \);\s*return TRUE;\s*\}',
                     driver) is not None,
@@ -808,11 +808,11 @@ check('clip = desktop_shm->cursor.clip;' in report
       and 'if (winios_direct_cursor_clip) winios_direct_cursor_clip( clip.left, clip.top, clip.right, clip.bottom );' in report
       and report.index('winios_direct_cursor_clip( clip.left') < report.index('winios_direct_cursor_pos( x, y );'),
       'each position report carries the clip rectangle read in the same snapshot, clip first')
-check('if ((flags & MOUSEEVENTF_MOVE) && winios_direct_cursor_on()) winios_report_cursor_pos();' in driver,
+check('if ((flags & MOUSEEVENTF_MOVE) && winios_cursor_position_wanted()) winios_report_cursor_pos();' in driver,
       'every posted move reports where the server put the cursor')
 check(re.search(r'static int winios_direct_cursor_on\(void\)\s*\{\s*return !winios_desktop_mode\(\) && '
                 r'winios_direct_cursor_wanted && winios_direct_cursor_wanted\(\);', driver) is not None,
-      'the reports are gated on direct mode and the app')
+      'the physical-mouse reports remain gated on direct mode and the app')
 for sym in ('winios_direct_cursor_wanted', 'winios_direct_cursor_set', 'winios_direct_cursor_show',
             'winios_direct_cursor_pos', 'winios_direct_cursor_clip', 'winios_direct_cursor_warp'):
     check(re.search(sym + r'\([^;]*\)\s*__attribute__\(\(weak\)\);', driver) is not None, f'{sym} is a weak import')

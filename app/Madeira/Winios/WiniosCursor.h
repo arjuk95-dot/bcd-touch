@@ -31,6 +31,10 @@
 
 /* Nonzero once the app has enabled the direct-mode cursor. */
 int winios_direct_cursor_wanted(void);
+/* Relative touch packs also need Wine's clipped position in desktop sessions.
+ * This opt-in only enables position reports; it never injects cursor moves. */
+int winios_cursor_pack_wanted(void);
+void winios_cursor_pack_track(int on);
 /* A new cursor image: straight-alpha BGRA, w*h*4 bytes, copied before return. */
 void winios_direct_cursor_set(unsigned int id, int w, int h, int hot_x, int hot_y, const void *bgra);
 /* 0: the program hides its cursor (ShowCursor/SetCursor(NULL)); 1: shows it. */

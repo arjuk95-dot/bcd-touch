@@ -1747,6 +1747,7 @@ final class HardwareInput: ObservableObject {
     private var cursorPackFocused=false
     func setCursorPackActive(_ active: Bool) {
         cursorPackActive=active;cursorPackFocused=false;touchCursorActive=active;lastAbsolute=nil
+        winios_cursor_pack_track(active ? 1:0)
         updateTracking();renderCursor()
     }
     func setCursorPackFocused(_ focused: Bool) { cursorPackFocused=focused;renderCursor() }

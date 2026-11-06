@@ -70,6 +70,7 @@ static struct user_driver_funcs winios_user_driver;
  * nothing the program sees, and does nothing until the app has asked for the
  * reports (MADEIRA_DIRECT_CURSOR=0 or MADEIRA_HWINPUT=0 in the app: never). */
 extern int winios_direct_cursor_wanted( void ) __attribute__((weak));
+extern int winios_cursor_pack_wanted( void ) __attribute__((weak));
 extern void winios_direct_cursor_set( unsigned int id, int w, int h, int hot_x, int hot_y,
                                       const void *bgra ) __attribute__((weak));
 extern void winios_direct_cursor_show( int show ) __attribute__((weak));
@@ -86,6 +87,15 @@ static int winios_desktop_mode(void);
 static int winios_direct_cursor_on(void)
 {
     return !winios_desktop_mode() && winios_direct_cursor_wanted && winios_direct_cursor_wanted();
+}
+
+/* A relative touch pack follows the real guest cursor in either launch route.
+ * Desktop's compositor otherwise only follows the absolute touch/physical-mouse
+ * routes, so its arrow stays at the old position while relative events arrive.
+ * Keep the existing physical-mouse/direct-mode routing unchanged. */
+static int winios_cursor_position_wanted(void)
+{
+    return winios_direct_cursor_on() || (winios_cursor_pack_wanted && winios_cursor_pack_wanted());
 }
 
 /* Wine's cursor position, read the way NtUserGetCursorPos does but without the
@@ -113,7 +123,7 @@ static void winios_report_cursor_pos(void)
  * madeira-bcd (2026-10-18): reported as a warp, which the app counts. */
 static BOOL winios_drv_set_cursor_pos( INT x, INT y )
 {
-    if (!winios_direct_cursor_on()) return TRUE;
+    if (!winios_cursor_position_wanted()) return TRUE;
     if (winios_direct_cursor_warp) winios_direct_cursor_warp( x, y );
     else winios_direct_cursor_pos( x, y );
     return TRUE;
@@ -153,7 +163,7 @@ void winios_drv_post_mouse(int x, int y, unsigned int flags, unsigned int mouse_
                     hwnd, flags, x, y, (unsigned)st);
     }
     /* The server has already moved (and clipped) its cursor for a MOVE. */
-    if ((flags & MOUSEEVENTF_MOVE) && winios_direct_cursor_on()) winios_report_cursor_pos();
+    if ((flags & MOUSEEVENTF_MOVE) && winios_cursor_position_wanted()) winios_report_cursor_pos();
 }
 
 /* The dedicated navigation keys (arrows, Insert/Delete, Home/End, Page
@@ -2617,7 +2627,7 @@ static void load_display_driver(void)
         /* direct mode: inert (like winios_pSetCursor) until the app enables it */
         else if (winios_direct_cursor_set) winios_user_driver.pSetCursor         = winios_drv_set_cursor;
         else if (winios_pSetCursor)      winios_user_driver.pSetCursor           = winios_pSetCursor;
-        if (!winios_desktop_mode() && winios_direct_cursor_pos)
+        if (winios_direct_cursor_pos)
             winios_user_driver.pSetCursorPos = winios_drv_set_cursor_pos;
         if (winios_pDestroyCursorIcon)   winios_user_driver.pDestroyCursorIcon   = winios_pDestroyCursorIcon;
         if (winios_pShowWindow)          winios_user_driver.pShowWindow          = winios_pShowWindow;

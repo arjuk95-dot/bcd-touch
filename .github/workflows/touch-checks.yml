@@ -13,6 +13,8 @@ jobs:
         run: python3 tools/touch-packs/check-swift.py
       - name: Stock touch and physical controller regression
         run: python3 tests/host/check-touch-gamepad.py
+      - name: Relative cursor in Dock desktop sessions
+        run: python3 tests/host/check-cursor-pack-desktop.py
       - name: Upstream stock layout and sharing compatibility
         run: |
           python3 tests/host/check-bcd-touch.py --require-swift --skip-preview

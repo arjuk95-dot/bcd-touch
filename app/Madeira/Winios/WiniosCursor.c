@@ -17,6 +17,7 @@ static pthread_mutex_t cursor_lock = PTHREAD_MUTEX_INITIALIZER;
 static int cursor_enabled;                     /* atomic; set once, after cursor_notify */
 static winios_direct_cursor_notify_t cursor_notify;
 static int cursor_tracking;
+static int cursor_pack_tracking;               /* atomic; independent of hardware mouse routing */
 static int cursor_pending;                     /* a notification is outstanding */
 static struct winios_direct_cursor_state cursor_state;
 static unsigned char cursor_image[WINIOS_CURSOR_MAX * WINIOS_CURSOR_MAX * 4];
@@ -38,6 +39,16 @@ static void cursor_notify_unlocked(int notify)
 int winios_direct_cursor_wanted(void)
 {
     return __atomic_load_n(&cursor_enabled, __ATOMIC_ACQUIRE);
+}
+
+int winios_cursor_pack_wanted(void)
+{
+    return __atomic_load_n(&cursor_pack_tracking, __ATOMIC_ACQUIRE);
+}
+
+void winios_cursor_pack_track(int on)
+{
+    __atomic_store_n(&cursor_pack_tracking, !!on, __ATOMIC_RELEASE);
 }
 
 void winios_direct_cursor_set(unsigned int id, int w, int h, int hot_x, int hot_y, const void *bgra)
