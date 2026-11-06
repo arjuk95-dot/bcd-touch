@@ -2296,6 +2296,31 @@ static int ios_ajan2_read( uint64_t addr, void *buf, size_t len )
                                                      (mach_vm_address_t)buf, &got ) == KERN_SUCCESS && got == len;
 }
 
+#include "ios_x86_entry_code.h"
+
+/* Failure evidence only: the executable alias near a spilled EAX can retain
+ * the generated branch that led outside its allocation. It is a candidate,
+ * not an inferred call stack. No mapping, instruction or guest state changes. */
+static void ios_ajan2_entry_code32( uint64_t frame, uint64_t base, uint64_t target )
+{
+    uint64_t eax = 0, start = 0;
+    size_t length, offset;
+    char bytes[112];
+
+    if (!base || !ios_ajan2_read( frame + 0x20, &eax, sizeof(eax) )) return;
+    length = ios_x86_entry_code_window( base, eax, target, ios_jit_anon_alias_lookup, &start );
+    if (!length) return;
+    dprintf( 2, "[entry-code32] candidate-eax=%#llx target=%#llx start=%#llx length=%zu "
+                "source=spilled-register; current executable-alias bytes, caller not established\n",
+             (unsigned long long)eax, (unsigned long long)target, (unsigned long long)start, length );
+    for (offset = 0; offset < length; offset += 32)
+    {
+        unsigned count = length - offset < 32 ? (unsigned)(length - offset) : 32;
+        ios_ajan2_hexdump( bytes, sizeof(bytes), base + start + offset, count );
+        dprintf( 2, "[entry-code32] %#llx: %s\n", (unsigned long long)(start + offset), bytes );
+    }
+}
+
 /* kind 1: FEX's GuestSignal_SIGILL thunk (`hlt #0`); kind 2: GuestSignal_SIGSEGV (`mov w1,#0; ldr x1,[x1]`). */
 static void ios_ajan2_entry_fail( const arm_thread_state64_t *st, uintptr_t teb, int kind )
 {
@@ -2387,6 +2412,7 @@ static void ios_ajan2_entry_fail( const arm_thread_state64_t *st, uintptr_t teb,
                      (unsigned long long)blk.pLdrInitializeThunk, which );
         }
     }
+    if (wow32) ios_ajan2_entry_code32( frame, gbase, rip );
 }
 
 /* A64 64-bit loads that can fetch a call target: LDR Xt,[Xn,#uimm], LDUR Xt,[Xn,#simm9],
