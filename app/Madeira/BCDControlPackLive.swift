@@ -337,6 +337,43 @@ struct BCDPackLayer: View {
     }
 }
 
+@MainActor private struct BCDPackTapSettings: View {
+    var pack: BCDControlPack
+    @ObservedObject var store: BCDPackStore
+    var body: some View {
+        VStack(alignment:.leading,spacing:6) {
+            if !pack.gestures.contains(where: { $0.kind == "tap" }),
+               let aim=pack.actions.first(where: { $0.label.caseInsensitiveCompare("Aim") == .orderedSame && $0.behavior == "toggle" }),
+               let attack=pack.actions.first(where: { $0.label.caseInsensitiveCompare("Attack") == .orderedSame && $0.behavior == "tap" }) {
+                Button("Use tap attack while aiming",systemImage:"hand.tap") { convert(gate:aim.id,target:attack.id) }
+                    .accessibilityIdentifier("pack-use-aimed-tap")
+                Text("Removes Attack buttons, keeps your other positions and bindings. Undo restores them.").font(.caption)
+            }
+            if let g=pack.gestures.first(where: { $0.kind == "tap" }), let target=pack.actions.first(where: { $0.id == g.action }) {
+                let gate=pack.actions.first { $0.id == g.whenToggled }?.label ?? "Aim"
+                Text("Tap screen: \(target.label) while \(gate) is enabled").font(.caption)
+                Picker("Tap binding",selection:Binding(get:{ target.output },set:{ output in rebind(target.id,to:output) })) {
+                    ForEach(BCDPackCatalog.addableOutputs(mode:pack.inputMode),id:\.self) { output in Text(BCDPackCatalog.outputLabel(output)).tag(output) }
+                }
+            }
+        }
+    }
+    private func convert(gate:String,target:String) {
+        do {
+            let cancellations=pack.actions.filter { $0.output == "Menu" || $0.label.caseInsensitiveCompare("Inventory") == .orderedSame }.map(\.id)
+            let updated=try BCDPackAuthoring.surfaceTap(in:pack,gate:gate,target:target,cancelOn:cancellations)
+            store.saveEdits(updated)
+        } catch { store.status="Tap controls not saved: \(error)" }
+    }
+    private func rebind(_ id:String,to output:String) {
+        var updated=pack
+        if let i=updated.actions.firstIndex(where: { $0.id == id }) {
+            updated.actions[i].output=output;updated.actions[i].evidence="player-binding"
+            BCDPackAuthoring.ensurePlayerEvidence(&updated);store.saveEdits(updated)
+        }
+    }
+}
+
 struct BCDPackInspector: View {
     @ObservedObject var store = BCDPackStore.shared
     @State var pad = UIDevice.current.userInterfaceIdiom == .pad
@@ -432,30 +469,7 @@ struct BCDPackInspector: View {
                 Text("Dead-zone compensation")
                 Slider(value: Binding(get: { p.aim.deadZone }, set: { v in edit { $0.aim.deadZone = v } }), in: 0...0.4)
             }
-            if !p.gestures.contains(where: { $0.kind == "tap" }),
-               let aim=p.actions.first(where: { $0.label.caseInsensitiveCompare("Aim") == .orderedSame && $0.behavior == "toggle" }),
-               let attack=p.actions.first(where: { $0.label.caseInsensitiveCompare("Attack") == .orderedSame && $0.behavior == "tap" }) {
-                Button("Use tap attack while aiming",systemImage:"hand.tap") {
-                    do {
-                        let cancellations=p.actions.filter { $0.output == "Menu" || $0.label.caseInsensitiveCompare("Inventory") == .orderedSame }.map(\.id)
-                        let updated=try BCDPackAuthoring.surfaceTap(in:p,gate:aim.id,target:attack.id,cancelOn:cancellations)
-                        store.saveEdits(updated)
-                    } catch { store.status="Tap controls not saved: \(error)" }
-                }.accessibilityIdentifier("pack-use-aimed-tap")
-                Text("Removes Attack buttons, keeps your other positions and bindings. Undo restores them.").font(.caption)
-            }
-            if let g=p.gestures.first(where: { $0.kind == "tap" }), let target=p.actions.first(where: { $0.id == g.action }) {
-                Text("Tap screen: \(target.label) while \(p.actions.first { $0.id == g.whenToggled }?.label ?? "Aim") is enabled")
-                    .font(.caption)
-                Picker("Tap binding",selection:Binding(get:{ target.output },set:{ output in edit { value in
-                    if let i=value.actions.firstIndex(where: { $0.id == target.id }) {
-                        value.actions[i].output=output;value.actions[i].evidence="player-binding"
-                        BCDPackAuthoring.ensurePlayerEvidence(&value)
-                    }
-                } })) {
-                    ForEach(BCDPackCatalog.addableOutputs(mode:p.inputMode),id:\.self) { output in Text(BCDPackCatalog.outputLabel(output)).tag(output) }
-                }
-            }
+            if let p=store.pack { BCDPackTapSettings(pack:p,store:store) }
             Toggle("Show actual hit regions", isOn: $store.debug)
             Button("Export controls", systemImage: "square.and.arrow.up") { exporting = true }
             Button("Import controls for this game", systemImage: "square.and.arrow.down") { importing = true }
