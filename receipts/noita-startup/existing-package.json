@@ -1,0 +1,43 @@
+{
+  "mode": "existing",
+  "ipa": "BCD-Touch-update-existing-unsigned.ipa",
+  "bytes": 191852312,
+  "sha256": "0035e6e47735985d165bee904475f83017b58e97eff3e560669ecc704014c44f",
+  "sourceIPA": "d12c1c66c63d87423aac6c7a96ded77263e3d6f559846e9cd4211151849f0ae3",
+  "appSource": "f9e5bec1650351d108c0bb5336330188c5d950d2",
+  "bundleID": "com.thebcd69.bcd",
+  "displayName": "BCD Touch Lab",
+  "helpers": [
+    "com.thebcd69.bcd.JITHelper",
+    "com.thebcd69.bcd.MemoryHost"
+  ],
+  "callbacks": [
+    "bcd",
+    "bcdtouchlab"
+  ],
+  "requestedEntitlements": {
+    "com.apple.developer.kernel.extended-virtual-addressing": true,
+    "com.apple.developer.kernel.increased-memory-limit": true,
+    "get-task-allow": true
+  },
+  "instructionHashes": {
+    "Madeira": "cd94c8ae90530d549590a7d7cbbe37ed4a81f0b0b9f46dd95fdd282073f98b50",
+    "PlugIns/MadeiraJITHelper.appex/MadeiraJITHelper": "e5e21f890cb0a1e3fb6009f2ebaa1c0a832569436597b746d52a0d8cc2e75e91",
+    "PlugIns/MadeiraMemoryHost.appex/MadeiraMemoryHost": "b96703e7fba1ba6a63dfbd0511100a90bfb5778dff9c2c2101292d83eefb5166"
+  },
+  "instructionsUnchanged": true,
+  "adHocSigned": true,
+  "personalSigningStillRequired": true,
+  "installed": false,
+  "dataPreservationVerified": false,
+  "physicallyTested": false,
+  "localIPA": "BCD-Noita-cursor-f9e5bec.ipa",
+  "nativeRun": "42191403792",
+  "packageRun": "42204232781",
+  "installationTested": false,
+  "crashFixProven": false,
+  "menuCursorPhysicallyTested": false,
+  "hardwareOpenGLTested": false,
+  "noitaGameplayTested": false,
+  "direct3DDeviceRegressionTested": false
+}

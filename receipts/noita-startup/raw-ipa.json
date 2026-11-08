@@ -1,0 +1,98 @@
+{
+  "kind": "IPA metadata inspection; no device execution or signature validation",
+  "ipa": "BCD-Touch-Lab-unsigned.ipa",
+  "bytes": 192355760,
+  "base": "53e7e8c73b62633b1d94c75b451fcc775928378f",
+  "appSource": "f9e5bec1650351d108c0bb5336330188c5d950d2",
+  "bundleID": "com.arjunkl.bcdtouch",
+  "displayName": "BCD Touch Lab",
+  "version": "0.1.630",
+  "build": "630",
+  "built": "2026-11-06T10:28:05Z",
+  "callbacks": [
+    "bcdtouchlab"
+  ],
+  "architecture": "arm64",
+  "helpers": [
+    {
+      "path": "Payload/Madeira.app/PlugIns/MadeiraJITHelper.appex/Info.plist",
+      "identifier": "com.arjunkl.bcdtouch.JITHelper"
+    },
+    {
+      "path": "Payload/Madeira.app/PlugIns/MadeiraMemoryHost.appex/Info.plist",
+      "identifier": "com.arjunkl.bcdtouch.MemoryHost"
+    }
+  ],
+  "notices": [
+    "licenses/LICENSE-BCD.txt",
+    "licenses/LICENSE-MADEIRA-GPL-3.0.txt",
+    "licenses/THIRD-PARTY-NOTICES.txt"
+  ],
+  "provisioningProfileIncluded": false,
+  "rootSignatureDirectoryPresent": true,
+  "converterProvenance": {
+    "source": "https://github.com/thebcd69/bcd-games/releases/download/v0.1.630/BCD.ipa",
+    "release": "v0.1.630",
+    "baseCommit": "53e7e8c73b62633b1d94c75b451fcc775928378f",
+    "archiveSHA256": "21e3fbfdc4c4221a4295d35d28348e826226ff3f727a18f110d3617d371f83d2",
+    "librarySHA256": "4865c8ec999833d8df0df69b8a52eb819adf452b0b12df7651c409425d311e3b",
+    "upstreamSourceFileSHA256": "073f903be98e973ff38f4d79f2c48d61ef938754a77b1caedda79c9f05a068c2",
+    "note": "Exact release dependency; source-file and release-file digests differ. No claim of byte identity to the absent source file."
+  },
+  "packagedConverterSHA256": "4865c8ec999833d8df0df69b8a52eb819adf452b0b12df7651c409425d311e3b",
+  "baseRuntimeProvenance": {
+    "source": "https://github.com/thebcd69/bcd-games/releases/download/v0.1.630/BCD.ipa",
+    "release": "v0.1.630",
+    "baseCommit": "53e7e8c73b62633b1d94c75b451fcc775928378f",
+    "archiveSHA256": "21e3fbfdc4c4221a4295d35d28348e826226ff3f727a18f110d3617d371f83d2",
+    "scope": "Only missing base runtime dependencies; existing source outputs retained",
+    "recovered": [
+      {
+        "name": "kernelbase-optin.dll",
+        "bytes": 3473408,
+        "peMachine": "0x8664",
+        "sha256": "4d53ed92f29eda8ff8e5d30a9fa3844e1e41793d16cce3587606c47d30d1256c"
+      },
+      {
+        "name": "msi-optin.dll",
+        "bytes": 1703936,
+        "peMachine": "0x8664",
+        "sha256": "c99fcb604830198af8f7ba2d6fcc954eb96b9e1f34144a9f9fb461b02b2d1a06"
+      },
+      {
+        "name": "oledlg-optin.dll",
+        "bytes": 786432,
+        "peMachine": "0x8664",
+        "sha256": "e1223e250fcdd6a47fb1e97a3eaf9de952ba336f13310ad50e21340fd1f44424"
+      },
+      {
+        "name": "setupapi-optin.dll",
+        "bytes": 1179648,
+        "peMachine": "0x8664",
+        "sha256": "29fc368a2218f66b2f31f232e91de8d16b43fb1905df9c0057609dfbbca03f86"
+      },
+      {
+        "name": "avifil32.dll",
+        "bytes": 786432,
+        "peMachine": "0x8664",
+        "sha256": "f9f478aee1aba648a5f61d8e52933f306cdc05d90cc17de8709b63e6d150dd57"
+      },
+      {
+        "name": "msvfw32.dll",
+        "bytes": 655360,
+        "peMachine": "0x8664",
+        "sha256": "7757888c3992707d9665d4d324d43ee29e92d14be906c2a294411175d5cff57d"
+      },
+      {
+        "name": "msxml3.dll",
+        "bytes": 2752512,
+        "peMachine": "0x8664",
+        "sha256": "32707111e715e9d4af64416642e270c95f870df2f1428ad9b4928fa4c476bcab"
+      }
+    ]
+  },
+  "installationTested": false,
+  "guestTraceTested": false,
+  "physicallyTested": false,
+  "sha256": "d12c1c66c63d87423aac6c7a96ded77263e3d6f559846e9cd4211151849f0ae3"
+}

@@ -1,0 +1,63 @@
+{
+  "appSource": "f9e5bec1650351d108c0bb5336330188c5d950d2",
+  "baseCommit": "99f5eb9dd481551e4a928d3e4a84093cce6060fc",
+  "branch": "wo-bcd-noita-workshop-001",
+  "bundleID": "com.thebcd69.bcd",
+  "ipa": {
+    "name": "BCD-Noita-cursor-f9e5bec.ipa",
+    "bytes": 191852312,
+    "sha256": "0035e6e47735985d165bee904475f83017b58e97eff3e560669ecc704014c44f",
+    "personalSigningRequired": true
+  },
+  "checks": {
+    "nativeBuild": {
+      "conclusion": "success",
+      "url": "https://github.com/arjuk95-dot/bcd-touch/actions/runs/42191403792",
+      "source": "f9e5bec1650351d108c0bb5336330188c5d950d2"
+    },
+    "existingSlotPackage": {
+      "conclusion": "success",
+      "url": "https://github.com/arjuk95-dot/bcd-touch/actions/runs/42204232781",
+      "source": "f9e5bec1650351d108c0bb5336330188c5d950d2"
+    }
+  },
+  "sourceChecks": {
+    "touchAndCursorRun": 42191403517,
+    "openGLBoundaryRun": 42191403598,
+    "bothPassed": true
+  },
+  "preservation": {
+    "appSource": "f9e5bec1650351d108c0bb5336330188c5d950d2",
+    "base": "99f5eb9dd481551e4a928d3e4a84093cce6060fc",
+    "ipaSHA256": "0035e6e47735985d165bee904475f83017b58e97eff3e560669ecc704014c44f",
+    "zipCRCVerified": true,
+    "unchangedFiles": {
+      "app/Madeira/BCDControlPackLive.swift": "7011b0d7fe36fd4c671d8df3dd8ec084edfa96d8094a6d660299fa22176a18df",
+      "app/Madeira/BCDControlPackAuthoring.swift": "d053a312c1d158680910847c2fb7a43917c36405697380a481d8f8aebfca160d",
+      "app/Madeira/BCDControlPack.swift": "ae8b335354385685bdc88f383ac5a29ef699518c2666a52c5891e044689e4f9c",
+      "app/Madeira/BCDNoitaPack.swift": "0d10464240f6b3d20189fa313da7bfad8db24a66b9e0d371d1dd9422928e1573",
+      "app/Madeira/BCDCursorPack.swift": "74229d6bae14929d920f8456742f542167555886c9a4dd469784b493b1f69c42",
+      "app/Madeira/BCDControlPackSurface.swift": "b2dc2576c6a5301a7a586f6576cd348156c97c915fb4b7097fe82c4fc7ffceaa",
+      "app/Madeira/BCDCursorPackSettings.swift": "a689ea40414caf26840c3a957b39069a63fc78b0722b40c76ca2ddbea88f6333",
+      "tools/touch-packs/dread_bindings.py": "18b7869bc08023630629af94cbe17c327a7c1c456df1664578e6a8b8c191cf1b",
+      "packs/pilots/dread-delusion-installed-iphone.json": "68e50d4ca02d522b66e059ec3254993d2f942064f18fd5b66b2557405270160f"
+    },
+    "graphicsLibrariesByteIdenticalToPreviousExport": true,
+    "dreadLayoutRestoredByUser": "2026-11-07; choosing Use generated controls next launch restored the original layout; phone files not edited by this recovery",
+    "newIPAPhysicallyTested": false,
+    "continueCrashFixed": false
+  },
+  "physicalStatus": {
+    "newIPAInstalled": false,
+    "newMenuCursorTested": false,
+    "noitaContinueCrashFixed": false,
+    "noitaGameplayVerified": false,
+    "dreadExistingLayoutRestoredByOwner": true
+  },
+  "limitations": [
+    "This update fixes desktop cursor reporting and adds bounded fault evidence; the Continue crash is unresolved.",
+    "Workshop passed on Wi-Fi; the specific Workshop item was not identified.",
+    "No phone data, subscriptions, mods, game DLLs or signing/JIT setup were changed by these fixes."
+  ],
+  "verifiedUTC": "2026-11-08T06:47:58.618971+00:00"
+}
