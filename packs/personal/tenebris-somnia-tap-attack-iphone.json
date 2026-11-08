@@ -1,0 +1,383 @@
+{
+  "version": 5,
+  "id": "tenebris-owner-mockup-v3",
+  "title": "Tenebris Somnia",
+  "identity": {
+    "bindingDigest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "build": "unreported",
+    "edition": "installed",
+    "executable": "games/tenebris somnia/tenebrissomnia/binaries/win64/tenebrissomnia-win64-shipping.exe",
+    "storeID": "local"
+  },
+  "inputMode": "controller",
+  "lookMode": "none",
+  "aim": {
+    "deadZone": 0.18,
+    "fullSpeed": 900,
+    "invertY": false,
+    "sensitivity": 1,
+    "vertical": 1
+  },
+  "actions": [
+    {
+      "id": "raw-ls",
+      "label": "Move",
+      "icon": "figure.walk",
+      "output": "LS",
+      "behavior": "hold",
+      "contexts": [
+        "onFoot",
+        "menu"
+      ],
+      "evidence": "owner-bindings"
+    },
+    {
+      "id": "raw-lt",
+      "label": "Aim",
+      "icon": "scope",
+      "output": "LT",
+      "behavior": "toggle",
+      "contexts": [
+        "onFoot"
+      ],
+      "evidence": "owner-bindings"
+    },
+    {
+      "id": "raw-rt",
+      "label": "Attack",
+      "icon": "bcd.sword",
+      "output": "RT",
+      "behavior": "tap",
+      "contexts": [
+        "onFoot"
+      ],
+      "evidence": "owner-bindings"
+    },
+    {
+      "id": "raw-a",
+      "label": "Interact",
+      "icon": "bcd.interact",
+      "output": "A",
+      "behavior": "tap",
+      "contexts": [
+        "onFoot"
+      ],
+      "evidence": "owner-bindings"
+    },
+    {
+      "id": "raw-x",
+      "label": "Run",
+      "icon": "bcd.run",
+      "output": "X",
+      "behavior": "hold",
+      "contexts": [
+        "onFoot"
+      ],
+      "evidence": "owner-bindings"
+    },
+    {
+      "id": "raw-b",
+      "label": "Inventory",
+      "icon": "bcd.inventory",
+      "output": "B",
+      "behavior": "tap",
+      "contexts": [
+        "onFoot"
+      ],
+      "evidence": "owner-bindings"
+    },
+    {
+      "id": "raw-menu",
+      "label": "Menu",
+      "icon": "pause",
+      "output": "Menu",
+      "behavior": "tap",
+      "contexts": [
+        "onFoot",
+        "menu"
+      ],
+      "evidence": "owner-bindings"
+    },
+    {
+      "id": "menu-a",
+      "label": "A",
+      "icon": "a.circle",
+      "output": "A",
+      "behavior": "tap",
+      "contexts": [
+        "menu"
+      ],
+      "evidence": "raw-menu-inputs"
+    },
+    {
+      "id": "menu-b",
+      "label": "B",
+      "icon": "b.circle",
+      "output": "B",
+      "behavior": "tap",
+      "contexts": [
+        "menu"
+      ],
+      "evidence": "raw-menu-inputs"
+    }
+  ],
+  "gestures": [
+    {
+      "kind": "tap",
+      "action": "raw-rt",
+      "whenToggled": "raw-lt",
+      "cancelOn": [
+        "raw-b",
+        "raw-menu"
+      ]
+    }
+  ],
+  "radial": [],
+  "contexts": [
+    "onFoot",
+    "menu"
+  ],
+  "evidence": [
+    {
+      "id": "owner-bindings",
+      "source": "Owner confirmation, 2026-11-03",
+      "detail": "Owner confirmed the selected installed preset: LT Aim, RT Attack, A Interact, X Run, B Inventory, Menu Pause; movement uses the floating left stick. This is current-player binding evidence, not an official default chart."
+    },
+    {
+      "id": "owner-layout",
+      "source": "Owner Tenebris mockup and interaction instructions, 2026-11-03",
+      "detail": "No idle movement stick. Movement centres at touchdown and disappears on lift. Thin outline icons, amber latched Aim. Aim-to-Attack slide sends exactly one attack and retains Aim until another tap. Full-screen anchors; independent iPad reach layout. New interaction feel and iPad layout are not physically tested."
+    },
+    {
+      "id": "raw-menu-inputs",
+      "source": "Explicit manual menu context",
+      "detail": "A and B remain honestly labelled raw Xbox buttons for menu navigation; no exact menu command meaning is asserted."
+    },
+    {
+      "id": "owner-tap-attack",
+      "source": "owner-confirmed:2026-11-08",
+      "detail": "Owner replaces the dedicated Attack button with one RT pulse per gameplay-surface tap while Aim (LT toggle) is enabled. Movement stays floating; control/editor/menu touches are excluded; drags and holds do not attack."
+    }
+  ],
+  "unresolved": [
+    "Installed edition/build number remains unreported.",
+    "Actions outside this requested layout have not been mapped; the editor exposes all Xbox button outputs.",
+    "V5 tap attack requires this updated BCD runtime; physical tap/hold/movement validation is pending."
+  ],
+  "phone": {
+    "aimRect": {
+      "x": 0.48,
+      "y": 0.18,
+      "width": 0.32,
+      "height": 0.5
+    },
+    "movementRect": {
+      "x": 0,
+      "y": 0.2,
+      "width": 0.48,
+      "height": 0.8
+    },
+    "controls": [
+      {
+        "id": "phone-ls",
+        "action": "raw-ls",
+        "role": "move",
+        "x": 0.18,
+        "y": 0.78,
+        "radius": 0.14,
+        "hitRadius": 0.14,
+        "opacity": 0.88,
+        "coordinateSpace": "screen"
+      },
+      {
+        "id": "phone-menu",
+        "action": "raw-menu",
+        "role": "button",
+        "x": 0.04,
+        "y": 0.066,
+        "radius": 0.045,
+        "hitRadius": 0.045,
+        "opacity": 0.88,
+        "coordinateSpace": "screen"
+      },
+      {
+        "id": "phone-b",
+        "action": "raw-b",
+        "role": "button",
+        "x": 0.96,
+        "y": 0.066,
+        "radius": 0.045,
+        "hitRadius": 0.045,
+        "opacity": 0.88,
+        "coordinateSpace": "screen"
+      },
+      {
+        "id": "phone-x",
+        "action": "raw-x",
+        "role": "button",
+        "x": 0.742,
+        "y": 0.84,
+        "radius": 0.087,
+        "hitRadius": 0.087,
+        "opacity": 0.88,
+        "coordinateSpace": "screen",
+        "labelPlacement": "inside"
+      },
+      {
+        "id": "phone-a",
+        "action": "raw-a",
+        "role": "button",
+        "x": 0.866,
+        "y": 0.805,
+        "radius": 0.125,
+        "hitRadius": 0.125,
+        "opacity": 0.88,
+        "coordinateSpace": "screen",
+        "labelPlacement": "inside"
+      },
+      {
+        "id": "phone-lt",
+        "action": "raw-lt",
+        "role": "button",
+        "x": 0.8,
+        "y": 0.55,
+        "radius": 0.095,
+        "hitRadius": 0.095,
+        "opacity": 0.88,
+        "coordinateSpace": "screen",
+        "labelPlacement": "inside"
+      },
+      {
+        "id": "phone-menu-a",
+        "action": "menu-a",
+        "role": "button",
+        "x": 0.866,
+        "y": 0.805,
+        "radius": 0.125,
+        "hitRadius": 0.125,
+        "opacity": 0.88,
+        "coordinateSpace": "screen",
+        "labelPlacement": "inside"
+      },
+      {
+        "id": "phone-menu-b",
+        "action": "menu-b",
+        "role": "button",
+        "x": 0.96,
+        "y": 0.066,
+        "radius": 0.045,
+        "hitRadius": 0.045,
+        "opacity": 0.88,
+        "coordinateSpace": "screen"
+      }
+    ]
+  },
+  "pad": {
+    "aimRect": {
+      "x": 0.48,
+      "y": 0.18,
+      "width": 0.32,
+      "height": 0.5
+    },
+    "movementRect": {
+      "x": 0,
+      "y": 0.22,
+      "width": 0.44,
+      "height": 0.78
+    },
+    "controls": [
+      {
+        "id": "pad-ls",
+        "action": "raw-ls",
+        "role": "move",
+        "x": 0.15,
+        "y": 0.78,
+        "radius": 0.085,
+        "hitRadius": 0.085,
+        "opacity": 0.88,
+        "coordinateSpace": "screen"
+      },
+      {
+        "id": "pad-menu",
+        "action": "raw-menu",
+        "role": "button",
+        "x": 0.035,
+        "y": 0.055,
+        "radius": 0.035,
+        "hitRadius": 0.035,
+        "opacity": 0.88,
+        "coordinateSpace": "screen"
+      },
+      {
+        "id": "pad-b",
+        "action": "raw-b",
+        "role": "button",
+        "x": 0.965,
+        "y": 0.055,
+        "radius": 0.035,
+        "hitRadius": 0.035,
+        "opacity": 0.88,
+        "coordinateSpace": "screen"
+      },
+      {
+        "id": "pad-x",
+        "action": "raw-x",
+        "role": "button",
+        "x": 0.79,
+        "y": 0.88,
+        "radius": 0.06,
+        "hitRadius": 0.06,
+        "opacity": 0.88,
+        "coordinateSpace": "screen",
+        "labelPlacement": "inside"
+      },
+      {
+        "id": "pad-a",
+        "action": "raw-a",
+        "role": "button",
+        "x": 0.91,
+        "y": 0.86,
+        "radius": 0.08,
+        "hitRadius": 0.08,
+        "opacity": 0.88,
+        "coordinateSpace": "screen",
+        "labelPlacement": "inside"
+      },
+      {
+        "id": "pad-lt",
+        "action": "raw-lt",
+        "role": "button",
+        "x": 0.81,
+        "y": 0.68,
+        "radius": 0.072,
+        "hitRadius": 0.072,
+        "opacity": 0.88,
+        "coordinateSpace": "screen",
+        "labelPlacement": "inside"
+      },
+      {
+        "id": "pad-menu-a",
+        "action": "menu-a",
+        "role": "button",
+        "x": 0.91,
+        "y": 0.86,
+        "radius": 0.08,
+        "hitRadius": 0.08,
+        "opacity": 0.88,
+        "coordinateSpace": "screen",
+        "labelPlacement": "inside"
+      },
+      {
+        "id": "pad-menu-b",
+        "action": "menu-b",
+        "role": "button",
+        "x": 0.965,
+        "y": 0.055,
+        "radius": 0.035,
+        "hitRadius": 0.035,
+        "opacity": 0.88,
+        "coordinateSpace": "screen"
+      }
+    ]
+  }
+}

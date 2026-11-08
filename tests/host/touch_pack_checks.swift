@@ -133,6 +133,7 @@ import Foundation
                 }
             }
         }
+        SurfaceTapChecks.run()
         for path in CommandLine.arguments.dropFirst() {
             let personal = path.hasPrefix("personal:")
             let file = personal ? String(path.dropFirst(9)) : path
@@ -144,6 +145,10 @@ import Foundation
                 let data = try JSONEncoder().encode(p)
                 let restored = try BCDControlPack.decode(data, for:p.identity, placement:.personal)
                 assert(restored == p)
+                var moved=p;moved.phone.controls[0].x=0.24;moved.aim.sensitivity=2.5
+                let converted=try BCDPackAuthoring.surfaceTap(in:moved,gate:"raw-lt",target:"raw-rt",cancelOn:["raw-b","raw-menu"])
+                assert(converted.phone.controls[0].x==0.24 && converted.aim.sensitivity==2.5)
+                assert(!converted.phone.controls.contains { $0.action == "raw-rt" } && converted.gestures.first?.whenToggled == "raw-lt")
                 let base = BCDPackAuthoring.preset(identity:p.identity,title:"Prior generic preset",genre:"first-person",mode:"controller")
                 let merged = try BCDPackAuthoring.merge(base:base,personal:p,baseline:base)
                 assert(merged.lookMode == "none" && merged.phone.controls == p.phone.controls && merged.actions.contains { $0.behavior == "toggle" })
@@ -152,6 +157,20 @@ import Foundation
                 malformed=p;malformed.version=2
                 assert((try? malformed.validate(placement:.personal)) == nil)
                 print("PASS: owner-confirmed V3 pack, toggle/slide/outline metadata, import round trip, merge and legacy rejection")
+            }
+            if personal, p.version == 5 {
+                assert(p.gestures == [.init(kind:"tap",action:"raw-rt",whenToggled:"raw-lt",cancelOn:["raw-b","raw-menu"])])
+                assert([p.phone,p.pad].allSatisfy { !$0.controls.contains { $0.action == "raw-rt" } && $0.movementRect != nil })
+                let roundTrip=try BCDControlPack.decode(JSONEncoder().encode(p),for:p.identity,placement:.personal)
+                assert(roundTrip==p)
+                var bad=p;bad.version=4;assert((try? bad.validate(placement:.personal))==nil)
+                bad=p;bad.gestures[0].whenToggled=nil;assert((try? bad.validate(placement:.personal))==nil)
+                bad=p;bad.gestures[0].whenToggled="raw-rt";assert((try? bad.validate(placement:.personal))==nil)
+                bad=p;bad.actions[bad.actions.firstIndex { $0.id == "raw-rt" }!].behavior="hold"
+                assert((try? bad.validate(placement:.personal))==nil)
+                let merged=try BCDPackAuthoring.merge(base:p,personal:roundTrip,baseline:p)
+                assert(merged.gestures==p.gestures && merged.phone.controls==p.phone.controls)
+                print("PASS: V5 Tenebris gated tap, no attack button, round trip, merge and malformed/legacy rejection")
             }
             var invalid = p; invalid.version = 999
             assert((try? invalid.validate()) == nil)

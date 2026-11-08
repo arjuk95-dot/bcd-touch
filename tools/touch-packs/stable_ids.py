@@ -18,7 +18,10 @@ def stabilize(pack,previous):
             if not matches:matches=[old for old in previous[device]['controls'] if old['action']==c['action']]
             if len(matches)==1:c['id']=matches[0]['id']
     pack['radial']=[changed.get(a,a) for a in pack['radial']]
-    for g in pack['gestures']:g['action']=changed.get(g['action'],g['action'])
+    for g in pack['gestures']:
+        g['action']=changed.get(g['action'],g['action'])
+        if 'whenToggled' in g:g['whenToggled']=changed.get(g['whenToggled'],g['whenToggled'])
+        if 'cancelOn' in g:g['cancelOn']=[changed.get(id,id) for id in g['cancelOn']]
     for name,keys in [('digitalMovement',['left','right','up','down']),('cursorControls',['fire','inventory','pause','throwAction','primaryClick','secondaryClick'])]:
         if name in pack:
             for key in keys:pack[name][key]=changed.get(pack[name][key],pack[name][key])

@@ -232,6 +232,20 @@ enum BCDPackAuthoring {
         }
         try p.validate(placement: .personal); return p
     }
+    /// Replace only the target's visible buttons, preserving every other personal
+    /// position, binding and calibration. The editor's ordinary Undo reverses it.
+    static func surfaceTap(in original: BCDControlPack, gate: String, target: String, cancelOn: [String]) throws -> BCDControlPack {
+        var p=original;p.version=max(p.version,5)
+        p.gestures.removeAll { $0.kind == "tap" }
+        p.gestures.append(.init(kind:"tap",action:target,whenToggled:gate,cancelOn:cancelOn))
+        for pad in [false,true] {
+            var layout=pad ? p.pad:p.phone
+            layout.controls.removeAll { $0.action == target }
+            for i in layout.controls.indices where layout.controls[i].slideToAction == target { layout.controls[i].slideToAction=nil }
+            if pad { p.pad=layout } else { p.phone=layout }
+        }
+        try p.validate(placement:.personal);return p
+    }
     static func ensurePlayerEvidence(_ p: inout BCDControlPack) {
         if !p.evidence.contains(where: { $0.id == "player-binding" }) {
             p.evidence.append(.init(id: "player-binding", source: "Player's touch editor", detail: "Explicit personal assignment. This records a player edit, not independently verified game defaults."))

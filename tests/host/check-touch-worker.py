@@ -204,3 +204,18 @@ with tempfile.TemporaryDirectory() as tmp, socket.socket() as occupied:
     result=subprocess.run([sys.executable,str(ROOT/'tools/touch-packs/worker.py'),'serve','--host','127.0.0.1','--port',str(occupied.getsockname()[1]),'--state',str(state),'--token-file',str(token),'--codex',str(folder/'must-not-be-executed')],capture_output=True,timeout=15)
     assert result.returncode!=0 and not list(state.glob('*.receipt.json')), 'An occupied worker port must fail before replaying generation jobs'
 print('PASS: pilot validation, identity/mode/hit rejection, cache/restart/overrides, corrupt-cache recovery, bounded failed-generation retries and duplicate-server startup (host fixtures)')
+
+# V5 conditional surface tap is opt-in; original V3 Tenebris remains valid.
+tap_pack=json.loads((ROOT/'packs/personal/tenebris-somnia-tap-attack-iphone.json').read_text(encoding='utf-8'))
+w.validate(tap_pack,personal=True)
+for change in ['legacy','missing-gate','bad-gate','hold-target','missing-toggle']:
+    bad=copy.deepcopy(tap_pack)
+    if change=='legacy':bad['version']=4
+    if change=='missing-gate':bad['gestures'][0].pop('whenToggled')
+    if change=='bad-gate':bad['gestures'][0]['whenToggled']='raw-rt'
+    if change=='hold-target':next(a for a in bad['actions'] if a['id']=='raw-rt')['behavior']='hold'
+    if change=='missing-toggle':bad['pad']['controls']=[c for c in bad['pad']['controls']if c['action']!='raw-lt']
+    try:w.validate(bad,personal=True)
+    except Exception:pass
+    else:raise AssertionError('Accepted malformed surface tap: '+change)
+print('PASS: V5 conditional tap schema and worker validation; legacy profiles retained')

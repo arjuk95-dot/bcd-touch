@@ -114,6 +114,7 @@ final class BCDPackView: UIView {
         var slideArmed = false
         var slideFired = false
         var didDrag = false
+        var surfaceTap: BCDPackSurfaceTap? = nil
     }
     private var pack: BCDControlPack?
     private var context = "onFoot"
@@ -126,6 +127,10 @@ final class BCDPackView: UIView {
     private var epoch = UUID()
     private var pulses = Set<UUID>()
     private var pulseActions: [UUID: String] = [:]
+    private var tapPulses = BCDPackTapPulses()
+    private var tapOutputOwner = UUID()
+    private var tapGate: (action: String, owner: UUID, output: String)?
+    private var tapTimer: Timer?
     private(set) var cursorEngine: BCDCursorPack?
     private var cursorTimer: Timer?
     init() {
@@ -135,9 +140,9 @@ final class BCDPackView: UIView {
         NotificationCenter.default.addObserver(self, selector: #selector(rotated), name: UIDevice.orientationDidChangeNotification, object: nil)
     }
     required init?(coder: NSCoder) { fatalError() }
-    deinit { cursorTimer?.invalidate();NotificationCenter.default.removeObserver(self) }
+    deinit { cursorTimer?.invalidate();tapTimer?.invalidate();NotificationCenter.default.removeObserver(self) }
     @objc private func interrupted() { clear() }
-    @objc private func rotated() { if cursorEngine != nil { clear() } }
+    @objc private func rotated() { if cursorEngine != nil || pack?.gestures.contains(where: { $0.kind == "tap" }) == true { clear() } }
     func configure(_ p: BCDControlPack, context: String, debug: Bool, editing: Bool) {
         let changed = pack != p || self.context != context || self.editing != editing
         if changed { clear();cursorEngine = nil;cursorTimer?.invalidate();cursorTimer=nil }
@@ -235,6 +240,7 @@ final class BCDPackView: UIView {
     var radialLabelFrames: [CGRect] { fingers.values.filter { $0.role == "radial" }.flatMap { radialLabels($0).map { $0.frame } } }
     func clear() {
         cursorEngine?.cancel(resetMode:false);flushCursor()
+        cancelSurfaceTaps()
         epoch = UUID()
         for f in fingers.values { release(f.owner) }
         for owner in pulses { release(owner) }; pulses.removeAll()
@@ -265,6 +271,7 @@ final class BCDPackView: UIView {
         if redraw || !events.isEmpty { setNeedsDisplay() }
     }
     private func clearToggles() {
+        cancelSurfaceTaps()
         let owners = Array(toggles.values); toggles.removeAll()
         for owner in owners { release(owner) }
         setNeedsDisplay()
@@ -272,8 +279,50 @@ final class BCDPackView: UIView {
     private func setToggle(_ a: BCDControlPack.Action, enabled: Bool) {
         if enabled, toggles[a.id] == nil {
             let owner = UUID(); toggles[a.id] = owner; send(a, owner: owner)
-        } else if !enabled, let owner = toggles.removeValue(forKey: a.id) { release(owner) }
+        } else if !enabled, let owner = toggles.removeValue(forKey: a.id) {
+            if tapGate?.action == a.id { cancelSurfaceTaps() }
+            release(owner)
+        }
         setNeedsDisplay()
+    }
+    private func cancelSurfaceTaps(invalidateTouches: Bool = true) {
+        let active = tapGate != nil || !tapPulses.idle
+        tapTimer?.invalidate();tapTimer=nil;tapPulses.cancel();tapGate=nil
+        if active { release(tapOutputOwner) }
+        // Clearing a gate cannot re-arm a touch already resting on the screen.
+        if invalidateTouches { for key in fingers.keys { fingers[key]?.surfaceTap=nil } }
+    }
+    private func surfaceTapEdge(_ edge: Bool) {
+        if edge, let id=tapGate?.output, let a=action(id) {
+            // A user can rebind the tap output to Menu. Its own pulse must outlive
+            // clearing the Aim gate, while remaining independently releasable.
+            if a.output == "Menu" { cancelSurfaceTaps();pulse(a) }
+            else { send(a,owner:tapOutputOwner) }
+        }
+        else { release(tapOutputOwner) }
+        setNeedsDisplay()
+    }
+    private func queueSurfaceTap(_ candidate: BCDPackSurfaceTap) {
+        guard toggles[candidate.gate] == candidate.gateOwner else { return }
+        if tapGate?.owner != candidate.gateOwner || tapGate?.output != candidate.action {
+            cancelSurfaceTaps(invalidateTouches:false)
+            tapGate=(candidate.gate,candidate.gateOwner,candidate.action)
+        }
+        if let edge=tapPulses.enqueue(now:ProcessInfo.processInfo.systemUptime) { surfaceTapEdge(edge) }
+        if tapTimer == nil {
+            let timer=Timer(timeInterval:1.0/120.0,repeats:true) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    guard let gate=self.tapGate, self.toggles[gate.action] == gate.owner,
+                          !LibraryModel.shared.blocksGameplayTouch, BCDPackFocus.shared.refresh() else {
+                        self.cancelSurfaceTaps();return
+                    }
+                    if let edge=self.tapPulses.advance(now:ProcessInfo.processInfo.systemUptime) { self.surfaceTapEdge(edge) }
+                    if self.tapPulses.idle { self.tapTimer?.invalidate();self.tapTimer=nil }
+                }
+            }
+            RunLoop.main.add(timer,forMode:.common);tapTimer=timer
+        }
     }
     private func hitsSlideTarget(_ c: BCDControlPack.Control, at point: CGPoint) -> Bool {
         guard let target = c.slideToAction else { return false }
@@ -304,7 +353,7 @@ final class BCDPackView: UIView {
     }
     private func send(_ a: BCDControlPack.Action, owner: UUID) {
         guard let p = pack else { return }
-        if a.output == "Menu" && a.behavior != "toggle" { clearToggles() }
+        if a.behavior != "toggle", a.output == "Menu" || p.gestures.contains(where: { $0.kind == "tap" && ($0.cancelOn ?? []).contains(a.id) }) { clearToggles() }
         if p.inputMode == "controller" { GamepadInput.shared.packTouch(owner: owner, value: TouchPadAction.sample(a.output)); return }
         if let keys = BCDPackCatalog.keyCodes(a.output) {
             let held = Set(keyHolds.values.flatMap { $0 }); keyHolds[owner] = keys
@@ -347,6 +396,11 @@ final class BCDPackView: UIView {
         if !editing, role == "look", pack.lookMode == "none" { role = "ignore" }
         if !editing, role == "button", let c = control, action(c.action)?.behavior == "toggle" { role = "toggle" }
         var finger = Finger(role: role, control: control, start: point, last: point, time: time)
+        if !editing, ["look","ignore","move"].contains(role), (control == nil || control?.role == "move"),
+           bounds.contains(point), let g=pack.gestures.first(where: { $0.kind == "tap" }),
+           let source=g.whenToggled, action(g.action) != nil, let owner=toggles[source] {
+            finger.surfaceTap=BCDPackSurfaceTap(action:g.action,gate:source,gateOwner:owner,start:point,began:time)
+        }
         if role == "toggle", let c = control, let binding = action(c.action) {
             finger.toggleWasOn = toggles[binding.id] != nil
             finger.slideArmed = !hitsSlideTarget(c, at: point)
@@ -371,6 +425,11 @@ final class BCDPackView: UIView {
             // every historical sample made the final sub-sample's tiny interval
             // dictate expiry, even when batches arrived only every 16-33 ms.
             let sample = ((event?.coalescedTouches(for: t) ?? []) + [t]).max { $0.timestamp < $1.timestamp } ?? t
+            // Aim keeps batch timing; tap rejection additionally observes the whole
+            // coalesced path so a rapid out-and-back drag never becomes an attack.
+            for past in event?.coalescedTouches(for:t) ?? [] {
+                fingers[ObjectIdentifier(t)]?.surfaceTap?.moved(to:past.location(in:self))
+            }
             moveTouch(ObjectIdentifier(t), to: sample.location(in: self), time: sample.timestamp, receivedAt: delivery)
         }
     }
@@ -379,6 +438,7 @@ final class BCDPackView: UIView {
               BCDPackFocus.shared.refresh() else { clear(); return }
         if let engine=cursorEngine { cursorGeometry();engine.move(identity,to:point,time:receivedAt ?? time);flushCursor(redraw:true);return }
         guard var finger = fingers[identity], time > finger.time else { return }
+        finger.surfaceTap?.moved(to:point)
         if finger.role == "look" || finger.role == "fireAim" {
             if pack?.inputMode == "controller" {
                 GamepadInput.shared.packLook(owner: finger.owner, phase: 1, dx: Double(point.x - finger.last.x), dy: Double(point.y - finger.last.y), time: time, receivedAt: receivedAt)
@@ -412,10 +472,10 @@ final class BCDPackView: UIView {
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) { finish(touches, cancelled: true) }
     private func finish(_ touches: Set<UITouch>, cancelled: Bool) {
         for t in touches {
-            endTouch(ObjectIdentifier(t), at: t.location(in: self), cancelled: cancelled)
+            endTouch(ObjectIdentifier(t), at: t.location(in: self), cancelled: cancelled, time:t.timestamp)
         }
     }
-    func endTouch(_ identity: AnyHashable, at point: CGPoint, cancelled: Bool) {
+    func endTouch(_ identity: AnyHashable, at point: CGPoint, cancelled: Bool, time: Double? = nil) {
             if let engine=cursorEngine {
                 if LibraryModel.shared.blocksGameplayTouch || !BCDPackFocus.shared.refresh() { clear();return }
                 engine.end(identity,at:point,time:ProcessInfo.processInfo.systemUptime,cancelled:cancelled);flushCursor(redraw:true);return
@@ -428,6 +488,9 @@ final class BCDPackView: UIView {
                 return
             }
             guard !LibraryModel.shared.blocksGameplayTouch, BCDPackFocus.shared.refresh(), let pack else { clear(); return }
+            if let tap=f.surfaceTap, tap.recognizes(end:point,time:time ?? ProcessInfo.processInfo.systemUptime,gateOwner:toggles[tap.gate]) {
+                queueSurfaceTap(tap)
+            }
             if f.role == "toggle", let c = f.control, let a = action(c.action) {
                 if hypot(point.x-f.start.x,point.y-f.start.y) >= 8 { f.didDrag = true }
                 updateSlide(&f, at: point)
@@ -473,6 +536,11 @@ final class BCDPackView: UIView {
             let status = "Touch roles: " + activeTouchRoles.joined(separator: ", ")
             (status as NSString).draw(at: CGPoint(x: safe.minX + 8, y: safe.minY + 4),
                 withAttributes: [.font:UIFont.monospacedSystemFont(ofSize:11, weight:.medium), .foregroundColor:UIColor.cyan])
+            if let g=pack?.gestures.first(where: { $0.kind == "tap" }), let gate=g.whenToggled {
+                ctx.setStrokeColor(UIColor.orange.cgColor);ctx.stroke(bounds.insetBy(dx:2,dy:2))
+                let caption="Tap surface → \(action(g.action)?.label ?? g.action) · requires \(action(gate)?.label ?? gate) · buttons keep ownership"
+                (caption as NSString).draw(at:CGPoint(x:safe.minX+8,y:safe.minY+18),withAttributes:[.font:UIFont.systemFont(ofSize:10),.foregroundColor:UIColor.orange])
+            }
         }
         for c in layout.controls where visible(c) {
             if let engine=cursorEngine, [.pointer,.paused,.utilities].contains(engine.mode) { continue }
@@ -498,7 +566,7 @@ final class BCDPackView: UIView {
             let a = action(c.action)
             let toggled = toggles[c.action] != nil
             let tint = toggled ? UIColor(red:1,green:0.67,blue:0.18,alpha:1) : UIColor.white
-            let pressed = fingers.values.contains { $0.control?.id == c.id } || pulseActions.values.contains(c.action) || cursorEngine?.fingers.values.contains { $0.action == c.action && $0.role != "ignore" } == true
+            let pressed = fingers.values.contains { $0.control?.id == c.id } || pulseActions.values.contains(c.action) || (tapPulses.down && tapGate?.action == c.action) || cursorEngine?.fingers.values.contains { $0.action == c.action && $0.role != "ignore" } == true
             if pressed { ctx.setFillColor(tint.withAlphaComponent(0.08).cgColor); ctx.fillEllipse(in: circle) }
             ctx.setStrokeColor(tint.withAlphaComponent(toggled || pressed ? 0.95 : c.opacity * ((pack?.version ?? 1) >= 3 ? 0.9 : 0.65)).cgColor)
             ctx.setLineWidth(pressed ? 1.5 : 1); ctx.strokeEllipse(in: circle)

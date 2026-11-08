@@ -31,7 +31,12 @@ struct BCDControlPack: Codable, Equatable {
         var controls: [Control]
         var movementRect: Rect? = nil
     }
-    struct Gesture: Codable, Equatable { var kind: String; var action: String }
+    struct Gesture: Codable, Equatable {
+        var kind: String; var action: String
+        /// V5: a gameplay-surface tap is available only while this toggle is held.
+        var whenToggled: String? = nil
+        var cancelOn: [String]? = nil
+    }
     var version: Int
     var id: String
     var title: String
@@ -73,7 +78,7 @@ struct BCDControlPack: Codable, Equatable {
     func validate(for expected: Identity? = nil, placement: Placement = .generated) throws {
         func require(_ ok: Bool, _ reason: String) throws { if !ok { throw Invalid.reason(reason) } }
         func text(_ s: String) -> Bool { !s.isEmpty && s.utf8.count <= 256 && !s.unicodeScalars.contains { $0.value < 32 } }
-        try require([1, 2, 3, 4].contains(version), "Unsupported pack version")
+        try require([1, 2, 3, 4, 5].contains(version), "Unsupported pack version")
         try require(text(id) && text(title), "Missing name")
         try require(expected == nil || identity == expected, "Game/build/bindings mismatch")
         for s in [identity.executable, identity.storeID, identity.edition, identity.build, identity.bindingDigest] { try require(text(s), "Incomplete identity") }
@@ -128,7 +133,24 @@ struct BCDControlPack: Codable, Equatable {
             try require(radial.allSatisfy { id in actions.contains { $0.id == id && $0.output.hasPrefix("key:") && $0.behavior == "tap" } }, "Equipment slots require direct tapped keys")
         } else { try require(digitalMovement == nil, "Digital movement requires cursor capability") }
         try require(radial.count <= 8 && radial.allSatisfy { ids.contains($0) }, "Unknown radial action")
-        try require(gestures.count <= 4 && Set(gestures.map(\.kind)).count == gestures.count && gestures.allSatisfy { ["swipeUp", "swipeDown", "swipeLeft", "swipeRight"].contains($0.kind) && ids.contains($0.action) }, "Unknown gesture")
+        try require(gestures.count <= (version >= 5 ? 5 : 4) && Set(gestures.map(\.kind)).count == gestures.count, "Duplicate/too many gestures")
+        for g in gestures {
+            try require(ids.contains(g.action), "Unknown gesture action")
+            if g.kind == "tap" {
+                let target = actions.first { $0.id == g.action }
+                let gate = actions.first { $0.id == g.whenToggled }
+                try require(version >= 5 && cursorControls == nil && target?.behavior == "tap" && gate?.behavior == "toggle" && gate?.id != target?.id, "Surface tap requires V5, a tap action and a separate toggle")
+                try require(gate?.output != target?.output, "Surface tap must use a different output from its toggle")
+                let cancellations=g.cancelOn ?? []
+                try require(cancellations.count <= 8 && Set(cancellations).count == cancellations.count && cancellations.allSatisfy { ids.contains($0) && $0 != gate?.id && $0 != target?.id }, "Invalid surface tap cancellation actions")
+                try require(Set(target?.contexts ?? []).isSubset(of:Set(gate?.contexts ?? [])), "Surface tap unavailable in its toggle contexts")
+                for layout in [phone,pad] {
+                    try require(layout.controls.contains { $0.role == "button" && $0.action == g.whenToggled }, "Surface tap needs a visible toggle button")
+                }
+            } else {
+                try require(["swipeUp", "swipeDown", "swipeLeft", "swipeRight"].contains(g.kind) && g.whenToggled == nil && g.cancelOn == nil, "Unknown or unsupported gesture")
+            }
+        }
         for layout in [phone, pad] {
             let r = layout.aimRect
             try require([r.x, r.y, r.width, r.height].allSatisfy { $0.isFinite && $0 >= 0 && $0 <= 1 } && r.width >= 0.25 && r.height >= 0.25 && r.x + r.width <= 1 && r.y + r.height <= 1, "Invalid reserved aim rectangle")
@@ -177,4 +199,47 @@ struct BCDControlPack: Codable, Equatable {
         let p = try JSONDecoder().decode(Self.self, from: data)
         try p.validate(for: expected, placement: placement); return p
     }
+}
+
+/// Touch ownership is assigned before arming this recognizer. It cannot turn a
+/// button/radial touch into an attack, or turn an out-and-back drag into a tap.
+struct BCDPackSurfaceTap {
+    var action: String
+    var gate: String
+    var gateOwner: UUID
+    var start: CGPoint
+    var began: Double
+    private(set) var travel: CGFloat = 0
+
+    mutating func moved(to point: CGPoint) {
+        guard point.x.isFinite, point.y.isFinite else { travel = .infinity;return }
+        travel = max(travel,hypot(point.x-start.x,point.y-start.y))
+    }
+    func recognizes(end: CGPoint, time: Double, gateOwner current: UUID?) -> Bool {
+        let elapsed = time-began
+        return start.x.isFinite && start.y.isFinite && end.x.isFinite && end.y.isFinite && current == gateOwner && elapsed.isFinite && elapsed >= 0 && elapsed <= 0.35 &&
+            max(travel,hypot(end.x-start.x,end.y-start.y)) <= 12
+    }
+}
+
+/// A short queue separates rapid taps with a real neutral interval. Deadlines
+/// start when an edge is published, so a delayed UI tick cannot collapse the gap.
+struct BCDPackTapPulses {
+    private(set) var pending = 0
+    private(set) var down = false
+    private(set) var deadline: Double? = nil
+    var idle: Bool { pending == 0 && !down && deadline == nil }
+    mutating func enqueue(now: Double) -> Bool? {
+        guard now.isFinite, pending < 8 else { return nil }
+        pending += 1
+        if deadline == nil { return advance(now:now) }
+        return nil
+    }
+    mutating func advance(now: Double) -> Bool? {
+        guard now.isFinite, deadline == nil || now >= deadline! else { return nil }
+        if down { down=false;deadline=now+0.04;return false }
+        if pending > 0 { pending-=1;down=true;deadline=now+0.05;return true }
+        deadline=nil;return nil
+    }
+    mutating func cancel() { pending=0;down=false;deadline=nil }
 }

@@ -105,6 +105,7 @@ import UIKit
         try checkWindowRouting(original)
         try await checkPackInteractions(original)
         try await checkTenebrisInteractions()
+        try await checkTenebrisTapInteractions()
         try await captureEditorFixtures()
         try captureAuthoringFixtures()
         var moved=store.pack!;moved.phone.controls[index].x=movedX
@@ -563,5 +564,110 @@ import UIKit
             try compactImage.pngData()!.write(to:folder.appendingPathComponent("placement-\(height)-simulator.png"))
             window.isHidden=true;store.placingControls=false
         }
+    }
+}
+
+private extension TouchPackPreview {
+    @MainActor func checkTenebrisTapInteractions() async throws {
+        let pack=try BCDControlPack.decode(Data(contentsOf:Bundle.main.url(forResource:"tenebris-somnia-tap-attack-iphone",withExtension:"json")!),placement:.personal)
+        let scene=UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first!
+        let library=LibraryModel.shared,focus=BCDPackFocus.shared,pad=GamepadInput.shared
+        let saved=library.current,blocked=library.blocksGameplayTouch
+        let keyboard=PackBoundarySpy.keyboardEvents,mouse=PackBoundarySpy.mouseEvents
+        let window=UIWindow(windowScene:scene);window.frame=scene.coordinateSpace.bounds;window.windowLevel = .normal+105
+        let root=UIViewController();root.view=UIView(frame:window.bounds)
+        let view=BCDPackView();view.frame=window.bounds;root.view.addSubview(view)
+        window.rootViewController=root;window.isHidden=false;window.layoutIfNeeded()
+        library.current=NSObject();library.blocksGameplayTouch=false;focus.observe(window);focus.setMonitoring(true)
+        defer { view.clear();window.isHidden=true;library.current=saved;library.blocksGameplayTouch=blocked;focus.setMonitoring(false) }
+        view.configure(pack,context:"onFoot",debug:false,editing:false);view.layoutIfNeeded()
+        let aim=view.controlCenter(pack.phone.controls.first { $0.action=="raw-lt" }!)
+        let interact=view.controlCenter(pack.phone.controls.first { $0.action=="raw-a" }!)
+        let open=CGPoint(x:view.bounds.width*0.55,y:view.bounds.height*0.4)
+        let zone=view.movementStartRegion,left=CGPoint(x:zone.minX+zone.width*0.2,y:zone.midY)
+        func count() -> Int { pad.touchEvents.filter { $0.value?.rt==255 }.count }
+        func tap(_ id:String,_ p:CGPoint,_ duration:Double=0.08) {
+            let now=ProcessInfo.processInfo.systemUptime
+            view.beginTouch(id,at:p,time:now);view.endTouch(id,at:p,cancelled:false,time:now+duration)
+        }
+        let initial=count()
+        tap("off",open);assert(count()==initial,"Aim-off tap attacked")
+        tap("aim-on",aim);assert(pad.sample.lt==255 && count()==initial)
+        let now=ProcessInfo.processInfo.systemUptime
+        view.beginTouch("move",at:left,time:now)
+        view.moveTouch("move",to:CGPoint(x:left.x+40,y:left.y),time:now+0.02)
+        assert(pad.sample.lx>0)
+        tap("right-tap",open);tap("left-tap",left)
+        try await Task.sleep(nanoseconds:260_000_000)
+        assert(count()==initial+2 && pad.sample.rt==0 && pad.sample.lt==255 && pad.sample.lx>0,"Movement/Aim and two distinct RT pulses did not coexist")
+        view.endTouch("move",at:CGPoint(x:left.x+40,y:left.y),cancelled:false,time:now+0.3)
+        assert(count()==initial+2 && pad.sample.lx==0 && view.movementVisual==nil)
+        let before=count(),t=ProcessInfo.processInfo.systemUptime
+        view.beginTouch("drag",at:open,time:t)
+        view.moveTouch("drag",to:CGPoint(x:open.x+60,y:open.y),time:t+0.03)
+        view.moveTouch("drag",to:open,time:t+0.06)
+        view.endTouch("drag",at:open,cancelled:false,time:t+0.1)
+        tap("hold",open,0.5)
+        view.beginTouch("cancelled",at:open,time:t);view.endTouch("cancelled",at:open,cancelled:true,time:t+0.1)
+        tap("interact",interact)
+        assert(count()==before,"Drag, hold, cancel or another button acquired Attack")
+        // Turning Aim off/on cannot arm a finger that was already resting.
+        view.beginTouch("resting",at:open,time:t)
+        tap("aim-off",aim);tap("aim-back-on",aim)
+        view.endTouch("resting",at:open,cancelled:false,time:t+0.2)
+        assert(count()==before && pad.sample.lt==255)
+        tap("interrupt-pulse",open);assert(pad.sample.rt==255)
+        NotificationCenter.default.post(name:BCDPackFocus.didLoseFocus,object:nil)
+        assert(pad.sample==GamepadSample() && view.toggledActionIDs.isEmpty)
+        let interrupted=count();try await Task.sleep(nanoseconds:180_000_000);assert(count()==interrupted)
+        tap("aim-for-context",aim);tap("context-pulse",open)
+        view.configure(pack,context:"menu",debug:false,editing:false)
+        assert(pad.sample==GamepadSample());tap("menu-surface",open)
+        assert(count()==interrupted+1)
+        view.configure(pack,context:"onFoot",debug:false,editing:false)
+        tap("aim-for-rotation",aim);tap("rotation-pulse",open)
+        NotificationCenter.default.post(name:UIDevice.orientationDidChangeNotification,object:nil)
+        assert(pad.sample==GamepadSample())
+        view.configure(pack,context:"onFoot",debug:false,editing:true)
+        let editCount=count();tap("edit-surface",open);assert(count()==editCount)
+        view.configure(pack,context:"onFoot",debug:false,editing:false)
+        tap("aim-for-inventory",aim)
+        let inventory=view.controlCenter(pack.phone.controls.first { $0.action == "raw-b" }!)
+        tap("inventory",inventory)
+        assert(pad.sample.lt==0 && pad.sample.rt==0,"Inventory left the tap attack gate armed")
+        // Aim cancellation releases this feature's RT owner, never another finger's.
+        var direct=try BCDPackAuthoring.addButton(to:pack,context:"onFoot",output:"RT")
+        let i=direct.phone.controls.count-1;direct.phone.controls[i].x=0.6;direct.phone.controls[i].y=0.9;direct.phone.controls[i].coordinateSpace="screen"
+        view.configure(direct,context:"onFoot",debug:false,editing:false)
+        tap("aim-for-independent",aim)
+        let held=view.controlCenter(direct.phone.controls[i])
+        view.beginTouch("independent-rt",at:held,time:ProcessInfo.processInfo.systemUptime)
+        tap("tap-with-held-rt",open);tap("disable-aim",aim)
+        assert(pad.sample.lt==0 && pad.sample.rt==255,"Aim cancellation released another finger's trigger")
+        view.endTouch("independent-rt",at:held,cancelled:false);assert(pad.sample.rt==0)
+        assert(PackBoundarySpy.keyboardEvents==keyboard && PackBoundarySpy.mouseEvents==mouse,"Controller tap emitted keyboard/mouse")
+        view.clear()
+        let folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
+        // Renderer captures are explicitly geometry fixtures, not game screenshots.
+        for (name,size,isPad,enabled,hits) in [
+            ("phone-idle",CGSize(width:956,height:440),false,false,false),
+            ("phone-aim",CGSize(width:956,height:440),false,true,false),
+            ("phone-hits",CGSize(width:956,height:440),false,true,true),
+            ("pad-aim",CGSize(width:1194,height:834),true,true,false)] {
+            var p=pack;if isPad { p.phone=p.pad }
+            let canvas=BCDPackView();canvas.frame=CGRect(origin:.zero,size:size);canvas.configure(p,context:"onFoot",debug:hits,editing:false)
+            if enabled {
+                let point=canvas.controlCenter(p.phone.controls.first { $0.action=="raw-lt" }!)
+                let at=ProcessInfo.processInfo.systemUptime
+                canvas.beginTouch("render-aim",at:point,time:at);canvas.endTouch("render-aim",at:point,cancelled:false,time:at+0.05)
+            }
+            let format=UIGraphicsImageRendererFormat();format.scale=2;format.opaque=true
+            let image=UIGraphicsImageRenderer(size:size,format:format).image { context in
+                UIColor(red:0.06,green:0.08,blue:0.09,alpha:1).setFill();context.fill(CGRect(origin:.zero,size:size));canvas.draw(canvas.bounds)
+                ("SIMULATOR FIXTURE · \(isPad ? "iPad geometry" : "iPhone geometry") · NO GAME" as NSString).draw(at:CGPoint(x:size.width*0.24,y:8),withAttributes:[.font:UIFont.systemFont(ofSize:11),.foregroundColor:UIColor.white])
+            }
+            try image.pngData()!.write(to:folder.appendingPathComponent("tenebris-tap-"+name+".png"));canvas.clear()
+        }
+        try Data("PASS: production UIKit V5 tap surface, Aim off/on, left/right taps, floating movement + LT + two distinct RT pulses, drag/hold/cancel rejection, button ownership, stale gate, focus/context/rotation/editor release, independent RT ownership, zero keyboard/mouse. Simulator only; physical game test pending.".utf8).write(to:folder.appendingPathComponent("tenebris-tap-interaction-regression.txt"))
     }
 }
