@@ -1,10 +1,14 @@
-name: OpenGL boundary and source checks
+name: OpenGL boundary and source checks (pinned validation)
 jobs:
   native-presenter:
     runs-on: macos-15-intel
     timeout-minutes: 20
     steps:
     - uses: actions/checkout@v4
+      with:
+        ref: 0b0f227b2d2e6f4b6a1dc50b7e017aa012003b83
+    - name: Verify exact application source
+      run: test "$(git rev-parse HEAD)" = 0b0f227b2d2e6f4b6a1dc50b7e017aa012003b83
     - run: sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
     - name: Compile production GL presenter against device SDK (no hardware execution)
       run: 'xcrun --sdk iphoneos clang -arch arm64 -miphoneos-version-min=17.0 -fobjc-arc -fmodules -Wall -c app/Madeira/Winios/WiniosGL.m
@@ -14,9 +18,14 @@ jobs:
     - name: Run real per-game GL picker persistence check
       run: python3 tests/opengl/check-game-setting.py
   policy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
     - uses: actions/checkout@v4
+      with:
+        ref: 0b0f227b2d2e6f4b6a1dc50b7e017aa012003b83
+    - name: Verify exact application source
+      run: test "$(git rev-parse HEAD)" = 0b0f227b2d2e6f4b6a1dc50b7e017aa012003b83
     - name: Check active upstream GL integration
       run: 'python3 tests/host/check-opengl-key.py
 
@@ -29,21 +38,45 @@ jobs:
         python3 tests/host/check-cursor-pack-desktop.py'
     - name: Check real Wine ARM64EC hybrid metadata and native ARM64 headers
       run: python3 tests/opengl/check-pe.py
-    - run: sudo apt-get update -qq && sudo apt-get install -y gcc-mingw-w64-i686 gcc-mingw-w64-x86-64
+    - name: Install checksum-pinned official LLVM-MinGW (no apt mirrors)
+      timeout-minutes: 8
+      shell: bash
+      run: |
+        set -euo pipefail
+        archive=llvm-mingw-20260421-ucrt-ubuntu-22.04-x86_64.tar.xz
+        sha=f8b8cce779affeab47bcaec6ce6e9e768b166094a366123ef64b2d0b389cc121
+        url="https://github.com/mstorsjo/llvm-mingw/releases/download/20260421/$archive"
+        # Verified against official release asset 401855784, API sha256 digest.
+        mkdir -p "$RUNNER_TEMP/bcd-gl-toolchain" build-out
+        curl --fail --location --proto '=https' --proto-redir '=https' \
+          --connect-timeout 20 --max-time 300 --retry 2 --retry-max-time 360 \
+          "$url" -o "$RUNNER_TEMP/bcd-gl-toolchain/$archive"
+        echo "$sha  $RUNNER_TEMP/bcd-gl-toolchain/$archive" | sha256sum --check --strict
+        tar -xJf "$RUNNER_TEMP/bcd-gl-toolchain/$archive" -C "$RUNNER_TEMP/bcd-gl-toolchain"
+        toolchain="$RUNNER_TEMP/bcd-gl-toolchain/${archive%.tar.xz}/bin"
+        test -x "$toolchain/i686-w64-mingw32-clang"
+        test -x "$toolchain/x86_64-w64-mingw32-clang"
+        echo "$toolchain" >> "$GITHUB_PATH"
+        printf 'source_commit=%s\nurl=%s\nsha256=%s\n' \
+          "$(git rev-parse HEAD)" "$url" "$sha" > build-out/gl-toolchain-provenance.txt
+        "$toolchain/x86_64-w64-mingw32-clang" --version >> build-out/gl-toolchain-provenance.txt
     - name: Compile real Windows GL smoke programs (not executed on host)
       run: 'mkdir -p build-out
 
-        i686-w64-mingw32-gcc -std=c11 -Wall -O2 tests/opengl/smoke.c -o build-out/bcd-opengl-smoke-x86.exe -lopengl32 -lgdi32
+        i686-w64-mingw32-clang -std=c11 -Wall -O2 tests/opengl/smoke.c -o build-out/bcd-opengl-smoke-x86.exe -lopengl32 -lgdi32
         -luser32
 
-        x86_64-w64-mingw32-gcc -std=c11 -Wall -O2 tests/opengl/smoke.c -o build-out/bcd-opengl-smoke-x64.exe -lopengl32 -lgdi32
+        x86_64-w64-mingw32-clang -std=c11 -Wall -O2 tests/opengl/smoke.c -o build-out/bcd-opengl-smoke-x64.exe -lopengl32 -lgdi32
         -luser32
 
         '
     - uses: actions/upload-artifact@v4
       with:
         name: OpenGL-Windows-smoke-programs
-        path: build-out/*.exe
+        path: |
+          build-out/*.exe
+          build-out/gl-toolchain-provenance.txt
+        if-no-files-found: error
         retention-days: 14
 'on':
 - push
