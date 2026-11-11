@@ -6,9 +6,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        ref: 0b0f227b2d2e6f4b6a1dc50b7e017aa012003b83
+        ref: 93503459c8af122b388944838d71e1aabbad5c55
     - name: Verify exact application source
-      run: test "$(git rev-parse HEAD)" = 0b0f227b2d2e6f4b6a1dc50b7e017aa012003b83
+      run: test "$(git rev-parse HEAD)" = 93503459c8af122b388944838d71e1aabbad5c55
     - run: sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
     - name: Compile production GL presenter against device SDK (no hardware execution)
       run: 'xcrun --sdk iphoneos clang -arch arm64 -miphoneos-version-min=17.0 -fobjc-arc -fmodules -Wall -c app/Madeira/Winios/WiniosGL.m
@@ -23,9 +23,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        ref: 0b0f227b2d2e6f4b6a1dc50b7e017aa012003b83
+        ref: 93503459c8af122b388944838d71e1aabbad5c55
     - name: Verify exact application source
-      run: test "$(git rev-parse HEAD)" = 0b0f227b2d2e6f4b6a1dc50b7e017aa012003b83
+      run: test "$(git rev-parse HEAD)" = 93503459c8af122b388944838d71e1aabbad5c55
     - name: Check active upstream GL integration
       run: 'python3 tests/host/check-opengl-key.py
 
