@@ -37,10 +37,11 @@ Behaviour (swiftc; --require-swift makes its absence a failure):
     files, MADEIRA_CFG_GAME, the log and the offer untouched; on, the launch file, the
     marker, the analysis, a killed run's recovery and the question work.
 
-  check-autotune.py [--require-swift] [--bless NAME...]
+  check-autotune.py [--require-swift] [--jobs 1|2|3] [--bless NAME...]
 --bless writes NAME.expect from the current result (review it before committing).
 """
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import importlib.util
 import json
 import os
@@ -58,6 +59,8 @@ CORE, GLUE, VIEWS, RULES_SWIFT = (APP / "AutoTuneCore.swift", APP / "AutoTune.sw
                                   APP / "AutoTuneViews.swift", APP / "AutoTuneRules.generated.swift")
 ap = argparse.ArgumentParser()
 ap.add_argument("--require-swift", action="store_true")
+ap.add_argument("--jobs", type=int, choices=range(1, 4), default=1,
+                help="bounded fixture replay workers (1–3; default: serial)")
 ap.add_argument("--bless", nargs="*", default=None)
 args = ap.parse_args()
 ok = True
@@ -184,6 +187,13 @@ check("its Close BCD is the only way an attempt restarts the app (no relaunch by
       and views.count("exit(") == 1)
 
 glue = GLUE.read_text()
+# Keep the non-engine boundary current even on hosts without Swift.
+glue_stubs = (R / "tests/host/autotune_glue_stubs.swift").read_text()
+config_stub = glue_stubs.split("enum MadeiraConfig {", 1)[1].split("\nstruct GameProfile", 1)[0]
+config_members = set(re.findall(r"static\s+(?:var|let|func)\s+(\w+)", config_stub))
+config_used = set(re.findall(r"\bMadeiraConfig\.(\w+)", glue))
+check("app glue's MadeiraConfig members all exist in its test boundary",
+      config_used <= config_members, "missing: " + str(sorted(config_used - config_members)))
 check("the switch is a UserDefaults bool read once per run, on when absent",
       "static let enabled: Bool = storedOn(globalKey)" in glue
       and "UserDefaults.standard.object(forKey: key) == nil || UserDefaults.standard.bool(forKey: key)" in glue)
@@ -353,6 +363,8 @@ for p in FIX.glob("*.expect"):
 check("every rule is matched by at least one fixture", set(ids) <= proved, "unproved: %s" % sorted(set(ids) - proved))
 
 # ---- behaviour --------------------------------------------------------------------------
+runner = subprocess.run([sys.executable, str(R / "tests/host/check-autotune-runner.py")], capture_output=True, text=True)
+check("bounded replay runner preserves all fixtures and comparisons", runner.returncode == 0, runner.stdout + runner.stderr)
 swiftc = shutil.which("swiftc")
 if not swiftc:
     if args.require_swift:
@@ -379,8 +391,41 @@ def uk(exp):
     return ["--user-keys", ",".join(exp["userKeys"])] if exp.get("userKeys") else []
 
 
+def replay_fixture(replay, p):
+    """Read-only replay: one worker owns all chunk sizes and the normal-end rerun."""
+    results = []
+    exp = json.loads((FIX / (p.stem + ".expect")).read_text())
+    runs = {}
+    for chunk in (0, 4093, 7):
+        r = subprocess.run([str(replay), "--chunk", str(chunk), "--end", json.dumps(exp["end"])] + uk(exp) + [str(p)],
+                           capture_output=True, text=True)
+        runs[chunk] = json.loads(r.stdout) if r.returncode == 0 else {"error": r.stderr}
+    got = runs[0]
+    same = all(runs[c].get(k) == got.get(k) for c in (4093, 7) for k in KEYS + ("facts", "monoMissing"))
+    diff = {k: (exp.get(k), got.get(k)) for k in KEYS if exp.get(k) != got.get(k)}
+    # Wine Mono missing (the game page's hint): only a fixture whose .expect says so may show it.
+    if bool(exp.get("monoMissing")) != bool(got.get("monoMissing")):
+        diff["monoMissing"] = (bool(exp.get("monoMissing")), bool(got.get("monoMissing")))
+    results.append((f"{p.stem}: {got.get('outcome')}, stage {got.get('stage')}, next {got.get('next') or '-'}",
+          not diff and same, "expected/got: %s; chunk sizes agree: %s" % (diff, same)))
+    # A crash read from the log alone (the app never came back) reads the same when the
+    # session ended normally. A memory kill or a hang exists only on the first path.
+    if exp.get("end", {}).get("killed") and exp["outcome"] in ("crashed", "exited-early") and exp["matched"]:
+        r = subprocess.run([str(replay), "--end", "{}"] + uk(exp) + [str(p)], capture_output=True, text=True)
+        alt = json.loads(r.stdout)
+        results.append((f"{p.stem}: a normal end gives the same rules ({alt['outcome']})",
+              alt["outcome"] in ("crashed", "hung", "exited-early") and alt["matched"] == exp["matched"], ""))
+    return results
+
+
 with tempfile.TemporaryDirectory(prefix="madeira-autotune-") as tmp:
     replay = build(tmp, "replay", [CORE, RULES_SWIFT, R / "tests/host/autotune_replay.swift"])
+    engine = build(tmp, "engine", [CORE, RULES_SWIFT, R / "tests/host/autotune_engine_checks.swift"])
+    glue_exe = build(tmp, "madeira-autotune-glue-check",
+                     [GLUE, CORE, RULES_SWIFT, R / "tests/host/autotune_glue_stubs.swift", R / "tests/host/autotune_glue_checks.swift"])
+    if not all((replay, engine, glue_exe)):
+        print("FAILED: auto-tune compile preflight; no fixtures replayed")
+        sys.exit(1)
     if replay:
         if args.bless is not None:
             for name in args.bless:
@@ -391,34 +436,15 @@ with tempfile.TemporaryDirectory(prefix="madeira-autotune-") as tmp:
                 prior.update({k: out[k] for k in KEYS})
                 exp_path.write_text(json.dumps(prior, indent=1, sort_keys=True, ensure_ascii=False) + "\n")
                 print(f"blessed {name}: {out['outcome']}, stage {out['stage']}, matched {out['matched']}, next {out['next']}")
-        for p in logs:
-            exp = json.loads((FIX / (p.stem + ".expect")).read_text())
-            runs = {}
-            for chunk in (0, 4093, 7):
-                r = subprocess.run([str(replay), "--chunk", str(chunk), "--end", json.dumps(exp["end"])] + uk(exp) + [str(p)],
-                                   capture_output=True, text=True)
-                runs[chunk] = json.loads(r.stdout) if r.returncode == 0 else {"error": r.stderr}
-            got = runs[0]
-            same = all(runs[c].get(k) == got.get(k) for c in (4093, 7) for k in KEYS + ("facts", "monoMissing"))
-            diff = {k: (exp.get(k), got.get(k)) for k in KEYS if exp.get(k) != got.get(k)}
-            # Wine Mono missing (the game page's hint): only a fixture whose .expect says so may show it.
-            if bool(exp.get("monoMissing")) != bool(got.get("monoMissing")):
-                diff["monoMissing"] = (bool(exp.get("monoMissing")), bool(got.get("monoMissing")))
-            check(f"{p.stem}: {got.get('outcome')}, stage {got.get('stage')}, next {got.get('next') or '-'}",
-                  not diff and same, "expected/got: %s; chunk sizes agree: %s" % (diff, same))
-            # A crash read from the log alone (the app never came back) reads the same when the
-            # session ended normally. A memory kill or a hang exists only on the first path.
-            if exp.get("end", {}).get("killed") and exp["outcome"] in ("crashed", "exited-early") and exp["matched"]:
-                r = subprocess.run([str(replay), "--end", "{}"] + uk(exp) + [str(p)], capture_output=True, text=True)
-                alt = json.loads(r.stdout)
-                check(f"{p.stem}: a normal end gives the same rules ({alt['outcome']})",
-                      alt["outcome"] in ("crashed", "hung", "exited-early") and alt["matched"] == exp["matched"])
-    engine = build(tmp, "engine", [CORE, RULES_SWIFT, R / "tests/host/autotune_engine_checks.swift"])
+        print(f"Replaying all {len(logs)} fixtures with {args.jobs} worker(s); chunks 0, 4093, 7 and normal-end reruns", flush=True)
+        with ThreadPoolExecutor(max_workers=args.jobs) as pool:
+            # map preserves fixture order; only this thread reports or updates `ok`.
+            for results in pool.map(lambda p: replay_fixture(replay, p), logs):
+                for result in results:
+                    check(*result)
     if engine:
         r = subprocess.run([str(engine)], capture_output=True, text=True)
         check("the engine checks pass", r.returncode == 0, "\n".join(l for l in r.stdout.splitlines() if not l.startswith("ok"))[-3000:])
-    glue_exe = build(tmp, "madeira-autotune-glue-check",
-                     [GLUE, CORE, RULES_SWIFT, R / "tests/host/autotune_glue_stubs.swift", R / "tests/host/autotune_glue_checks.swift"])
     if glue_exe:
         for mode in ("off", "on", "default"):
             t = Path(tmp) / mode

@@ -70,7 +70,7 @@ jobs:
     - name: Check online recommended settings
       run: python3 tests/host/check-remote-recommendations.py --require-swift
     - name: Check auto-tune
-      run: python3 tests/host/check-autotune.py --require-swift
+      run: python3 tests/host/check-autotune.py --require-swift --jobs 3
     - name: Check GTA V Legacy GPU reset rule
       run: python3 tests/host/check-gta5l-gpu-reset.py
     - name: Check the Start menu entries

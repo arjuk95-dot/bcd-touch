@@ -39,6 +39,8 @@ enum LibraryPrefs {
 }
 
 enum MadeiraConfig {
+    // Test-only capability boundary; this fixture has no bundled graphics driver.
+    static let desktopGLAdvice = "OpenGL advice fixture: inspect the selected backend and renderer diagnostics."
     static var documents: URL? { ProcessInfo.processInfo.environment["AUTOTUNE_TEST_DOCS"].map { URL(fileURLWithPath: $0) } }
     static func all() -> [String: String] {
         guard let d = documents, let t = try? String(contentsOf: d.appendingPathComponent("bcd.cfg"), encoding: .utf8) else { return [:] }
