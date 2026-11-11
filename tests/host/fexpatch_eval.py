@@ -10,6 +10,8 @@ import shutil
 import subprocess
 import sys
 
+from overlay_base import ensure_overlay_base
+
 # Source trees the ARM64EC overlays read or write.
 OVERLAY_TREES = ('FEXCore/Source', 'FEXCore/include', 'Source/Windows', 'External/rpmalloc/rpmalloc')
 
@@ -20,6 +22,8 @@ OVERLAY_TREES = ('FEXCore/Source', 'FEXCore/include', 'Source/Windows', 'Externa
 # "ec-ret-direct-v1 madeira-bcd"`). The checks still evaluate each overlay on the
 # chain's own input: the pin the overlays were written against, OVERLAY_BASE.
 OVERLAY_BASE = '3bec2ac498bf78156ab47c0c194b0e8cb2849756'
+OVERLAY_TREE = 'e348431369f07995227d15e1ecf90fbf3c4d90c6'
+OVERLAY_UPSTREAM = 'https://github.com/willfaust/FEX.git'
 PIN_MARKER = 'ec-ret-direct-v1 madeira-bcd'
 
 
@@ -48,9 +52,7 @@ def overlay_base(root, tmp):
     if PIN_MARKER not in (fex / 'Source/Windows/ARM64EC/Module.cpp').read_text():
         return fex
     base = Path(tmp) / 'base'
-    have = subprocess.run(['git', '-C', str(fex), 'cat-file', '-e', OVERLAY_BASE + '^{commit}'], capture_output=True)
-    if have.returncode:
-        subprocess.run(['git', '-C', str(fex), 'fetch', '-q', '--depth=1', 'origin', OVERLAY_BASE], check=True)
+    ensure_overlay_base(fex, OVERLAY_BASE, OVERLAY_TREE, OVERLAY_UPSTREAM)
     trees = [rel for rel in OVERLAY_TREES if not rel.startswith('External/')]
     archive = subprocess.run(['git', '-C', str(fex), 'archive', OVERLAY_BASE] + trees, check=True, capture_output=True)
     base.mkdir(parents=True)

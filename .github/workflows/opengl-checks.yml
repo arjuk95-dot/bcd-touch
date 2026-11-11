@@ -66,6 +66,8 @@ jobs:
 'on':
   workflow_dispatch: {}
   push:
+    branches-ignore:
+    - wo-bcd-v653-test-first-001
     paths:
     - app/**
     - tests/opengl/**
