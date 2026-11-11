@@ -47,7 +47,7 @@ for p in logs:
     assert serial_calls[p.stem, 'normal'] == int(needs_normal)
 wrong, _ = exercise(3, mismatch=True)
 assert all(not group[0][1] for group in wrong), 'chunk fact mismatch must fail'
-preflight = source.index('if not all((replay, engine, glue_exe))')
+preflight = source.index('if not all(required)')
 assert all(source.index(f'{name} = build(') < preflight for name in ('replay', 'engine', 'glue_exe'))
 assert preflight < source.index('if args.bless is not None:') < source.index('with ThreadPoolExecutor(max_workers=args.jobs)')
 print(f'PASS: runner only: all {len(logs)} fixtures, {sum(serial_calls.values())} subprocess calls, three chunks, required normal ends and exact ordered results preserved with 1/3 workers; mismatches fail; all builds precede replay/bless')

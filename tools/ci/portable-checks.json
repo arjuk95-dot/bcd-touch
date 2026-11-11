@@ -46,13 +46,6 @@
       ]
     },
     {
-      "name": "Check the alpha IPA tool",
-      "argv": [
-        "python3",
-        "tests/host/check-alpha-ipa.py"
-      ]
-    },
-    {
       "name": "Check audio downmix",
       "argv": [
         "python3",
@@ -193,13 +186,6 @@
       ]
     },
     {
-      "name": "Check Social Club aligned 1 GB slot",
-      "argv": [
-        "python3",
-        "tests/host/check-sc-align1g.py"
-      ]
-    },
-    {
       "name": "Check wow census",
       "argv": [
         "python3",
@@ -281,13 +267,6 @@
       "argv": [
         "python3",
         "tests/host/check-unixlib-binder.py"
-      ]
-    },
-    {
-      "name": "Check vcrt arm64 key",
-      "argv": [
-        "python3",
-        "tests/host/check-vcrt-arm64-key.py"
       ]
     },
     {
@@ -437,5 +416,26 @@
         "tests/host/check-xcode-sources.py"
       ]
     }
-  ]
+  ],
+  "retained_on_mac": [
+    {
+      "path": "tests/host/check-alpha-ipa.py",
+      "reason": "Invokes native codesign directly and ditto through make-alpha-ipa.py; not portable."
+    },
+    {
+      "path": "tests/host/check-sc-align1g.py",
+      "reason": "GCC -Werror rejects a logging macro accepted by Apple Clang; retain Mac coverage until compiler-equivalent parity is proved."
+    },
+    {
+      "path": "tests/host/check-vcrt-arm64-key.py",
+      "reason": "GCC -Werror emits a string-bound warning not yet evaluated for parity with Apple Clang; retain Mac coverage."
+    }
+  ],
+  "linux_evidence": {
+    "run": 43057859544,
+    "artifact": 13871883219,
+    "artifact_sha256": "ebb9927335cc7c9248bdafd279f8146de76382b7edd79f74e4fd4dffd7dde446",
+    "passed_candidates": 59,
+    "seconds_for_original_62": 35.373
+  }
 }

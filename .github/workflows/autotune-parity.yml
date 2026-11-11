@@ -1,0 +1,58 @@
+name: Auto-tune portable parity experiment
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+# Manual experiment only. Existing archive/check workflows are untouched.
+jobs:
+  core:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-15-intel]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    env:
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned official Linux Swift 6.1.2
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 2 https://download.swift.org/swift-6.1.2-release/ubuntu2204/swift-6.1.2-RELEASE/swift-6.1.2-RELEASE-ubuntu22.04.tar.gz -o "$RUNNER_TEMP/swift.tar.gz"
+          echo "ed40901b5bccf9022ff5d41425e2316f8e710a7e0c99717ba62080744e81fd66  $RUNNER_TEMP/swift.tar.gz" | sha256sum --check
+          mkdir "$RUNNER_TEMP/swift"
+          tar -xzf "$RUNNER_TEMP/swift.tar.gz" -C "$RUNNER_TEMP/swift" --strip-components=1
+          echo "$RUNNER_TEMP/swift/usr/bin" >> "$GITHUB_PATH"
+      - name: Select pinned Apple toolchain
+        if: runner.os == 'macOS'
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+      - name: Verify toolchain and execute all portable coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tests/host/check-autotune-parity-report.py
+          swiftc --version | tee swift-version.txt
+          grep -E 'Swift version 6\.1\.2([ (]|$)' swift-version.txt
+          python3 tests/host/check-autotune.py --require-swift --suite core --jobs 3 --parity-output parity.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: autotune-parity-${{ runner.os }}
+          path: |
+            parity.json
+            swift-version.txt
+          if-no-files-found: error
+  compare:
+    needs: core
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: autotune-parity-*
+          path: parity
+      - name: Require exact cross-platform parity
+        run: python3 tests/host/compare-autotune-parity.py parity/autotune-parity-Linux/parity.json parity/autotune-parity-macOS/parity.json
