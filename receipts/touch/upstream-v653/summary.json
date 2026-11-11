@@ -1,0 +1,36 @@
+{
+  "status": "local-candidate-awaiting-native-CI",
+  "upstream": "c3c2d152fca4d491b703b910d112ab54299c36c1",
+  "forkBaseline": "733333d1d822b2e46798ce54021711d52c27add9",
+  "upstreamSourceArchiveSHA256": "ec50285e4fd853748fcfb8f339a186d0df243a1f35501b4706959704f444dd56",
+  "upstreamIPA_SHA256": "a19306da887f4849043e56c498fa61caa59a2c14e6bff66394433f8221dd362b",
+  "preservedControlAndPackFiles": 17,
+  "additionalPassed": [
+    "Wine ARM64EC hybrid metadata and native ARM64 header checks",
+    "all Swift sources use upstream present counter",
+    "workflow shell syntax and step references",
+    "Xcode source registration",
+    "AutoTune generated source matches rules",
+    "pinned unchanged 7-Zip files"
+  ],
+  "notExecuted": [
+    "Swift fixture execution",
+    "iOS SDK compilation",
+    "simulator previews",
+    "production publisher simulator fixture",
+    "full native archive",
+    "sideload packaging",
+    "device installation and JIT",
+    "Noita gameplay and Direct3D device regression"
+  ],
+  "publication": {
+    "state": "blocked",
+    "reason": "GitHub integration create_branch returned 403 Resource not accessible by integration; local git has no HTTPS write credentials",
+    "remoteBranchCreated": false
+  },
+  "notes": [
+    "Upstream fixture/patch whitespace remains unchanged; no new merge markers or integration-only whitespace errors.",
+    "Four missing reference documents reconstructed from public source/notices and labelled as such.",
+    "No signing identity, account, saves, pack data or game files were changed on a device."
+  ]
+}

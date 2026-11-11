@@ -18,6 +18,7 @@ void madeira_display_set_layer(CAMetalLayer *layer);
 
 // Posted (on the main queue) when the guest's virtual monitor changes size.
 extern NSString * const MadeiraDisplayModeChangedNotification;
+// The CAMetalLayer an HWND's OpenGL output goes to (unretained; Winios/WiniosGL.m).
 CAMetalLayer *madeira_display_layer_for_hwnd(void *hwnd);
 #endif
 

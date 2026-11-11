@@ -1,0 +1,111 @@
+[
+  {
+    "test": "check-cursor-pack-desktop",
+    "status": "passed",
+    "seconds": 0.14,
+    "limitations": []
+  },
+  {
+    "test": "check-x86-entry-code",
+    "status": "passed",
+    "seconds": 0.11,
+    "limitations": []
+  },
+  {
+    "test": "check-opengl-key",
+    "status": "passed-available-portions",
+    "seconds": 1.94,
+    "limitations": [
+      "SKIP: no macOS clang; the session setup was not compiled"
+    ]
+  },
+  {
+    "test": "check-opengl-ui",
+    "status": "passed-available-portions",
+    "seconds": 0.09,
+    "limitations": [
+      "SKIP: no swiftc; BCDOpenGL.swift was not compiled"
+    ]
+  },
+  {
+    "test": "check-gl-probe",
+    "status": "passed-available-portions",
+    "seconds": 0.28,
+    "limitations": [
+      "SKIP: the iOS-SDK syntax check needs Xcode (the Mac)"
+    ]
+  },
+  {
+    "test": "check-gl-present-count",
+    "status": "passed-available-portions",
+    "seconds": 0.05,
+    "limitations": [
+      "SKIP: no dxmt sources for the patch (check out the submodule, or set WINEMETAL_SRC)"
+    ]
+  },
+  {
+    "test": "check-touch-worker",
+    "status": "passed",
+    "seconds": 7.58,
+    "limitations": []
+  },
+  {
+    "test": "check-touch-move-safety",
+    "status": "passed-available-portions",
+    "seconds": 0.05,
+    "limitations": [
+      "SKIP: production Swift association fixtures require swiftc"
+    ]
+  },
+  {
+    "test": "check-xcode-sources",
+    "status": "passed",
+    "seconds": 0.05,
+    "limitations": []
+  },
+  {
+    "test": "check-bcd-orientation",
+    "status": "passed",
+    "seconds": 0.09,
+    "limitations": []
+  },
+  {
+    "test": "check-window-coordinates",
+    "status": "passed-available-portions",
+    "limitations": [
+      "LeakSanitizer disabled because this executor runs under ptrace; address/undefined sanitizers and negative controls passed"
+    ],
+    "source": "Wine rectangle/DPI source extracted from hash-verified upstream v0.1.653 source archive; synthetic C harness, no Wine process"
+  },
+  {
+    "test": "check-gamepad-profile",
+    "status": "passed-available-portions",
+    "seconds": 0.08,
+    "limitations": [
+      "SKIP: Swift compiler unavailable locally; macOS CI runs this check with --require-swift"
+    ]
+  },
+  {
+    "test": "check-touch-gamepad",
+    "status": "blocked-missing-swiftc",
+    "seconds": 0.05,
+    "limitations": [
+      "FileNotFoundError: [Errno 2] No such file or directory: 'swiftc'"
+    ]
+  },
+  {
+    "test": "check-opengl-wine",
+    "status": "passed-available-portions",
+    "seconds": 0.03,
+    "limitations": [
+      "SKIP: no Wine sources here (check out the wine submodule)"
+    ]
+  },
+  {
+    "test": "check-external-storage",
+    "status": "passed-available-portions",
+    "limitations": [
+      "Swift fixtures and macOS native behavior not executed locally"
+    ]
+  }
+]

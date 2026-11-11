@@ -88,6 +88,30 @@ import UniformTypeIdentifiers
         let i = request(entry).identity
         return Self.hash(Self.encoded([i.executable, i.storeID, i.edition]))
     }
+    /// Moving changes path-based pack identities. Keep all associated data in place until
+    /// a complete cache, preset, preferences and personal-edit migration is available.
+    func moveBlockReason(_ entry: LibraryEntry) -> String? {
+        let executable = entry.launchRelativePath.lowercased()
+        let key = identityKey(entry)
+        let preferenceKeys = ["TouchPackGenerated." + key, "TouchPackLocal." + key,
+                              "TouchPack.genre." + executable, "TouchPack.mode." + executable]
+        if preferenceKeys.contains(where: { UserDefaults.standard.object(forKey: $0) != nil }) {
+            return BCDPackMoveSafety.reason
+        }
+        do {
+            let files = try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.fileSizeKey])
+            for file in files where file.pathExtension == "json" && file.lastPathComponent != "worker.json" {
+                // A corrupt or unexpectedly large record cannot establish that moving is safe.
+                let size = try file.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
+                guard size <= 8 * 1024 * 1024 else { return BCDPackMoveSafety.reason }
+                let data = try Data(contentsOf: file)
+                if BCDPackMoveSafety.blocks(data, executable: executable, gameKey: key) {
+                    return BCDPackMoveSafety.reason
+                }
+            }
+        } catch { return BCDPackMoveSafety.reason }
+        return nil
+    }
     func authoringChoice(_ entry: LibraryEntry, key: String) -> String {
         UserDefaults.standard.string(forKey: "TouchPack." + key + "." + entry.launchRelativePath.lowercased()) ?? "auto"
     }
@@ -665,5 +689,23 @@ struct BCDPackTools: View {
             Button("Use stock input profile next launch") { store.preferStockNextLaunch() }
             Button("Use stock controls for this session") { store.enabled = false; BCDInputLive.shared.refresh() }
         } label: { Image(systemName: "hand.draw").padding(12).background(.black.opacity(0.2)).clipShape(Circle()) }
+    }
+}
+
+// MARK: - Move safety (Foundation-only regression boundary)
+enum BCDPackMoveSafety {
+    static let reason = "Move is unavailable to preserve game touch controls. Moving customized or prepared packs between drives needs control-data migration, which is not supported yet."
+    static func blocks(_ data: Data, executable: String, gameKey: String) -> Bool {
+        guard let root = try? JSONSerialization.jsonObject(with: data) else { return true }
+        func associated(_ value: Any) -> Bool {
+            if let object = value as? [String: Any] {
+                if let path = object["executable"] as? String, path.lowercased() == executable.lowercased() { return true }
+                if object.keys.contains(where: { $0 == gameKey || $0.hasPrefix(gameKey + ".") }) { return true }
+                return object.values.contains(where: associated)
+            }
+            if let values = value as? [Any] { return values.contains(where: associated) }
+            return false
+        }
+        return associated(root)
     }
 }

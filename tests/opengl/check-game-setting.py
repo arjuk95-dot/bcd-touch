@@ -14,7 +14,7 @@ def block(text,header):
 storage=profiles[profiles.index('struct GameProfile {'):profiles.index('    func set(')]+block(profiles,'    func set(')+'\n}\n'
 route=re.search(r'^        case [^\n]*"gl-backend"[^\n]*:\n.*?(?=^        case |^        default:)',block(live,'    func set('),re.M|re.S)
 assert route,'Displayed GL picker must route into the game profile'
-row=re.search(r'Self.line\("gl-backend"[^\n]*\n\s*note: [^\n]*\),',live)
+row=re.search(r'Self.line\(BCDOpenGL.key[^\n]*\n\s*note: BCDOpenGL.pageNote\),',live)
 assert row
 source=r'''import Foundation
 enum CoverStore {
@@ -33,7 +33,7 @@ struct BCDGameSetting {
  enum Kind {case choice([BCDGameChoice])}
  var id:String;var title:String;var kind:Kind;var value:String;var defaultValue:String;var note:String
 }
-'''+storage+'\nfinal class Fixture {\nfunc entry(for game:BCDGame)->LibraryEntry? {game.entry}\n'+block(live,'    private func setLine(')+'\n'+block(live,'    private static func line(')+'''
+'''+(r/'app/Madeira/BCDOpenGL.swift').read_text()+'\n'+storage+'\nfinal class Fixture {\nfunc entry(for game:BCDGame)->LibraryEntry? {game.entry}\n'+block(live,'    private func setLine(')+'\n'+block(live,'    private static func line(')+'''
 static func glRow(_ profile:GameProfile)->BCDGameSetting { return '''+row[0][:-1]+''' }
 func set(_ setting:String,to value:String,for game:BCDGame) {
  switch setting {
@@ -62,7 +62,7 @@ func set(_ setting:String,to value:String,for game:BCDGame) {
   precondition(d.text==baseline && d.get("gl-backend")==nil)
   precondition(LibraryModel.shared.entries.count==2)
   imported.text=n.text;precondition(imported.get("gl-backend")=="zink")
-  fixture.set(row.id,to:"off",for:game);precondition(Fixture.glRow(n).value=="off")
+  fixture.set(row.id,to:"gles",for:game);precondition(Fixture.glRow(n).value=="gles")
   fixture.set(row.id,to:"",for:game);precondition(n.get("gl-backend")==nil && Fixture.glRow(n).value.isEmpty)
   precondition(n.get("fps-limit")=="40" && d.text==baseline)
   let before=n.text;fixture.set("unrelated",to:"zink",for:game);precondition(n.text==before)

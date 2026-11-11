@@ -3,6 +3,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 ROOT=Path(__file__).resolve().parents[2]
+subprocess.run(['python3', str(ROOT/'tests/host/check-touch-move-safety.py')], check=True)
 with tempfile.TemporaryDirectory(prefix='bcd-touch-check-') as tmp:
     tmp=Path(tmp)
     source=(ROOT/'app/Madeira/TouchGamepad.swift').read_text(encoding='utf-8')

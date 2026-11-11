@@ -1,4 +1,6 @@
 #!/bin/bash
+# Portions copyright 2026 Russell Barton: code taken from https://github.com/thebcd69/bcd-games (pull request #46 by rbarton124)
+# under GPL-3.0-or-later with the Madeira Converter Exception and modified for BCD in November 2026. See THIRD-PARTY-NOTICES.md.
 # Build Wine PE DLLs that upstream's arm64ec-windows set does not ship but
 # games import (and, since ml2106, xinput1_1-1_4 with host rumble; see below): older VC++ runtimes (Crysis's Bin64\Crysis64.exe needs
 # msvcr80), D3DX9/10/11, d3d10, avifil32, XAudio2, dinput, RichEdit (the
@@ -124,6 +126,16 @@ ZMP=""
 if [ "${MADEIRA_ZMP_BUILD:-1}" != 0 ] && [ -f "$R/wine/dlls/kernelbase/process.c" ] && [ -f "$SHIP/kernelbase.dll" ]; then
     ZMP=kernelbase
 fi
+# madeira-bcd (OpenGL, gl-backend = zink or gles): opengl32-optin.dll is Wine's opengl32 built from this tree as it is pinned. The Wine fork builds
+# opengl32 with the default image base for everything but x86 (dlls/opengl32/Makefile.in; the shipped arm64ec-windows/opengl32.dll is based at
+# 0x7a800000, an emulated sub-floor window where its thunks lose the TEB). Only a game whose gl-backend key is on runs it: WineProcessBridge.m
+# adds opengl32 to MADEIRA_OPTIN_DLLS and links it as opengl32.dll for that session; every other game keeps the shipped file byte for byte. Built
+# only from a tree that has the fork's change (unix_private.h's ios_wow_host_ptr) and no uncommitted opengl32 edit; verified by
+# tools/verify-opengl32-optin.py before it ships. MADEIRA_OPENGL32_BUILD=0 skips it.
+OGL=""
+if [ "${MADEIRA_OPENGL32_BUILD:-1}" != 0 ] && [ -f "$R/wine/dlls/opengl32/unix_wgl.c" ] && [ -f "$SHIP/opengl32.dll" ]; then
+    OGL=opengl32
+fi
 # madeira-bcd: a new file too. wer-optin.dll is Wine's own, unpatched wer.dll (Hello Neighbor's
 # UE4 executable imports it and exited at once with 0xc0000135, a tester's log, build 573). It is
 # NOT shipped as wer.dll: Wine's wer.dll has 68 unimplemented exports, so a program that loads
@@ -192,7 +204,29 @@ fi
 # advapi32, user32, win32u) all ship.
 # httpapi (2026-11-03, round 630, agent G2 S7; GrandChase QB5XMM, build 626): the game's cpprest_2_10.dll imports HTTPAPI.dll, which
 # only the 32-bit set has (c0000135 at the loader). Wine's httpapi imports only advapi32, which ships.
-OPTIN_WANT="dxva2 evr xpsprint sfc sfc_os tbs twinapi.appcore mfasfsrcsnk wmvdecod wmadmod oledlg fwpuclnt sensapi ddraw msi mspatcha odbccp32 sxs rstrtmgr glu32 tdh gamingtcui qwave msvproc xinputuap httpapi"
+# dxdiagn (Far Cry 4): the prefix registers CLSID_DxDiagProvider at system32\dxdiagn.dll, but only the 32-bit set has the DLL, so
+# CoCreateInstance failed in a 64-bit program; Ubisoft's systemdetection64.dll logged "Can't get the IDxDiagProvider (CoCreateInstance
+# failed)" and the game read a null result. Wine's dxdiagn imports ddraw (opt-in, above), d3d9, dsound, version, ole32, oleaut32,
+# user32 and advapi32: a game lists both, "dxdiagn,ddraw". Many programs ask for the provider and go on without it, hence opt-in.
+# Built with tools/patch-wine-dxdiagn-directshow.py (below): without devenum.dll, Initialize failed on the DirectShow section.
+# Round 2026-11-11 (build 652), seven more libraries a 64-bit program imports that only the 32-bit set has, each the c0000135 loader failure of
+# a tester's log, each opt-in because a program that loads one optionally today keeps running without it:
+# msvcp_win (agent G3 S5; DRAGON BALL FighterZ EWFEK0, build 634): GameChat2.dll (the Xbox Game Chat library) imports msvcp_win.dll. Wine's is
+# a module of forwards to msvcp140.dll (shipped) and stubs; it imports nothing.
+# bluetoothapis (agent G3 S6; Dolphin 5ZT354, build 634): bthprops.cpl, which the program imports, imports bluetoothapis.dll. Its imports
+# (setupapi, cfgmgr32, user32) all ship. Wiimote pairing is not expected to work; the program only has to start.
+# gameinput (agent G1 S5; Assassin's Creed Black Flag Resynced FM9B31 and K5GZ6Q, build 634): ACBlackFlag.exe imports GameInput.dll. Wine's
+# is a stub (GameInputCreate answers E_NOTIMPL) that imports nothing beyond the kernel.
+# ntdsapi (agent G5 S6; Ghost of Tsushima Director's Cut TYJFHF, QZGY97, YFVZPF, build 634): Sony's PsPcSdk.dll imports NTDSAPI.dll (and
+# tbs.dll, above). Wine's ntdsapi imports only user32, which ships.
+# mfplay (agent T2 S-MF1; Grind Survivors F1AMJS, Satisfactory, Bloodstained, build 630): Unreal's WmfMedia plugin logs "Failed to load mfplay.dll"
+# and the media player cannot start. Wine's mfplay imports mfplat, mf, ole32 and user32, which ship.
+# avicap32 (agent G4 S15; Football Manager 2020 8HC016, build 630): fm.exe (the Unity player) imports AVICAP32.dll (webcam capture). Wine's
+# imports only user32; its one unix call (capGetDriverDescriptionW) meets BCD's null-handle path, answers STATUS_NOT_IMPLEMENTED once and the
+# function returns FALSE: no capture devices, which is what a phone has to say.
+# coremessaging (agent G7 S6; Momo Game ER8RD6, build 630): Momo Game.exe imports CoreMessaging.dll (Windows 10's messaging and dispatcher-queue
+# library). Wine's imports only combase, which ships; CreateDispatcherQueueController is real, the CoreUI functions are stubs.
+OPTIN_WANT="dxva2 evr xpsprint sfc sfc_os tbs twinapi.appcore mfasfsrcsnk wmvdecod wmadmod oledlg fwpuclnt sensapi ddraw msi mspatcha odbccp32 sxs rstrtmgr glu32 tdh gamingtcui qwave msvproc xinputuap httpapi dxdiagn msvcp_win bluetoothapis gameinput ntdsapi mfplay avicap32 coremessaging"
 OPT=""
 if [ "${MADEIRA_OPTIN_BUILD:-1}" != 0 ]; then
     for d in $OPTIN_WANT; do
@@ -223,7 +257,16 @@ DCO=""
 if [ "${MADEIRA_DCOMP_BUILD:-1}" != 0 ] && [ -f "$R/wine/dlls/dcomp/device.c" ] && [ -f "$SHIP/dcomp.dll" ]; then
     DCO=dcomp
 fi
-[ -n "$todo$XI$WGI$UCX$NTS$XSE$FBT$ZMP$WER$WTY$OPT$SDL$DCO" ] || { echo "nothing to build"; exit 0; }
+# madeira-bcd (round 2026-11-11, agent G7 S1): combase-optin.dll, a patched copy of a DLL that IS shipped. tools/patch-wine-combase-implicit-mta.py
+# makes a thread that never started COM use a process MTA that is created on first need: Unreal Engine 5's FAsyncLoadingThread creates the audio
+# device enumerator on such a thread, got CO_E_NOTINITIALIZED where no thread of the process had made an MTA, did not check it and called through
+# NULL (Meccha Chameleon F4WD9B, Hubert 2CGJ07). The result ships NEXT TO the shipped combase.dll, which stays byte for byte; only a game with
+# env.MADEIRA_OPTIN_DLLS = combase runs it (WineProcessBridge.m's opt-in loop links it as combase.dll for that session). MADEIRA_COMBASE_BUILD=0 skips it.
+CMB=""
+if [ "${MADEIRA_COMBASE_BUILD:-1}" != 0 ] && [ -f "$R/wine/dlls/combase/apartment.c" ] && [ -f "$SHIP/combase.dll" ]; then
+    CMB=combase
+fi
+[ -n "$todo$OGL$XI$WGI$UCX$NTS$XSE$FBT$ZMP$WER$WTY$OPT$SDL$DCO$CMB" ] || { echo "nothing to build"; exit 0; }
 
 # The cached tree may have disabled winegstreamer because macOS has no
 # GStreamer headers. Only its real PE frontend is needed here; the iOS unix
@@ -292,11 +335,27 @@ if [ -n "$MFA" ]; then
         MFA=""
     fi
 fi
+# dxdiagn-optin.dll: Wine's DxDiag provider, patched so a missing DirectShow device enumerator (devenum.dll) leaves that section
+# empty instead of failing IDxDiagProvider::Initialize (see the script). A patch that does not apply drops the DLL (an unpatched
+# one fails Initialize here, which a program treats as no provider).
+DXD=""
+case " $OPT " in *" dxdiagn "*) DXD=dxdiagn ;; esac
+if [ -n "$DXD" ]; then
+    if python3 "$R/tools/patch-wine-dxdiagn-directshow.py" "$R/wine"; then
+        rm -f "$B/dlls/dxdiagn/arm64ec-windows/dxdiagn.dll" "$B"/dlls/dxdiagn/arm64ec-windows/*.o
+    else
+        echo "::warning::dxdiagn DirectShow patch did not apply; dxdiagn-optin.dll not shipped"
+        targets="${targets/ dlls\/dxdiagn\/arm64ec-windows\/dxdiagn.dll/}"
+        OPT="${OPT/ dxdiagn/}"
+        DXD=""
+    fi
+fi
 [ -n "$targets" ] && make -C "$B" -k -j"$JOBS" $targets > "$B.build.log" 2>&1
 git -C "$R/wine" checkout -- dlls/msvcrt/main.c dlls/xinput1_3/main.c dlls/d2d1/dc_render_target.c \
     dlls/windows.gaming.input/provider.c dlls/windows.gaming.input/main.c
 for d in $undelayed; do git -C "$R/wine" checkout -- "dlls/$d/Makefile.in"; done
 [ -n "$MFA" ] && git -C "$R/wine" checkout -- dlls/mfsrcsnk/media_source.c
+[ -n "$DXD" ] && git -C "$R/wine" checkout -- dlls/dxdiagn/provider.c
 [ -n "$undelayed" ] && echo "::notice::delay imports linked as plain imports:$undelayed"
 # madeira-bcd: ucrtbase-x64math.dll (see UCX above), from the restored tree:
 # msvcrt/main.c no longer carries the data-sync patch, so the DLL differs from a
@@ -364,7 +423,13 @@ fi
 # before it ships (tools/verify-kernelbase-optin.py). Its objects are removed afterwards like the fiber-trace block's.
 if [ -n "$ZMP" ]; then
     kb="$B/dlls/kernelbase/arm64ec-windows/kernelbase.dll"
+    ZMPDIAG=0
     if git -C "$R/wine" diff --quiet -- dlls/kernelbase; then
+        # madeira-bcd (night round 2026-11-11, G5 S7; Glyphica 8YHNJ0): GetProcessMitigationPolicy says what it did and the opt-in kernelbase exports
+        # SetProcessValidCallTargets (tools/patch-wine-zero-mitigation-diag.py); the two files are put back below. A patch that does not apply
+        # builds the kernelbase as before.
+        python3 "$R/tools/patch-wine-zero-mitigation-diag.py" "$R/wine" && ZMPDIAG=1 \
+            || echo "::warning::kernelbase zero-mitigation diagnostic patch did not apply; kernelbase-optin.dll is built without it"
         rm -f "$kb" "$B"/dlls/kernelbase/arm64ec-windows/*.o
         make -C "$B" -j"$JOBS" dlls/kernelbase/arm64ec-windows/kernelbase.dll > "$B.kernelbase-optin.log" 2>&1
         if [ -f "$kb" ] && cp "$kb" "$SHIP/kernelbase-optin.dll.tmp" &&
@@ -380,7 +445,44 @@ if [ -n "$ZMP" ]; then
     else
         echo "::warning::wine/dlls/kernelbase differs from the pin; kernelbase-optin.dll not built"
     fi
+    if [ "$ZMPDIAG" = 1 ]; then git -C "$R/wine" checkout -- dlls/kernelbase/process.c dlls/kernelbase/kernelbase.spec; fi
     rm -f "$kb" "$B"/dlls/kernelbase/arm64ec-windows/*.o
+fi
+# madeira-bcd (OpenGL): opengl32-optin.dll (see OGL above), from the restored tree. Only from an opengl32 the pin left as it is and that has the
+# fork's change; stripped like the kernelbase variant and padded to at least SizeOfImage + 0x10000 like the other extra DLLs; verified (the
+# shipped DLL's machine and exports, not based at 0x7a800000) before it ships. Its delay import of glu32 stays, as in the shipped file. The
+# objects are removed afterwards (wine/build-arm64ec is cached).
+if [ -n "$OGL" ]; then
+    og="$B/dlls/opengl32/arm64ec-windows/opengl32.dll"
+    og_tmp="$SHIP/opengl32-optin.dll.tmp"
+    if git -C "$R/wine" diff --quiet -- dlls/opengl32 && grep -q "ios_wow_host_ptr" "$R/wine/dlls/opengl32/unix_private.h"; then
+        rm -f "$og" "$B"/dlls/opengl32/arm64ec-windows/*.o
+        make -C "$B" -j"$JOBS" dlls/opengl32/arm64ec-windows/opengl32.dll > "$B.opengl32.log" 2>&1
+        if [ -f "$og" ] && cp "$og" "$og_tmp" && "$MINGW/arm64ec-w64-mingw32-strip" --strip-debug "$og_tmp"; then
+            python3 - "$og_tmp" <<'PY'
+import struct, sys
+p = sys.argv[1]; d = open(p, 'rb').read()
+pe = struct.unpack_from('<I', d, 0x3c)[0]
+target = struct.unpack_from('<I', d, pe + 24 + 56)[0] + 0x10000
+if len(d) < target:
+    open(p, 'ab').write(b'\0' * (target - len(d)))
+PY
+            if python3 "$R/tools/verify-opengl32-optin.py" "$og_tmp" "$SHIP/opengl32.dll"; then
+                mv "$og_tmp" "$SHIP/opengl32-optin.dll"
+                echo "::notice::opengl32-optin.dll (the tree's opengl32 with the default image base; linked as opengl32.dll only for a game whose gl-backend key is on): built next to the shipped opengl32.dll"
+            else
+                rm -f "$og_tmp"
+                echo "::warning::opengl32-optin.dll failed its check; not shipped (gl-backend = zink or gles then cannot work for a 64-bit game)"
+            fi
+        else
+            rm -f "$og_tmp"
+            echo "::warning::opengl32-optin.dll did not build; gl-backend = zink or gles cannot work for a 64-bit game"
+            grep -m 10 "error" "$B.opengl32.log"
+        fi
+    else
+        echo "::warning::wine/dlls/opengl32 differs from the pin or lacks the fork's winios change; opengl32-optin.dll not built"
+    fi
+    rm -f "$og" "$B"/dlls/opengl32/arm64ec-windows/*.o
 fi
 # madeira-bcd: setupapi-optin.dll (see SDL above), from the restored tree. Stripped the way
 # build/wine-pe/build-modules.sh strips the shipped one (--strip-debug), padded to at least SizeOfImage
@@ -457,6 +559,42 @@ PY
     fi
     git -C "$R/wine" checkout -- dlls/dcomp/device.c
     rm -f "$dc" "$B"/dlls/dcomp/arm64ec-windows/*.o
+fi
+# madeira-bcd: combase-optin.dll (see CMB above), from the restored tree. Stripped and padded like setupapi-optin.dll, verified (the implicit
+# MTA's marker, the shipped combase.dll's machine and exports) before it ships. The tree and the patched objects are restored afterwards
+# (wine/build-arm64ec is cached).
+if [ -n "$CMB" ]; then
+    cb="$B/dlls/combase/arm64ec-windows/combase.dll"
+    cb_tmp="$SHIP/combase-optin.dll.tmp"
+    if python3 "$R/tools/patch-wine-combase-implicit-mta.py" "$R/wine"; then
+        rm -f "$cb" "$B"/dlls/combase/arm64ec-windows/*.o
+        make -C "$B" -j"$JOBS" dlls/combase/arm64ec-windows/combase.dll > "$B.combase.log" 2>&1
+        if [ -f "$cb" ] && cp "$cb" "$cb_tmp" && "$MINGW/arm64ec-w64-mingw32-strip" --strip-debug "$cb_tmp"; then
+            python3 - "$cb_tmp" <<'PY'
+import struct, sys
+p = sys.argv[1]; d = open(p, 'rb').read()
+pe = struct.unpack_from('<I', d, 0x3c)[0]
+target = struct.unpack_from('<I', d, pe + 24 + 56)[0] + 0x10000
+if len(d) < target:
+    open(p, 'ab').write(b'\0' * (target - len(d)))
+PY
+            if python3 "$R/tools/patch-wine-combase-implicit-mta.py" --verify "$cb_tmp" "$SHIP/combase.dll"; then
+                mv "$cb_tmp" "$SHIP/combase-optin.dll"
+                echo "::notice::combase-optin.dll (the shipped combase.dll with an implicit MTA for a thread that never started COM; linked as combase.dll only for a game with combase in env.MADEIRA_OPTIN_DLLS): built next to the shipped combase.dll"
+            else
+                rm -f "$cb_tmp"
+                echo "::warning::combase-optin.dll failed its check; not shipped (env.MADEIRA_OPTIN_DLLS = combase does nothing)"
+            fi
+        else
+            rm -f "$cb_tmp"
+            echo "::warning::combase-optin.dll did not build; env.MADEIRA_OPTIN_DLLS = combase does nothing"
+            grep -m 10 "error" "$B.combase.log"
+        fi
+    else
+        echo "::warning::the combase implicit-MTA patch did not apply; combase-optin.dll not shipped"
+    fi
+    git -C "$R/wine" checkout -- dlls/combase/apartment.c
+    rm -f "$cb" "$B"/dlls/combase/arm64ec-windows/*.o
 fi
 # madeira-bcd: ntdll-sync.dll (see NTS above), from the restored tree. First the
 # unpatched ntdll.dll, which must equal the shipped one apart from its time
@@ -653,6 +791,13 @@ if [ -n "$MFA" ]; then
     f="$B/dlls/mfasfsrcsnk/arm64ec-windows/mfasfsrcsnk.dll"
     if [ -f "$f" ] && ! python3 "$R/tools/patch-wine-mfasfsrcsnk-winedmo.py" --verify "$f"; then
         echo "::warning::mfasfsrcsnk.dll failed its check (no winedmo patch); not shipped"
+        rm -f "$f"
+    fi
+fi
+if [ -n "$DXD" ]; then
+    f="$B/dlls/dxdiagn/arm64ec-windows/dxdiagn.dll"
+    if [ -f "$f" ] && ! python3 "$R/tools/patch-wine-dxdiagn-directshow.py" --verify "$f"; then
+        echo "::warning::dxdiagn.dll failed its check (no DirectShow patch); not shipped"
         rm -f "$f"
     fi
 fi

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright 2026 thebcd69 (BCD)
 // BCD Material: additional terms under GPL-3.0 section 7 apply; see LICENSE-BCD.md.
+// Portions copyright 2026 creeper4004: colour profiles and Settings > Appearance, from thebcd69/bcd-games pull request #27; GPL-3.0-only, modified for BCD in November 2026. See THIRD-PARTY-NOTICES.md.
 
 import SwiftUI
 import UIKit
@@ -249,6 +250,47 @@ struct BCDCoverCard: View {
     }
 }
 
+/// madeira-bcd (round 632): iOS Smart Punctuation turns "--" into an em dash and straight quotes into curly ones, which breaks a launch
+/// argument such as "--windowed" or a quoted path as it is typed. SwiftUI has no modifier for these traits: a zero-size view put behind the
+/// field finds the UIKit text view next to it (a TextField with an axis is a UITextView, one without a UITextField) and turns smart dashes
+/// and smart quotes off on it. Nothing else of the field changes.
+struct BCDSmartPunctuationOff: UIViewRepresentable {
+    final class Probe: UIView {
+        override func didMoveToWindow() {
+            super.didMoveToWindow()
+            DispatchQueue.main.async { [weak self] in self?.apply() }
+        }
+
+        func apply() {
+            var node: UIView? = superview
+            for _ in 0..<4 {
+                guard let current = node else { return }
+                if Self.turnOff(in: current) { return }
+                node = current.superview
+            }
+        }
+
+        private static func turnOff(in view: UIView) -> Bool {
+            if let field = view as? UITextField { field.smartDashesType = .no; field.smartQuotesType = .no; return true }
+            if let text = view as? UITextView { text.smartDashesType = .no; text.smartQuotesType = .no; return true }
+            return view.subviews.contains { turnOff(in: $0) }
+        }
+    }
+
+    func makeUIView(context: Context) -> Probe {
+        let probe = Probe()
+        probe.isUserInteractionEnabled = false
+        return probe
+    }
+
+    func updateUIView(_ probe: Probe, context: Context) { DispatchQueue.main.async { probe.apply() } }
+}
+
+extension View {
+    /// The text field this is applied to takes dashes and quotes as typed.
+    func bcdSmartPunctuationOff() -> some View { background(BCDSmartPunctuationOff().frame(width: 0, height: 0)) }
+}
+
 /// A 1-point border fading from `top` to `bottom` white inside a rounded rectangle of `radius`
 /// (continuous corners), as `strokeBorder` with a vertical LinearGradient draws it, but by Core
 /// Animation layers: a gradient layer masked by a stroked shape, which the system draws without a
@@ -335,7 +377,7 @@ struct BCDGameStatusLine: View {
         switch game.state {
         case .ready: return BCDStyle.mint
         case .downloading, .installing, .queued: return BCDStyle.lavender
-        case .updateAvailable: return Color(red: 1, green: 0.76, blue: 0.29)
+        case .updateAvailable: return BCDStyle.amber
         case .broken: return BCDStyle.alert
         case .notInstalled: return nil
         }

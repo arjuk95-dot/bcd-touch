@@ -1,0 +1,90 @@
+{
+  "baseline": "733333d1d822b2e46798ce54021711d52c27add9",
+  "files": [
+    {
+      "path": "app/Madeira/BCDControlPack.swift",
+      "sha256": "d69df310ec1d91fc9574e26b3c05623d6bb396c065766e8adc009d9c10653c75",
+      "unchanged": true
+    },
+    {
+      "path": "app/Madeira/BCDMouseJoystick.swift",
+      "sha256": "e89a0ec28c3e4c3c0769b61b5181d4ab6e1139281d5135b0e1324f31a5b81564",
+      "unchanged": true
+    },
+    {
+      "path": "app/Madeira/BCDCursorPack.swift",
+      "sha256": "5ff94aebeb06fe3c1deb20641c08ec22bf7c2fd483d59be01c32a6f1313cff74",
+      "unchanged": true
+    },
+    {
+      "path": "app/Madeira/BCDNoitaPack.swift",
+      "sha256": "0d10464240f6b3d20189fa313da7bfad8db24a66b9e0d371d1dd9422928e1573",
+      "unchanged": true
+    },
+    {
+      "path": "app/Madeira/BCDControlPackSurface.swift",
+      "sha256": "337d437785304212a14dbeb016490a326165da085d4e9a969738403e0651b0c9",
+      "unchanged": true
+    },
+    {
+      "path": "app/Madeira/BCDCursorPackSettings.swift",
+      "sha256": "d7a2ff8e8c1454a99ca24f2de1786b68f4347f183b7eda26a8fc734d2f523e3e",
+      "unchanged": true
+    },
+    {
+      "path": "app/Madeira/BCDControlPackAuthoring.swift",
+      "sha256": "d719811544ebdbda6d352dafd26499e90a265dd2bc516a128daafcfa4ed3c35b",
+      "unchanged": true
+    },
+    {
+      "path": "app/Madeira/TouchGamepad.swift",
+      "sha256": "d8db4817052bc8fbed23108c6d39f0074c6158328efc426b4afdb86771960f79",
+      "unchanged": true
+    },
+    {
+      "path": "packs/personal/tenebris-somnia-owner-iphone.json",
+      "sha256": "68cd67ae67087a0ac2324f736230232ecf511f92c87d53a9b2bb227115505506",
+      "unchanged": true
+    },
+    {
+      "path": "packs/personal/tenebris-somnia-tap-attack-iphone.json",
+      "sha256": "e1a460e580359da4ada48f2513b729dcdd29a8b8108bb83505838c2c2f1164cb",
+      "unchanged": true
+    },
+    {
+      "path": "packs/pilots/chronicles-of-the-wolf.json",
+      "sha256": "f9f7fe892524b763c908ece9b1c5f1e969df10fd9ac603ff0fc94fa666415934",
+      "unchanged": true
+    },
+    {
+      "path": "packs/pilots/dread-delusion-installed-iphone.json",
+      "sha256": "68e50d4ca02d522b66e059ec3254993d2f942064f18fd5b66b2557405270160f",
+      "unchanged": true
+    },
+    {
+      "path": "packs/pilots/dread-delusion.json",
+      "sha256": "693200872d9e1e799716c25f6e9e641111aad348a1e67daa5d731d97b90b439e",
+      "unchanged": true
+    },
+    {
+      "path": "packs/pilots/noita-cursor-v4.json",
+      "sha256": "7645db3812c4abe15a945723740212101c561683e2dd1bc76b1106eb727a97e6",
+      "unchanged": true
+    },
+    {
+      "path": "packs/requests/chronicles-of-the-wolf.json",
+      "sha256": "410e831df45e491b8fe11de702d36b7aa4a3a824fe6875eacbb58177dbe89641",
+      "unchanged": true
+    },
+    {
+      "path": "packs/requests/dread-delusion-installed-iphone.json",
+      "sha256": "5ca8f0b782262034da4befd3bf1adbc34352b85c32c1270c408672b03769dfd0",
+      "unchanged": true
+    },
+    {
+      "path": "packs/requests/dread-delusion.json",
+      "sha256": "5fe9ec43238004868124d92c06d6722172919da4fd54a36bc32f614cf839fc3b",
+      "unchanged": true
+    }
+  ]
+}

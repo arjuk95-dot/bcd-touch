@@ -1,3 +1,5 @@
+# Copyright 2026 Connor Gow. This file was taken from https://github.com/willfaust/Madeira (pull request #462)
+# under GPL-3.0-or-later. See THIRD-PARTY-NOTICES.md.
 # Meson cross file for iOS arm64 (device). @SDK@ is filled in by build.sh.
 # The VK_USE_PLATFORM_* defines match what MoltenVK's mvk_vulkan.h sets, so
 # every file sees the same Vulkan platform types whatever it includes first.

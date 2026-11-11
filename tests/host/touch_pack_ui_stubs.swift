@@ -12,7 +12,7 @@ struct LibraryEntry {
     static let shared = LibraryModel()
     @Published var blocksGameplayTouch = false
     var current:NSObject?
-    var menu=false, launching=false
+    var menu=false, launching=false, desktopHome=false
     var menuButtonRect=CGRect.zero, performanceRect=CGRect.zero
 }
 @MainActor final class GamepadInput {
@@ -60,7 +60,7 @@ final class TouchControlsModel {
     static let shared=TouchControlsModel()
     var editing=false, sessionPanel=false
     var controls:[Int]=[]
-    func hitsInteractive(_ point:CGPoint,in bounds:CGRect,topBar:Bool=true)->Bool { false }
+    func hitsInteractive(_ point:CGPoint,in bounds:CGRect,topBar:Bool=true,controlsArea:CGRect?=nil)->Bool { false }
 }
 @MainActor enum ControlPresetsModel { static let enabled=false }
 @MainActor final class BCDTouchFeelModel {
@@ -80,3 +80,8 @@ enum MadeiraConfig { static func gameValue(_ name:String)->String? { nil };stati
 
 @MainActor final class MetalHostView:UIView { static let shared=MetalHostView() }
 @MainActor func winios_screen_size(_ w:UnsafeMutablePointer<Int32>,_ h:UnsafeMutablePointer<Int32>) {w.pointee=1408;h.pointee=648}
+
+// Upstream 653 window routing boundaries, not replacements for production behavior.
+enum BCDDuoFeatures { static let active = false }
+@MainActor final class FoldTabletop { static let shared = FoldTabletop(); var bottom: CGRect? }
+@MainActor enum GamepadEventClaim { static func install(on window: UIWindow) {} }

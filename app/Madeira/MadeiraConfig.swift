@@ -17,14 +17,14 @@ enum MadeiraConfig {
     /// Describes the built capability and current setting; a bundled library
     /// does not prove successful context creation or hardware rendering.
     static var desktopGLAdvice: String {
-        let gl = Bundle.main.bundleURL.appendingPathComponent("Frameworks")
+        let gl = Bundle.main.bundleURL.appendingPathComponent("gl")
         let have = ["libOSMesa.dylib", "libMoltenVK.dylib"].allSatisfy {
             FileManager.default.fileExists(atPath: gl.appendingPathComponent($0).path)
         }
         if !have { return "This build lacks the desktop OpenGL libraries. Install a BCD build containing them." }
         let backend = gameValue("gl-backend") ?? get("gl-backend") ?? "off"
         if backend != "zink" {
-            return "Desktop OpenGL is off. Select Desktop OpenGL (Zink) in this game's Display settings, then fully restart BCD."
+            return "Desktop OpenGL is off. Select Desktop OpenGL in this game's Options → Direct3D settings, then start a new session."
         }
         return "Desktop OpenGL (Zink) is selected. Export the [winios-gl] diagnostics to check context creation and the actual renderer."
     }

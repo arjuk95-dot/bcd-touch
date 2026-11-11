@@ -1,4 +1,6 @@
 /* GPL-3.0-or-later WITH the Madeira Converter Exception, version 1. */
+/* Copyright 2026 Connor Gow and 125hz. This file was taken from https://github.com/willfaust/Madeira (pull request #462)
+ * under GPL-3.0-or-later and modified for BCD in November 2026. See THIRD-PARTY-NOTICES.md. */
 // WiniosGL.m — the EAGL half of the winios OpenGL driver.
 //
 // build/win32u-unix/opengl_ios.c implements WGL for win32u on top of Apple's
@@ -36,10 +38,9 @@
 #include <pthread.h>
 #include <stdatomic.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "../IOSDisplayShim.h"
-#include "../BCDFrameRing.h"
-#include "../../../build/win32u-unix/gl_policy.h"
 
 #define GL_RING 3
 
@@ -279,30 +280,29 @@ static BOOL pipeline_ensure(MadeiraGLPresenter *p, MTLPixelFormat format) {
     return YES;
 }
 
-// Frames put on screen by GL, both backends. DXMT counts its own presents
-// (madeira_get_present_count); madeira_frame_count adds the two, so the FPS
-// readout and the launch checks that wait for a first frame see GL games too.
+// Frames put on screen by GL, both backends. DXMT counts its own presents (winemetal's madeira_get_present_count);
+// madeira-bcd: tools/patch-winemetal-gl-present.py makes that getter add this count, so BCD's HUD, the launch checks that wait for a
+// first frame and the engine's census see a GL game's frames as they see a Direct3D game's. Each GL present also stamps the
+// frame-time ring (BCDFrameRing.c) like a DXMT present, which is where the in-game Pause waits (BCDPauseGate).
 static _Atomic uint64_t gl_present_count;
 static _Atomic double gl_last_present_time;
-extern int madeira_get_vsync_locked(void);
-uint64_t madeira_gl_present_count(void) { return atomic_load(&gl_present_count); }
 double madeira_gl_last_present_time(void) { return atomic_load(&gl_last_present_time); }
 
-void madeira_gl_pace(int interval) {
-    static __thread double previous;
-    int mode = madeira_get_vsync_locked();
-    const char *hz = getenv("BCD_SESSION_HZ");
-    double display = hz ? atof(hz) : 60;
-    const char *override = getenv("MADEIRA_FPS_CAP");
-    double cap = bcd_gl_cap(mode, display, interval, override ? atof(override) : 0);
-    double now = CACurrentMediaTime(), delay = cap > 0 ? previous + 1.0 / cap - now : 0;
-    if (delay > 0 && delay < 0.2) [NSThread sleepForTimeInterval:delay];
-    previous = CACurrentMediaTime();
-}
-extern uint64_t madeira_get_present_count(void);
+extern void bcd_frame_ring_push(void);
 
-uint64_t madeira_frame_count(void) {
-    return madeira_get_present_count() + atomic_load_explicit(&gl_present_count, memory_order_relaxed);
+// madeira-bcd (Windows Vulkan): a Vulkan game's presents count like a GL game's, through the same getter, so the HUD, the launch checks that
+// wait for a first frame (Library.swift, the Dock's starting screen) and the session summary see them. build/win32u-unix/vulkan_surface_ios.c
+// calls this after each vkQueuePresentKHR, from client_surface_present(), which holds win32u's surfaces_lock: COUNT ONLY, nothing that can wait.
+// No frame-ring push here: bcd_frame_ring_push() ends in the Pause gate (BCDPauseGate), which would block that lock; the HUD's frame-time graph
+// and the in-game Pause therefore do not cover Vulkan games yet (docs/VULKAN.md).
+static _Atomic uint64_t vulkan_present_count;
+void madeira_vulkan_present_note(void) {
+    atomic_fetch_add_explicit(&vulkan_present_count, 1, memory_order_relaxed);
+}
+
+uint64_t madeira_gl_present_count(void) {
+    return atomic_load_explicit(&gl_present_count, memory_order_relaxed) +
+           atomic_load_explicit(&vulkan_present_count, memory_order_relaxed);
 }
 
 // The presenter behind *state, created on first use for hwnd's layer.
@@ -317,11 +317,65 @@ static MadeiraGLPresenter *presenter_get(void **state, void *hwnd) {
         p->queue = [p->device newCommandQueue];
         p->queue.label = @"winios-gl present";
         *state = (void *)CFBridgingRetain(p);
-        GLLOG("presenter hwnd=%p layer=%p Metal-device=%s registry=%llu", hwnd, (__bridge void *)layer,
-              p->device.name.UTF8String, (unsigned long long)p->device.registryID);
+        GLLOG("presenter for hwnd %p on layer %p", hwnd, (__bridge void *)layer);
     }
     if (!p->layer.device) p->layer.device = p->device;
     return p;
+}
+
+// The FPS limit's frame time for a GL present: 1 = 60, 3 = 30, 4 = 40 FPS (the same
+// modes DXMT's present honours); 0 (display maximum) and 2 (uncapped) present at once.
+// MADEIRA_GL_FPS_CAP=0 presents every GL frame at once, as before.
+extern int madeira_get_vsync_locked(void);
+static double gl_cap_frame_time(void) {
+    static int enabled = -1;
+    if (enabled < 0) { const char *e = getenv("MADEIRA_GL_FPS_CAP"); enabled = !(e && e[0] == '0'); }   // 0: OpenGL games ignore the session's FPS limit, as before
+    if (!enabled) return 0;
+    switch (madeira_get_vsync_locked()) {
+    case 1: return 1.0 / 60.0;
+    case 3: return 1.0 / 30.0;
+    case 4: return 1.0 / 40.0;
+    default: return 0;
+    }
+}
+
+// madeira-bcd (night round 2026-11-11, T3 S11; Akka Arrh 8BBTB3 and Soldier of Fortune JHANDP, the first Zink device logs): the players say "No visuals" and
+// "texture / graphical problems" and the log cannot tell a black picture from a wrongly drawn one. At the 120th presented frame of each presenter one
+// probe line says how much of the slot's IOSurface is not black and its mean colour, from a grid of at most 64x64 samples. Plain C so the host check can run
+// it: `base` is the BGRA surface, `stride` its bytes per row. Returns the sample count (0: nothing to look at).
+static int madeira_gl_probe_pixels(const uint8_t *base, size_t stride, int width, int height,
+                                   int *nonblack_pct, int *mean_r, int *mean_g, int *mean_b, int *varied) {
+    *nonblack_pct = *mean_r = *mean_g = *mean_b = *varied = 0;
+    if (!base || width <= 0 || height <= 0 || stride < (size_t)width * 4) return 0;
+    int step_x = width > 64 ? width / 64 : 1, step_y = height > 64 ? height / 64 : 1;
+    long samples = 0, nonblack = 0, sum_r = 0, sum_g = 0, sum_b = 0;
+    int first_b = -1, first_g = -1, first_r = -1;
+    for (int y = 0; y < height; y += step_y) {
+        const uint8_t *row = base + (size_t)y * stride;
+        for (int x = 0; x < width; x += step_x) {
+            int b = row[x * 4], g = row[x * 4 + 1], r = row[x * 4 + 2];
+            samples++;
+            sum_r += r; sum_g += g; sum_b += b;
+            if (r > 8 || g > 8 || b > 8) nonblack++;
+            if (first_b < 0) { first_b = b; first_g = g; first_r = r; }
+            else if (abs(r - first_r) > 8 || abs(g - first_g) > 8 || abs(b - first_b) > 8) *varied = 1;
+        }
+    }
+    *nonblack_pct = (int)(nonblack * 100 / samples);
+    *mean_r = (int)(sum_r / samples); *mean_g = (int)(sum_g / samples); *mean_b = (int)(sum_b / samples);
+    return (int)samples;
+}
+
+// The probe of slot `s` (just presented, its content final: GL finished the blit, OSMesa copied the frame), read-only; once per presenter.
+static void gl_probe_slot(MadeiraGLPresenter *p, GLSlot *s, void *hwnd) {
+    if (!s->surface || s->locked) return;
+    int nonblack, r, g, b, varied;
+    if (IOSurfaceLock(s->surface, kIOSurfaceLockReadOnly, NULL) != 0) return;   // 0 = kIOReturnSuccess
+    int samples = madeira_gl_probe_pixels((const uint8_t *)IOSurfaceGetBaseAddress(s->surface), IOSurfaceGetBytesPerRow(s->surface),
+                                          p->width, p->height, &nonblack, &r, &g, &b, &varied);
+    IOSurfaceUnlock(s->surface, kIOSurfaceLockReadOnly, NULL);
+    GLLOG("hwnd %p: probe at frame %lu (%dx%d, %d samples): non-black %d%%, mean rgb %d,%d,%d, %s", hwnd, p->frames, p->width, p->height,
+          samples, nonblack, r, g, b, varied ? "varied" : "flat");
 }
 
 // Draw slot `s` (its IOSurface, rows bottom-up) onto the presenter's layer.
@@ -345,24 +399,28 @@ static BOOL present_slot(MadeiraGLPresenter *p, GLSlot *s, void *hwnd) {
     [enc setFragmentSamplerState:p->sampler atIndex:0];
     [enc drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3];
     [enc endEncoding];
+    // The session's FPS limit (madeira_set_vsync_locked, DXMT's vsync mode), applied
+    // the way DXMT applies it: the drawable is held for the frame time, and the
+    // layer's drawable pool then holds the game to the cap.
+    double minimum = gl_cap_frame_time();
+    if (minimum > 0) [cb presentDrawable:drawable afterMinimumDuration:minimum];
+    else [cb presentDrawable:drawable];
     [drawable addPresentedHandler:^(id<MTLDrawable> shown) {
-        if (shown.presentedTime <= 0) return; // iOS can drop a submitted drawable.
-        if (atomic_fetch_add_explicit(&gl_present_count, 1, memory_order_relaxed) == 0)
-            GLLOG("first actual OpenGL present hwnd=%p time=%.6f", hwnd, shown.presentedTime);
-        atomic_store(&gl_last_present_time, CACurrentMediaTime());
-        bcd_frame_ring_push();
+        if (shown.presentedTime > 0)
+            atomic_store(&gl_last_present_time, CACurrentMediaTime());
     }];
     [cb addCompletedHandler:^(id<MTLCommandBuffer> done) {
         if (done.status == MTLCommandBufferStatusError)
             GLLOG("Metal presentation FAILED: %s", done.error.description.UTF8String);
     }];
-    [cb presentDrawable:drawable];
     [cb commit];
     s->last = cb;
+    atomic_fetch_add_explicit(&gl_present_count, 1, memory_order_relaxed);
+    bcd_frame_ring_push();
 
     if (++p->frames == 1 || p->frames % 600 == 0)
-        GLLOG("hwnd %p: %lu frames submitted (%dx%d), actual displayed=%llu", hwnd, p->frames, p->width, p->height,
-              (unsigned long long)madeira_gl_present_count());
+        GLLOG("hwnd %p: %lu frames presented (%dx%d)", hwnd, p->frames, p->width, p->height);
+    if (p->frames == 120) gl_probe_slot(p, s, hwnd);   // madeira-bcd: T3 S11, once
     return YES;
 }
 
@@ -459,11 +517,7 @@ static BOOL zink_slots_create(MadeiraGLPresenter *p, int w, int h) {
 static void *zink_slot_lock(GLSlot *s, int *row_pixels) {
     if (s->last) [s->last waitUntilCompleted];   // Metal may still be reading it
     if (!s->locked) {
-        kern_return_t result = IOSurfaceLock(s->surface, 0, NULL);
-        if (result != KERN_SUCCESS) {
-            GLLOG("IOSurfaceLock failed: %#x", result);
-            return NULL;
-        }
+        IOSurfaceLock(s->surface, 0, NULL);
         s->locked = YES;
     }
     *row_pixels = (int)(IOSurfaceGetBytesPerRow(s->surface) / 4);

@@ -1,6 +1,11 @@
+/* Portions copyright 2026 Russell Barton: code taken from https://github.com/thebcd69/bcd-games (pull request #46 by rbarton124)
+ * under GPL-3.0-or-later with the Madeira Converter Exception and modified for BCD in November 2026. See THIRD-PARTY-NOTICES.md. */
+/* Portions copyright 2026 SirDank, ft7t8drgwf-wq and 125hz: code taken from https://github.com/willfaust/Madeira (pull requests #349, #353, #360 and #363; commits 4e568c1, ba617bb and ada55ec)
+ * under GPL-3.0-or-later and modified for BCD in October and November 2026. See THIRD-PARTY-NOTICES.md. */
 // WineProcessBridge.m - Initialize Wine's ntdll Unix-side on iOS
 // This calls __wine_main() to bootstrap the Wine process, connecting
 // to the already-running wineserver thread.
+// Portions copyright 2026 Paulo Eduardo Correa (pauloec): the native iPhone Duo interface (Liquid Glass, system tabs, controller navigation, Windows desktop on Home), from thebcd69/bcd-games pull request #43; GPL-3.0-only, modified for BCD in November 2026. See THIRD-PARTY-NOTICES.md.
 
 #import <Foundation/Foundation.h>
 #import <os/log.h>
@@ -26,6 +31,7 @@
 #include <dirent.h>
 #include "../../build/madeira_cfg.h"   /* ml1095: one config file */
 #include "../../build/bcd_epic_mask.h"   /* madeira-bcd (2026-10-22): Epic's sign-in arguments masked in the argv lines */
+#include "../../build/madeira_redact.h"   /* the arguments are logged with credential-like values redacted */
 #include "BCDGraphicsRoutes.h"   /* madeira-bcd (round 602): env.MADEIRA_D3D8 = d3d9 and env.MADEIRA_DDRAW = cnc replace Wine's d3d8.dll and ddraw.dll in syswow64 */
 #include <sys/stat.h>
 #include <pwd.h>
@@ -501,6 +507,7 @@ static int madeira_cfg_off_word(const char *v)
 {
     return v && (!strcmp(v, "0") || !strcmp(v, "off") || !strcmp(v, "no"));
 }
+
 static const char *madeira_docs_dir_early(void)
 {
     char docs[1024], v[16];
@@ -520,6 +527,108 @@ static const char *madeira_docs_dir_early(void)
 __attribute__((constructor)) static void madeira_docs_dir_ctor(void)
 {
     g_madeira_docs_early = madeira_docs_dir_early();
+}
+
+/* madeira-bcd (OpenGL, docs/OPENGL.md): the game's `gl-backend` key (bcd.cfg, or the game's own file, which wins; an
+ * env.MADEIRA_GL_BACKEND line works the same) turns the winios OpenGL driver on for THIS session:
+ *   zink  desktop OpenGL: Mesa OSMesa + Zink on MoltenVK, from the bundle's gl/ folder (build/mesa-ios, build/moltenvk-ios);
+ *         if Zink cannot start the driver falls back to gles by itself and says so in the log
+ *   gles  Apple's OpenGL ES 3.0 through EAGL; a desktop-GL-only game fails its own version check
+ * Only these two words count. Unset, empty or anything else: OpenGL stays off, MADEIRA_GL_BACKEND is not exported, and every OpenGL
+ * path in the engine (the driver in win32u, the real opengl32 unix tables and the opt-in opengl32.dll, the x18 store patching, the
+ * wineserver's LuaJIT substitution) stays where it was; the session is what it was before OpenGL existed. Nothing is logged then.
+ * One session runs per app run, so nothing needs undoing; wine_session_end() drops the variables for tidiness. */
+static int g_gl_love_hint_set;
+static void bcd_gl_session_setup(NSString *bundlePath)
+{
+    char want[32] = "";
+    const char *pre = getenv("MADEIRA_GL_BACKEND");
+    NSString *glDir = [bundlePath stringByAppendingPathComponent:@"gl"];
+
+    if (!madeira_cfg_get("gl-backend", want, sizeof(want)) || !want[0]) {
+        if (pre) strlcpy(want, pre, sizeof(want));
+    }
+    for (char *c = want; *c; c++) if (*c >= 'A' && *c <= 'Z') *c += 'a' - 'A';
+    if (!strcmp(want, "zink") || !strcmp(want, "gles")) {
+        NSFileManager *fm = [NSFileManager defaultManager];
+        BOOL haveZink = [fm fileExistsAtPath:[glDir stringByAppendingPathComponent:@"libOSMesa.dylib"]]
+                     && [fm fileExistsAtPath:[glDir stringByAppendingPathComponent:@"libMoltenVK.dylib"]];
+        setenv("MADEIRA_GL_BACKEND", want, 1);
+        setenv("MADEIRA_GL_DIR", glDir.UTF8String, 1);
+        /* LOVE 11 checks this SDL hint (read from the environment) before it tries desktop GL; with the GLES backend there is no
+         * desktop GL context, and SDL then makes the ES context through WGL_EXT_create_context_es2_profile, which that backend
+         * advertises. overwrite=0: a value the game's file sets wins. */
+        if (!strcmp(want, "gles") && !getenv("LOVE_GRAPHICS_USE_OPENGLES")) {
+            setenv("LOVE_GRAPHICS_USE_OPENGLES", "1", 1);
+            g_gl_love_hint_set = 1;
+        }
+        dprintf(STDERR_FILENO, "[WineProc] gl-backend=%s: OpenGL is on for this session (winios WGL driver; Zink and MoltenVK bundled: %s; %s)\n",
+                want, haveZink ? "yes" : "no", !strcmp(want, "zink") ? (haveZink ? "desktop OpenGL" : "no Zink here: the driver falls back to OpenGL ES") : "OpenGL ES");
+    } else {
+        unsetenv("MADEIRA_GL_BACKEND");
+        unsetenv("MADEIRA_GL_DIR");
+        if (want[0])
+            dprintf(STDERR_FILENO, "[WineProc] gl-backend=%s is not zink or gles: OpenGL stays off\n", want);
+    }
+}
+
+/* madeira-bcd (Windows Vulkan, docs/BUILDING.md 6c; Madeira #353, #400 and #462, see THIRD-PARTY-NOTICES.md): the game's `vulkan` key (bcd.cfg, or
+ * the game's own file, which wins) turns Vulkan on for the x64 programs of THIS session:
+ *   moltenvk     winevulkan on MoltenVK, the gl/ folder's libMoltenVK.dylib (the one Zink uses)
+ *   kosmickrisp  the same on gl/libvulkan_kosmickrisp.dylib, if a build bundles it (BCD's does not yet: Vulkan then stays off)
+ * Only these two words count. Unset, empty, "off" or anything else: Vulkan stays off, MADEIRA_VULKAN_LIBRARY is not exported, the prefix
+ * gets no winevulkan.dll and keeps the farm's vulkan-1.dll stand-in (tools/build-stub-dlls.py: a game that probes finds no Vulkan driver,
+ * as always), and win32u lists no Vulkan GPU (build/win32u-unix/vulkan_ios.c): the session is what it was before. On: MADEIRA_VULKAN_LIBRARY
+ * names the library and system32 (in an ARM64EC session) and sysx64 get links to the bundle's vulkan/arm64ec-windows/winevulkan.dll and
+ * vulkan-1.dll, over the stand-in; the next session's farm pass restores the stand-in, and winevulkan.dll's link, which no farm holds, is
+ * removed here when the key is gone. x64 programs only: the unix side binds no 32-bit table (build/ntdll-unix/virtual_ios.c). */
+static void bcd_vulkan_session_setup(NSFileManager *fm, NSString *prefix, NSString *bundlePath, BOOL use_arm64ec)
+{
+    char want[64] = "";
+    NSString *win = [prefix stringByAppendingPathComponent:@"drive_c/windows"];
+    NSString *stack = [bundlePath stringByAppendingPathComponent:@"vulkan/arm64ec-windows"];
+    NSArray<NSString *> *dlls = @[@"winevulkan.dll", @"vulkan-1.dll"];
+    NSArray<NSString *> *dirs = use_arm64ec ? @[@"system32", @"sysx64"] : @[@"sysx64"];
+    NSString *lib = nil;
+    int linked = 0;
+
+    /* A previous session's links into the vulkan folder (the farm pass has replaced vulkan-1.dll's already; winevulkan.dll is in no farm). */
+    for (NSString *dir in @[@"system32", @"sysx64"])
+        for (NSString *dll in dlls) {
+            NSString *path = [[win stringByAppendingPathComponent:dir] stringByAppendingPathComponent:dll];
+            NSString *dest = [fm destinationOfSymbolicLinkAtPath:path error:nil];
+            if (dest && [dest rangeOfString:@"/vulkan/arm64ec-windows/"].location != NSNotFound)
+                [fm removeItemAtPath:path error:nil];
+        }
+
+    if (madeira_cfg_get("vulkan", want, sizeof(want)) && want[0]) {
+        for (char *c = want; *c; c++) if (*c >= 'A' && *c <= 'Z') *c += 'a' - 'A';
+        if (!strcmp(want, "moltenvk")) lib = [bundlePath stringByAppendingPathComponent:@"gl/libMoltenVK.dylib"];
+        else if (!strcmp(want, "kosmickrisp")) lib = [bundlePath stringByAppendingPathComponent:@"gl/libvulkan_kosmickrisp.dylib"];
+        else if (strcmp(want, "off") && strcmp(want, "0") && strcmp(want, "no"))
+            dprintf(STDERR_FILENO, "[WineProc] vulkan=%s is not moltenvk or kosmickrisp: Vulkan stays off\n", want);
+    }
+    if (!lib) {
+        unsetenv("MADEIRA_VULKAN_LIBRARY");
+        return;
+    }
+    if (access(lib.fileSystemRepresentation, R_OK) != 0 ||
+        access([stack stringByAppendingPathComponent:@"winevulkan.dll"].fileSystemRepresentation, R_OK) != 0 ||
+        access([stack stringByAppendingPathComponent:@"vulkan-1.dll"].fileSystemRepresentation, R_OK) != 0) {
+        unsetenv("MADEIRA_VULKAN_LIBRARY");
+        dprintf(STDERR_FILENO, "[WineProc] vulkan=%s: Vulkan stays off, %s or the bundle's vulkan/arm64ec-windows/{winevulkan,vulkan-1}.dll "
+                "is missing\n", want, lib.UTF8String);
+        return;
+    }
+    setenv("MADEIRA_VULKAN_LIBRARY", lib.UTF8String, 1);   /* read by build/win32u-unix/vulkan_ios.c */
+    for (NSString *dir in dirs)
+        for (NSString *dll in dlls) {
+            NSString *dst = [[win stringByAppendingPathComponent:dir] stringByAppendingPathComponent:dll];
+            [fm removeItemAtPath:dst error:nil];
+            if ([fm createSymbolicLinkAtPath:dst withDestinationPath:[stack stringByAppendingPathComponent:dll] error:nil]) linked++;
+        }
+    dprintf(STDERR_FILENO, "[WineProc] vulkan=%s: Vulkan is on for this session (MADEIRA_VULKAN_LIBRARY=%s; %d Vulkan DLL links in %s; "
+            "x64 programs only)\n", want, lib.UTF8String, linked, use_arm64ec ? "system32 + sysx64" : "sysx64");
 }
 
 /* The profile's AppData\LocalLow folder.
@@ -873,6 +982,45 @@ static void madeira_link_wbem(NSFileManager *fm, NSString *prefix, NSString *sys
     }
     dprintf(STDERR_FILENO, "[WineProc] %s\\wbem: %d/%zu links\n", system_dir.UTF8String,
             linked, sizeof(wbem) / sizeof(wbem[0]));
+}
+
+/* The empty system directories wine.inf creates in every Wine prefix
+ * ([FakeDlls] for system32, [FakeDllsWow64] for syswow64) that the shipped
+ * template and the runtime farms leave out. Madeira's syswow64 is a farm built
+ * at session start, not a wineboot result, so it never got wine.inf's mui
+ * folder, and the template's system32 has no mui, catroot or spool\printers.
+ *
+ * Valve's Steam service checks a few fixed Windows folders while it prepares a
+ * per-account (CEG) executable. A trace of Black Ops's CEG job (build 34) shows
+ * C:\windows\system32\mui (syswow64\mui for the 32-bit service) answering
+ * c0000034 on Madeira, where every Wine, Proton and Windows install has it;
+ * Valve's server then refuses the job (Fail) for Black Ops and Borderlands 2
+ * alike. Empty folders only, the same ones stock Wine makes; nothing else
+ * changes. Idempotent: an existing folder is left alone. */
+static void madeira_ensure_wine_inf_dirs(NSFileManager *fm, NSString *prefix, BOOL wow64)
+{
+    static const char * const sys32[] = { "mui", "catroot", "spool/printers" };
+    static const char * const wow[]   = { "mui" };
+    NSString *windows = [prefix stringByAppendingPathComponent:@"drive_c/windows"];
+    int made = 0, present = 0, failed = 0;
+
+    for (int pass = 0; pass < (wow64 ? 2 : 1); pass++)
+    {
+        NSString *base = [windows stringByAppendingPathComponent:pass ? @"syswow64" : @"system32"];
+        const char * const *names = pass ? wow : sys32;
+        size_t count = pass ? sizeof(wow) / sizeof(wow[0]) : sizeof(sys32) / sizeof(sys32[0]);
+
+        for (size_t i = 0; i < count; i++)
+        {
+            NSString *dir = [base stringByAppendingPathComponent:[NSString stringWithUTF8String:names[i]]];
+            BOOL isDir = NO;
+            if ([fm fileExistsAtPath:dir isDirectory:&isDir] && isDir) { present++; continue; }
+            if ([fm createDirectoryAtPath:dir withIntermediateDirectories:YES attributes:nil error:nil]) made++;
+            else failed++;
+        }
+    }
+    dprintf(STDERR_FILENO, "[WineProc] wine.inf system folders: %d made, %d already there, %d failed\n",
+            made, present, failed);
 }
 
 static void madeira_link_syswow64_wbem(NSFileManager *fm, NSString *prefix, NSString *bundle)
@@ -1476,6 +1624,38 @@ static void madeira_audio_io_slice(void)
     dprintf(STDERR_FILENO, "[audio] io buffer asked %.1f ms, granted %.2f ms (env.MADEIRA_AUDIO_IO_MS)\n", ms, session.IOBufferDuration * 1000.0);
 }
 
+/* madeira-bcd (night round 2026-11-11, T3 S5): the audio driver (build/ntdll-unix/audio_null_ios.c, ml2300) found a stream that has been short in
+ * nearly every render pass for 20 s because its client queues less than one RemoteIO pass (two 10 ms periods under a 21 ms pass: Quake II,
+ * Counter-Strike 2, Deadlock, Resonance, ...), and asks for what env.MADEIRA_AUDIO_IO_MS = 5 gives at the start of a session: a smaller IO buffer.
+ * Called from the stream's timer thread, so the audio session is touched on a background queue (setActive can block for a while); once per app run
+ * (the driver asks once too: this is the second guard). Not when the game's own file has env.MADEIRA_AUDIO_IO_MS, whatever its value: that was settled
+ * by madeira_audio_io_slice at the session's start, and 0 there means "leave the system's slice". Unlike that function it publishes no
+ * MADEIRA_AUDIO_IO_US: the driver's engine period (ios_engine_period) is read once, before this runs, and a client does not take a new one mid-stream.
+ * The session's preference stays for the rest of the app run, as the env key's does. Returns 1 when the request was queued, 0 when it was not made. */
+int madeira_audio_request_io_slice(double ms)
+{
+    static _Atomic int asked;
+    const char *own = getenv("MADEIRA_AUDIO_IO_MS");
+    if (ms < 1 || ms > 100 || (own && *own)) return 0;
+    if (atomic_exchange(&asked, 1)) return 0;
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        NSError *err = nil;
+        AVAudioSession *session = [AVAudioSession sharedInstance];
+        double before = session.IOBufferDuration * 1000.0;
+        if (![session setPreferredIOBufferDuration:ms / 1000.0 error:&err])
+            dprintf(STDERR_FILENO, "[audio] setPreferredIOBufferDuration(%.1f ms) failed: %s\n", ms, err.localizedDescription.UTF8String);
+        err = nil;
+        [session setActive:YES error:&err];   /* the session is already active: this applies the new duration */
+        dprintf(STDERR_FILENO, "[audio] io buffer asked %.1f ms (the stream's queue is shorter than one pass), was %.2f ms, granted %.2f ms\n",
+                ms, before, session.IOBufferDuration * 1000.0);
+        /* iOS may take a moment to apply a change made while the unit runs: say what it settled on, so the next log shows whether it held */
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+            dprintf(STDERR_FILENO, "[audio] io buffer is now %.2f ms (asked %.1f ms)\n", [AVAudioSession sharedInstance].IOBufferDuration * 1000.0, ms);
+        });
+    });
+    return 1;
+}
+
 /* Once per app run, when a session with either switch starts; each observer
  * checks its switch again when it fires (a later session may have it off). */
 static void madeira_engine_observers_install(void)
@@ -2021,24 +2201,7 @@ static void *wine_process_thread(void *arg) {
                         dprintf(STDERR_FILENO, "[steam-env] MADEIRA_STEAM_IDENTITY=none (from the game's file): no Steam game identity published\n");
                     }
                 }
-                {
-                    char backend[16] = "off";
-                    madeira_cfg_get("gl-backend", backend, sizeof backend);
-                    const char *override = getenv("MADEIRA_GL_BACKEND");
-                    if (override && *override) strlcpy(backend, override, sizeof backend);
-                    BOOL enabled = !strcmp(backend, "zink");
-                    if (getenv("MADEIRA_NO_GL") && strcmp(getenv("MADEIRA_NO_GL"), "0")) enabled = NO;
-                    NSString *gl = [[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent:@"Frameworks"];
-                    BOOL bundled = [[NSFileManager defaultManager] fileExistsAtPath:[gl stringByAppendingPathComponent:@"libOSMesa.dylib"]] &&
-                                   [[NSFileManager defaultManager] fileExistsAtPath:[gl stringByAppendingPathComponent:@"libMoltenVK.dylib"]];
-                    setenv("MADEIRA_GL_DIR", gl.fileSystemRepresentation, 1);
-                    setenv("MADEIRA_GL_BACKEND", enabled ? "zink" : "off", 1);
-                    setenv("MADEIRA_NO_GL", enabled ? "0" : "1", 1);
-                    LOG("OpenGL selected=%{public}s dependencies=%d path=%{public}s; restart required to change backend",
-                        enabled ? "zink" : "off", bundled, gl.fileSystemRepresentation);
-                    if (enabled && !bundled) LOG("OpenGL ERROR: missing bundled desktop GL libraries; context creation will fail");
-                    if (enabled) LOG("OpenGL: MetalFX upscaling/frame generation do not apply to GL frames");
-                }
+
                 {   /* madeira-bcd (round 604): the in-game menu's Wine debug channels, for THIS start only (BCDDebugLive.swift, BCDDebugChannels.swift).
                      * The menu writes the text of the WINEDEBUG it wants into a file in the temporary folder; it is exported here, after the game's own
                      * lines, and the file is removed, so the start after this one runs as always. Anything but plain channel text is ignored. */
@@ -2372,6 +2535,8 @@ static void *wine_process_thread(void *arg) {
                 madeira_link_syswow64_wbem(fm, prefix, bundlePath);
                 madeira_seed_winsxs_x86(fm, prefix, bundlePath);
             }
+            /* Steam CEG (Madeira #519, ada55ec): the empty folders stock Wine makes and the template lacks. */
+            madeira_ensure_wine_inf_dirs(fm, prefix, has_i386_set);
             madeira_link_wine_mono(fm, prefix, bundlePath);
 
             /* madeira-bcd (2026-10-22): MADEIRA_MSIEXEC_SYSTEM32=1 (set for an Epic game's session by ContentView, or by a
@@ -2736,6 +2901,11 @@ static void *wine_process_thread(void *arg) {
                 }
             }
 
+            /* madeira-bcd (OpenGL): the game's gl-backend key, decided before the opt-in DLLs below (opengl32 is one) and before Wine starts. */
+            bcd_gl_session_setup(bundlePath);
+            /* madeira-bcd (Windows Vulkan): the game's vulkan key, after the farm passes above (it re-points two links of the prefix). */
+            bcd_vulkan_session_setup(fm, prefix, bundlePath, use_arm64ec);
+
             /* madeira-bcd: env.MADEIRA_OPTIN_DLLS = dxva2,evr (comma or semicolon separated) runs each
              * listed <name>-optin.dll that this build ships (tools/build-wine-extra-dlls.sh, OPTIN_WANT)
              * as <name>.dll, as MADEIRA_WER and MADEIRA_WINTYPES above. Fort Solis and DRAGON BALL
@@ -2771,6 +2941,13 @@ static void *wine_process_thread(void *arg) {
                         [wanted addObject:@"kernelbase"];
                         dprintf(STDERR_FILENO, "[WineProc] MADEIRA_ZERO_MITIGATION_POLICY=1: the opt-in kernelbase is added to MADEIRA_OPTIN_DLLS\n");
                     }
+                }
+                /* madeira-bcd (OpenGL): a session with gl-backend on runs the opt-in opengl32.dll (the tree's, with the default image base;
+                 * the shipped one is based at 0x7a800000, where its thunks lose the TEB); the key brings it along, as above. A session
+                 * without the key lists nothing and keeps the shipped file. */
+                if (getenv("MADEIRA_GL_BACKEND") && ![wanted containsObject:@"opengl32"]) {
+                    [wanted addObject:@"opengl32"];
+                    dprintf(STDERR_FILENO, "[WineProc] gl-backend: the opt-in opengl32 is added to MADEIRA_OPTIN_DLLS\n");
                 }
                 if (([wanted containsObject:@"wmadmod"] || [wanted containsObject:@"wmvdecod"] || [wanted containsObject:@"mfasfsrcsnk"]) && !getenv("MADEIRA_WG_64BIT")) setenv("MADEIRA_WG_64BIT", "1", 0);
                 NSString *ecDir = [bundlePath stringByAppendingPathComponent:@"arm64ec-windows"];
@@ -3213,13 +3390,18 @@ static void *wine_process_thread(void *arg) {
         for (int i = 0; i < extra_argc; i++) argv[argc++] = extra_argv[i];
         argv[argc] = NULL;
         dprintf(STDERR_FILENO, "[WineProc] argv[1] = %s\n", exe_path);
+        /* An argument may be a credential (a sign-in token, a password): each is logged as a redacted copy
+         * (build/madeira_redact.h, upstream Madeira's log redaction); argv itself is passed on unchanged. */
+        int credential_next = 0;
         for (int i = 0; i < extra_argc; i++) {
             /* madeira-bcd (2026-10-22, Epic Games milestone 2): Epic's sign-in code, account ID and name print as "*" (build/bcd_epic_mask.h);
              * a signed-in start passes none of them here (BCD Host reads them from a one-use file), so this is a second line of defence. */
             char masked[sizeof(args_buf) + 1];
+            char shown[sizeof(args_buf) + 64];
             long masked_len = bcd_epic_mask_a(extra_argv[i], strlen(extra_argv[i]), masked);
             if (masked_len >= 0) masked[masked_len] = 0;
-            dprintf(STDERR_FILENO, "[WineProc] argv[%d] = %s\n", 2 + i, masked_len >= 0 ? masked : extra_argv[i]);
+            madeira_redact_arg_a(masked_len >= 0 ? masked : extra_argv[i], &credential_next, shown, sizeof(shown));
+            dprintf(STDERR_FILENO, "[WineProc] argv[%d] = %s\n", 2 + i, shown);
         }
 
         /* iOS-Madeira: chdir to the unix path that maps to the exe's Wine
@@ -3379,6 +3561,13 @@ static void *wine_process_thread(void *arg) {
  * whoever gets here first (the boot thread, or wine_session_abandon). */
 static void wine_session_end(void)
 {
+    /* A confirmed Windows desktop Stop is draining (native Duo interface; WineServerBridge.m: 1 queued, 2 draining): its worker
+     * (wine_session_quit_desktop, at the end of this file) ends the session itself, once every guest thread is gone, so that the end work
+     * does not clear the environment the closing programs still use. */
+    {
+        extern int g_wineserver_desktop_shutdown;
+        if (__atomic_load_n(&g_wineserver_desktop_shutdown, __ATOMIC_ACQUIRE)) return;
+    }
     if (__atomic_exchange_n(&g_session_end_claim, 1, __ATOMIC_ACQ_REL)) return;
     g_wine_running = 0;
     wine_progname_restore();
@@ -3392,11 +3581,14 @@ static void wine_session_end(void)
     unsetenv("DXMT_ENABLE_NVEXT"); unsetenv("DXMT_WSI_MONITOR_IDENTITY"); unsetenv("DXMT_WSI_MODE_TABLE");
     unsetenv("BCD_SERVICES_DIR"); unsetenv("BCD_SERVICES_TARGET");   /* round 620 */
     unsetenv("BCD_SESSION_HZ");   /* round 626 (agent H S2): the next launch publishes its own */
+    unsetenv("BCD_GAME_FOLDER");  /* madeira-bcd pool-fg: the next launch publishes its own game's folder, or none */
     /* madeira-bcd: Horizon Zero Dawn's per-game switches must not reach a later game
      * of this app run (GTA V Enhanced runs without them). */
     unsetenv("MADEIRA_UCRT_X64_MATH"); unsetenv("MADEIRA_SRV_FGETPATH");
     unsetenv("MADEIRA_NTDLL_SYNC");   /* madeira-bcd: a game's switch is its own */
     unsetenv("MADEIRA_ANON_LDADDAL32"); /* build 608: opt-in belongs only to the game that enabled it */
+    unsetenv("MADEIRA_REAL_SUSPEND");   /* a game's switch is its own: the server reads it per session now (mach_ios.c ios_real_suspend_enabled), so a later game must not inherit it */
+    unsetenv("MADEIRA_FIRST_PROC_OWN_EXIT_FLAG");   /* a game's switch is its own (server_ios.c ios_process_exiting_ptr reads it when a process exits) */
     /* madeira-bcd: Diablo II: Resurrected's executable-section switches (thebcd69/bcd-games#4), likewise */
     unsetenv("MADEIRA_NTDLL_XSEC"); unsetenv("MADEIRA_SHARED_SECTION_EXEC"); unsetenv("MADEIRA_NTDLL_DATA_SYNC_RANGE");
     unsetenv("MADEIRA_FAULT_LOOP_GUEST_PROGRESS"); unsetenv("MADEIRA_D2R_PROBE_RECOVERY");
@@ -3406,9 +3598,23 @@ static void wine_session_end(void)
     unsetenv("MADEIRA_X64_MACHINE");  /* madeira-bcd: likewise (BeamNG.drive's launcher) */
     unsetenv("MADEIRA_TINY_WINDOW_FIX"); /* madeira-bcd: likewise (American Truck Simulator's tiny window) */
     unsetenv("MADEIRA_OPTIN_DLLS");   /* madeira-bcd: likewise */
+    unsetenv("MADEIRA_GL_BACKEND"); unsetenv("MADEIRA_GL_DIR");   /* madeira-bcd (OpenGL): likewise (the game's gl-backend key) */
+    unsetenv("MADEIRA_VULKAN_LIBRARY");   /* madeira-bcd (Windows Vulkan): likewise (the game's vulkan key) */
+    if (g_gl_love_hint_set) { unsetenv("LOVE_GRAPHICS_USE_OPENGLES"); g_gl_love_hint_set = 0; }
     unsetenv("MADEIRA_NLS_EXTRA");    /* madeira-bcd: likewise (env_ios.c reads it at every code page request) */
     unsetenv("MADEIRA_WG_64BIT");     /* madeira-bcd: likewise (Resident Evil 2's decoders; a later game keeps the stub table) */
     unsetenv("MADEIRA_VCRT_ARM64_KEY"); /* madeira-bcd: likewise (the Runtimes\\arm64 marker is per game) */
+    unsetenv("MADEIRA_X64_HOOK_ZONE"); /* madeira-bcd: likewise (Far Cry 4's hook zone) */
+    unsetenv("MADEIRA_SLEEP_KERNEL_APC"); /* madeira-bcd: likewise (Far Cry 3's sleeps) */
+    unsetenv("MADEIRA_WOA_RECHECK"); /* madeira-bcd: likewise (Ubisoft Connect's waits) */
+    unsetenv("MADEIRA_GL_EMPTY_EXTENSIONS"); /* madeira-bcd: likewise (Far Cry 4's hardware detection) */
+    unsetenv("MADEIRA_FEX_SPLIT_LOCK"); /* madeira-bcd: likewise (a game's own 0 must not reach a later game) */
+    unsetenv("MADEIRA_POOL_CODE_FOREGROUND"); /* madeira-bcd: likewise (the code-buffer policy) */
+    unsetenv("MADEIRA_POOL_CARVE_MERGE"); /* madeira-bcd: likewise (the code-buffer merge) */
+    unsetenv("MADEIRA_UBI_CEF"); /* madeira-bcd: likewise (a game's own 0 must not reach a later game) */
+    unsetenv("MADEIRA_KILL_REAP"); /* madeira-bcd: likewise (the game starter's ended copy) */
+    unsetenv("MADEIRA_SELF_WRITE"); /* madeira-bcd: likewise (a game's own 0 must not reach a later game) */
+    unsetenv("MADEIRA_APC_BUSY_QUEUE"); /* madeira-bcd: likewise (the Dock sets it for a Ubisoft game's session, ContentView.startDock) */
     unsetenv("MADEIRA_TAIL_CARVE_EXEC_CHECK"); /* madeira-bcd: likewise */
     unsetenv("MADEIRA_POOL_CLAMP_SECTIONS"); /* madeira-bcd: likewise */
     unsetenv("MADEIRA_LUM_PROBE");      /* madeira-bcd: likewise */
@@ -3483,6 +3689,20 @@ int wine_session_dock_game_left(int32_t status)
     dprintf(STDERR_FILENO, "[WineProc] madeira-bcd: the Dock game's last program closed by itself with status 0x%x before it drew a "
             "picture; nothing of it is left; ending the session here\n", (unsigned)status);
     __atomic_store_n(&g_wine_exit_code, (int)status, __ATOMIC_RELEASE);
+    wine_session_end();
+    return 1;
+}
+
+/* madeira-bcd (night round 2026-11-11, A4 S1; 1MQV99, DR1MW9 and 10 more Windows desktop logs): the player closed the Windows desktop
+ * (BCD's Close, or Start > Shut Down: wineboot --end-session --shutdown ends with 0 and never stops the session), nothing else ends a
+ * desktop session (its explorer and services never exit). The library's watch (LibraryModel.watchDesktopClose, DesktopExitRules.closeVerdict)
+ * decides; this ends the session as wine_session_dock_game_quit does: the status is 0 and NOT the session's crash status (g_launch_exit
+ * stays empty), so no error box is shown and the session reads as the player's quit. Returns 1 when it ended the session. */
+int wine_session_desktop_closed(void)
+{
+    if (!g_wine_running || __atomic_load_n(&g_session_end_claim, __ATOMIC_ACQUIRE)) return 0;
+    dprintf(STDERR_FILENO, "[WineProc] madeira-bcd: the player closed the Windows desktop; ending the session here\n");
+    __atomic_store_n(&g_wine_exit_code, 0, __ATOMIC_RELEASE);
     wine_session_end();
     return 1;
 }
@@ -3728,4 +3948,87 @@ void madeira_memory_canary(const char *tmpdir) {
         mc_sample("throughput", "after", NULL);
     }
     fprintf(stderr, "[mem-canary] ml1076 done\n");
+}
+
+/* Confirmed Windows desktop Stop (thebcd69/bcd-games#43, native Duo interface): terminates the whole guest, keeps BCD alive, and ends the
+ * session once every native guest thread is gone. After wine_session_end and everything the host checks slice from this file. */
+extern int ios_thread_registry_count(void);
+extern thread_t ios_thread_registry_mach(int i);
+
+// Retained send rights keep Mach names stable while shutdown unregisters guests.
+static int desktop_thread_is_gone(thread_t port)
+{
+    mach_port_type_t type = 0;
+    kern_return_t kr = mach_port_type(mach_task_self(), port, &type);
+    if (kr == KERN_SUCCESS && (type & MACH_PORT_TYPE_DEAD_NAME)) return 1;
+    thread_basic_info_data_t info;
+    mach_msg_type_number_t size = THREAD_BASIC_INFO_COUNT;
+    kr = thread_info(port, THREAD_BASIC_INFO, (thread_info_t)&info, &size);
+    return kr == KERN_INVALID_ARGUMENT || kr == MACH_SEND_INVALID_DEST || kr == KERN_TERMINATED;
+}
+
+int wine_session_quit_desktop(void)
+{
+    extern int g_wineserver_desktop_shutdown;
+    if (!g_wine_running || __atomic_load_n(&g_session_end_claim, __ATOMIC_ACQUIRE)) return 0;
+    // The request below sets the desktop shutdown flag before any guest receives SIGQUIT; while it is set the boot thread's normal end
+    // (wine_session_end) returns at once, so this worker finalizes once the guests are gone and the server has drained.
+    enum { max_threads = 8192 };
+    thread_t *ports = calloc(max_threads, sizeof(*ports));
+    int used = 0, scanned = 0, unknown = !ports;
+    int initial_count = ios_thread_registry_count();
+    if (initial_count > max_threads) { unknown = 1; initial_count = max_threads; }
+    if (ports) for (; scanned < initial_count; ++scanned) {
+        thread_t port = ios_thread_registry_mach(scanned);
+        if (!port || desktop_thread_is_gone(port)) continue;
+        int duplicate = 0;
+        for (int j = 0; j < used; ++j) if (ports[j] == port) { duplicate = 1; break; }
+        if (duplicate) continue;
+        if (mach_port_mod_refs(mach_task_self(), port, MACH_PORT_RIGHT_SEND, 1) == KERN_SUCCESS)
+            ports[used++] = port;
+        else if (!desktop_thread_is_gone(port)) unknown = 1;
+    }
+    if (!wineserver_request_desktop_shutdown()) {
+        for (int j = 0; j < used; ++j) mach_port_deallocate(mach_task_self(), ports[j]);
+        free(ports);
+        dprintf(STDERR_FILENO, "[desktop-quit] shutdown request refused; completion unverified\n");
+        return -1;
+    }
+    // Thread registry keeps historic slots. New registrations are included on every
+    // pass; after server shutdown no guest can create another server thread.
+    dprintf(STDERR_FILENO, "[desktop-quit] confirmed; awaiting Windows shutdown\n");
+    wineserver_stop();
+    int alive = 0, stable = 0;
+    for (int attempt = 0; attempt < 800; ++attempt) {
+        int count = ios_thread_registry_count();
+        if (count > max_threads) { unknown = 1; count = max_threads; }
+        if (ports) for (int slot = 0; slot < count; ++slot) {
+            thread_t port = ios_thread_registry_mach(slot);
+            if (!port || desktop_thread_is_gone(port)) continue;
+            int duplicate = 0;
+            for (int j = 0; j < used; ++j) if (ports[j] == port) { duplicate = 1; break; }
+            if (duplicate) continue;
+            if (used == max_threads) { unknown = 1; break; }
+            if (mach_port_mod_refs(mach_task_self(), port, MACH_PORT_RIGHT_SEND, 1) == KERN_SUCCESS)
+                ports[used++] = port;
+            else if (!desktop_thread_is_gone(port)) unknown = 1;
+        }
+        alive = 0;
+        for (int j = 0; j < used; ++j) if (!desktop_thread_is_gone(ports[j])) ++alive;
+        if (!alive && !unknown) {
+            if (++stable >= 3) break;
+        } else stable = 0;
+        usleep(10000);
+    }
+    for (int j = 0; j < used; ++j) mach_port_deallocate(mach_task_self(), ports[j]);
+    free(ports);
+    dprintf(STDERR_FILENO, "[desktop-quit] native guests retained=%d alive=%d unknown=%d\n", used, alive, unknown);
+    if (alive || unknown || stable < 3) {
+        dprintf(STDERR_FILENO, "[desktop-quit] incomplete; not publishing successful session completion\n");
+        return -1;
+    }
+    __atomic_store_n(&g_wine_exit_code, 0, __ATOMIC_RELEASE);
+    __atomic_store_n(&g_wineserver_desktop_shutdown, 0, __ATOMIC_RELEASE);   // drained and joined: the normal end work may run
+    wine_session_end();
+    return 1;
 }

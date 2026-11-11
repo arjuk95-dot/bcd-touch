@@ -1,19 +1,26 @@
 name: Touch HUD simulator previews
-on: [workflow_dispatch]
 jobs:
   preview:
     runs-on: macos-15-intel
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - name: Select the iOS 18.5 simulator toolchain
-        run: |
-          if [ -d /Applications/Xcode_16.4.app ]; then sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer; fi
-          xcodebuild -version
-      - name: Capture production renderer (no guest game)
-        run: python3 tools/touch-packs/simulator-preview.py
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: touch-simulator-previews
-          path: touch-evidence
+    - uses: actions/checkout@v4
+    - name: Select the iOS 18.5 simulator toolchain
+      run: 'if [ -d /Applications/Xcode_16.4.app ]; then sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer;
+        fi
+
+        xcodebuild -version
+
+        '
+    - name: Capture production renderer (no guest game)
+      run: python3 tools/touch-packs/simulator-preview.py
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: touch-simulator-previews
+        path: touch-evidence
+'on':
+  workflow_dispatch: {}
+  push:
+    branches:
+    - wo-bcd-upstream-653-001
