@@ -2804,8 +2804,6 @@ jobs:
       contents: read
     env:
       PYTHONUNBUFFERED: '1'
-      CLANG_MODULE_CACHE_PATH: ${{ runner.temp }}/autotune-modules
-      SWIFT_MODULECACHE_PATH: ${{ runner.temp }}/autotune-modules
     steps:
     - uses: actions/checkout@v4
       with:
@@ -2826,6 +2824,10 @@ jobs:
         tar -xzf "$RUNNER_TEMP/swift.tar.gz" -C "$RUNNER_TEMP/swift" --strip-components=1
 
         echo "$RUNNER_TEMP/swift/usr/bin" >> "$GITHUB_PATH"
+
+        echo "CLANG_MODULE_CACHE_PATH=$RUNNER_TEMP/autotune-modules" >> "$GITHUB_ENV"
+
+        echo "SWIFT_MODULECACHE_PATH=$RUNNER_TEMP/autotune-modules" >> "$GITHUB_ENV"
 
         '
     - name: Run complete portable core with checked optimization
