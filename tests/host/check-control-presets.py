@@ -318,8 +318,9 @@ assert 'TouchControlsOverlay.showsLayoutMenu(self) ? 4 : 3) + 1' in model, 'the 
 window = function(content, 'final class ControlsWindow: UIWindow {')
 assert window.index('if m.editing || m.sessionPanel {') < window.index('!hit.isDescendant(of: root)') \
     < window.index('guard m.hitsInteractive('), 'menu and dialog presentations take their touches in play mode'
-reserve = function(gamepad, '@MainActor func reserveSessionSlot(touchControls: Bool) {')
-assert reserve.index('guard Self.enabled, gameSet || Self.optIn("MADEIRA_PAD_EARLY_SLOT")') < reserve.index('touchState.reserved = true')
+reserve = function(gamepad, '@MainActor func reserveSessionSlot(touchControls: Bool, force: Bool = false) {')
+assert reserve.index('guard Self.enabled, !Self.packKeyboardMouseSession, force || gameSet || Self.optIn("MADEIRA_PAD_EARLY_SLOT")') < reserve.index('touchState.reserved = true')
+assert reserve.index('guard touch || paired else {') < reserve.index('touchState.reserved = true'), 'even a forced reservation needs a controller source'
 # Round 630 (agent T1 S1, Dokimon Quest): the game's own file can set it (a list row), exactly "1"; a set switch that reserves nothing says so.
 assert 'let gameSet = MadeiraConfig.gameValue("env.MADEIRA_PAD_EARLY_SLOT") == "1"' in reserve and 'slot=0 not reserved' in reserve
 run = function(content, 'private func runWineFullSequence(profile: LibraryEntry? = nil) {')
@@ -357,7 +358,13 @@ assert '[touch] default layout=' in apply and 'MADEIRA_TOUCH_GAME_DEFAULT=0' in 
 # 578 (lead): no default at session start (an empty overlay with touch controls on may be the player's touch-as-mouse
 # setup); only turning touch controls on in the in-game menu fills an empty overlay.
 assert 'applyGameDefault(' not in begin and 'ControlPresetsModel.shared.sessionBegan()' in begin, \
-    'a session never puts a default layout on screen by itself'
+    'the stock automatic-default helper stays deferred until the user enables controls'
+# The fork's separate offline fallback is bounded to a non-Desktop session
+# without an available pack, and never replaces nonempty game-specific controls.
+fallback = function(begin, 'if !packAvailable, entry.desktop != true {')
+empty_fallback = function(fallback, 'if entry.controls?.isEmpty ?? true {')
+assert 'controls.controls = entry.controllerMode == "keys" ? ControlPresetLayout.keyboard(for: screen) : ControlPresetLayout.xbox(for: screen)' in empty_fallback
+assert 'if controls.controls.contains(where: { $0.action.padName != nil }) { GamepadInput.shared.reserveSessionSlot(touchControls: true, force: true) }' in fallback
 live = (app / 'BCDTouchLive.swift').read_text()
 set_visible = function(live, 'func setVisible(_ on: Bool) {')
 assert 'presets.applyGameDefault(' in set_visible and 'if on, let entry = library.activeEntry, inLibrarySession' in set_visible \
@@ -371,3 +378,14 @@ assert 'ControlPresetLayout.keyboardID' in function(presets, 'static func layout
 # The WASD stick's centre glyph: fed by the action (the classic stick face that drew it is deleted; BCD's controls draw their own).
 assert 'var stickGlyph: String?' in content, 'the action still names its stick glyph'
 print('PASS: switches (opt-in built-in default and session slot), edit write-back, the session\'s layout and stick glyph wiring')
+
+# Execute the production reservation method too: stock calls keep force=false,
+# and a fork fallback cannot override disabled XInput or a keyboard/mouse pack.
+slot_fixture = (root / 'tests/host/session-slot-reservation.swift').read_text()
+assert slot_fixture.count('// PRODUCTION_RESERVATION_METHOD') == 1
+with tempfile.TemporaryDirectory(prefix='bcd-session-slot-') as tmp:
+    src, exe = Path(tmp) / 'check.swift', Path(tmp) / 'check'
+    src.write_text(slot_fixture.replace('// PRODUCTION_RESERVATION_METHOD', reserve))
+    subprocess.run([os.environ.get('SWIFTC', 'swiftc'), '-parse-as-library', '-swift-version', '5',
+                    str(src), '-o', str(exe)], check=True)
+    subprocess.run([str(exe)], check=True)

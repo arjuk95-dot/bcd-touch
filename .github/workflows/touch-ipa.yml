@@ -1,6 +1,11 @@
 name: BCD Touch v653 integration IPA
 'on':
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      run_linux_parity:
+        description: Run the optional Linux parity experiment after its Ubuntu launcher is validated
+        type: boolean
+        default: false
   push:
     branches:
     - wo-bcd-upstream-653-001
@@ -62,6 +67,8 @@ jobs:
         python3 tests/host/check-x86-entry-code.py
 
         python3 tests/opengl/check-game-setting.py'
+    - name: Check control presets
+      run: python3 tests/host/check-control-presets.py
     - name: Check preview build cache correctness
       run: python3 tests/host/check-ui-preview-cache.py
     - name: Check BCD's in-game layer
@@ -197,8 +204,6 @@ jobs:
       run: python3 tests/host/check-clip-dedupe.py
     - name: Check console headless
       run: python3 tests/host/check-console-headless.py
-    - name: Check control presets
-      run: python3 tests/host/check-control-presets.py
     - name: Check d3d11 src
       run: python3 tests/host/check-d3d11-src.py
     - name: Check d3d12 tiled
@@ -2798,6 +2803,9 @@ jobs:
         if-no-files-found: warn
         retention-days: 7
   autotune-core-linux:
+    # The complete core and glue suite still runs on Mac above.
+    # Resume this optional job only after native Ubuntu parity is validated.
+    if: github.event_name == 'workflow_dispatch' && inputs.run_linux_parity
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     permissions:
