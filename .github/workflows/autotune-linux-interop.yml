@@ -1,0 +1,52 @@
+name: AutoTune exact-source Linux interop experiment
+'on':
+  workflow_dispatch: {}
+  push:
+    branches: [wo-bcd-linux-interop-3f71]
+permissions:
+  contents: read
+jobs:
+  core:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    env:
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: experiment
+      - uses: actions/checkout@v4
+        with:
+          ref: 3f71fd2c5eeaf64c8970882841aebc5803dbf952
+          path: source
+          submodules: recursive
+      - name: Install checksum-pinned official Swift 6.1.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 2 --connect-timeout 20 --max-time 600 \
+            https://download.swift.org/swift-6.1.2-release/ubuntu2204/swift-6.1.2-RELEASE/swift-6.1.2-RELEASE-ubuntu22.04.tar.gz \
+            -o "$RUNNER_TEMP/swift.tar.gz"
+          echo "ed40901b5bccf9022ff5d41425e2316f8e710a7e0c99717ba62080744e81fd66  $RUNNER_TEMP/swift.tar.gz" | sha256sum --check --strict
+          mkdir -p "$RUNNER_TEMP/swift"
+          tar -xzf "$RUNNER_TEMP/swift.tar.gz" -C "$RUNNER_TEMP/swift" --strip-components=1
+      - name: Probe real libc and run all exact-source core tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 experiment/tools/ci/run-autotune-linux-interop.py \
+            --source "$GITHUB_WORKSPACE/source" \
+            --swiftc "$RUNNER_TEMP/swift/usr/bin/swiftc" \
+            --output "$RUNNER_TEMP/autotune-interop" 2>&1 | tee "$RUNNER_TEMP/autotune-interop.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: autotune-parity-Linux-3f71-gnu-interop
+          path: |
+            ${{ runner.temp }}/autotune-interop/parity.json
+            ${{ runner.temp }}/autotune-interop/interop-metadata.json
+            ${{ runner.temp }}/autotune-interop/memmem.swift
+            ${{ runner.temp }}/autotune-interop/bin/swiftc
+            ${{ runner.temp }}/autotune-interop.log
+          if-no-files-found: error
+          retention-days: 7

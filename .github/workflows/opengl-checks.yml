@@ -66,6 +66,7 @@ jobs:
 'on':
   workflow_dispatch: {}
   push:
+    branches-ignore: [wo-bcd-linux-interop-3f71]
     paths:
     - app/**
     - tests/opengl/**
