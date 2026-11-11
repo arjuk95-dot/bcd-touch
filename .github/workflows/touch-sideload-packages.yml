@@ -1,19 +1,22 @@
 name: Touch sideload packages
 on:
+  push:
+    branches: [package-733333d-existing]
+    paths: [.github/workflows/touch-sideload-packages.yml]
   workflow_dispatch:
     inputs:
       source_run:
         description: Full-build run containing BCD-Touch-Lab-build
         required: true
-        default: '42113758205'
+        default: '42458316942'
       source_commit:
         description: App source commit embedded in that IPA
         required: true
-        default: 6c6de009bb34a1d78d78f3ad2f8646cbc1e04122
+        default: 733333d1d822b2e46798ce54021711d52c27add9
       source_sha256:
         description: SHA-256 of the source IPA
         required: true
-        default: 94225ca679cd656c8ef65126359c74ce92d09d83cf0d2437956304089aa839df
+        default: 12233f78347cc1fb757befa02429fced77288aa89891034adce77df96384f3e5
 permissions:
   contents: read
   actions: read
@@ -26,15 +29,15 @@ jobs:
     runs-on: macos-26-intel
     timeout-minutes: 15
     env:
-      SOURCE_COMMIT: ${{ inputs.source_commit }}
-      SOURCE_SHA256: ${{ inputs.source_sha256 }}
+      SOURCE_COMMIT: ${{ inputs.source_commit || '733333d1d822b2e46798ce54021711d52c27add9' }}
+      SOURCE_SHA256: ${{ inputs.source_sha256 || '12233f78347cc1fb757befa02429fced77288aa89891034adce77df96384f3e5' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: BCD-Touch-Lab-build
           path: source-artifact
-          run-id: ${{ inputs.source_run }}
+          run-id: ${{ inputs.source_run || '42458316942' }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Prepare update for the existing BCD slot
         run: >-
