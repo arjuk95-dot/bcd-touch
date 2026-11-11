@@ -1,36 +1,65 @@
 name: Touch fork checks
-on: [workflow_dispatch, push]
 jobs:
   touch:
     runs-on: macos-15-intel
     steps:
-      - uses: actions/checkout@v4
-      - name: Select the iOS 18 simulator SDK used by the preview checks
-        run: |
-          if [ -d /Applications/Xcode_16.4.app ]; then sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer; fi
-          xcodebuild -version
-      - name: Production Swift timing, state, schema and UIKit checks
-        run: python3 tools/touch-packs/check-swift.py
-      - name: Stock touch and physical controller regression
-        run: python3 tests/host/check-touch-gamepad.py
-      - name: Relative cursor in Dock desktop sessions
-        run: python3 tests/host/check-cursor-pack-desktop.py
-      - name: Bounded 32-bit generated-code failure evidence
-        run: python3 tests/host/check-x86-entry-code.py
-      - name: Upstream stock layout and sharing compatibility
-        run: |
-          python3 tests/host/check-bcd-touch.py --require-swift --skip-preview
-          python3 tests/host/check-bcd-control-share.py --require-swift
-      - name: Worker and invalid-pack checks
-        run: |
-          python3 -m venv /tmp/touch-venv
-          /tmp/touch-venv/bin/pip install jsonschema
-          /tmp/touch-venv/bin/python tests/host/check-touch-worker.py
+    - uses: actions/checkout@v4
+    - name: Select the iOS 18 simulator SDK used by the preview checks
+      run: 'if [ -d /Applications/Xcode_16.4.app ]; then sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer;
+        fi
 
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: Noita-control-export
-          path: touch-evidence/noita-controls-v4.json
-          if-no-files-found: ignore
-          retention-days: 7
+        xcodebuild -version
+
+        '
+    - name: Production Swift timing, state, schema and UIKit checks
+      run: python3 tools/touch-packs/check-swift.py
+    - name: Stock touch and physical controller regression
+      run: python3 tests/host/check-touch-gamepad.py
+    - name: Relative cursor in Dock desktop sessions
+      run: python3 tests/host/check-cursor-pack-desktop.py
+    - name: Bounded 32-bit generated-code failure evidence
+      run: python3 tests/host/check-x86-entry-code.py
+    - name: Upstream stock layout and sharing compatibility
+      run: 'python3 tests/host/check-bcd-touch.py --require-swift --skip-preview
+
+        python3 tests/host/check-bcd-control-share.py --require-swift
+
+        '
+    - name: Worker and invalid-pack checks
+      run: 'python3 -m venv /tmp/touch-venv
+
+        /tmp/touch-venv/bin/pip install jsonschema
+
+        /tmp/touch-venv/bin/python tests/host/check-touch-worker.py
+
+        '
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: Noita-control-export
+        path: touch-evidence/noita-controls-v4.json
+        if-no-files-found: ignore
+        retention-days: 7
+'on':
+  workflow_dispatch: {}
+  push:
+    paths:
+    - app/**
+    - tools/touch-packs/**
+    - tests/host/touch*
+    - tests/host/check-touch*
+    - tests/host/check-bcd-touch*
+    - tests/host/check-bcd-control-share.py
+    - tests/host/check-cursor-pack-desktop.py
+    - tests/host/check-x86-entry-code.py
+    - .github/workflows/touch-checks.yml
+    - build/**
+    - tools/patch-*.py
+    - packs/**
+    - schema/**
+    - .gitmodules
+    - wine
+    - FEX
+    - dxmt
+    - madeira-dock
+    - schemas/**

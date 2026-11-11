@@ -23,6 +23,16 @@ spec = importlib.util.spec_from_file_location("bcd_preview", ROOT / "tools/ui-pr
 preview = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(preview)
 
+# The stock preview must not include a view whose live store is deliberately
+# excluded. Keep the real cursor-settings screen in the independent fork tests.
+assert "BCDCursorPackSettings.swift" in preview.ENGINE_BOUND
+for source in preview.APP.glob("BCD*.swift"):
+    if source.name not in preview.ENGINE_BOUND:
+        assert "BCDPackStore" not in source.read_text(), f"live pack-store dependency leaked into preview: {source.name}"
+for path in ("tools/touch-packs/check-swift.py", "tools/touch-packs/simulator-preview.py"):
+    text = (ROOT / path).read_text()
+    assert all(name in text for name in ("BCDControlPackLive.swift", "BCDCursorPackSettings.swift")), path
+
 with tempfile.TemporaryDirectory(prefix="bcd-preview-cache-check-") as tmp:
     base = Path(tmp)
     src = base / "source"

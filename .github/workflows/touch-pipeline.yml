@@ -20,3 +20,23 @@ jobs:
   push:
     branches:
     - wo-bcd-upstream-653-001
+    paths:
+    - app/**
+    - tools/touch-packs/**
+    - tests/host/touch*
+    - tests/host/check-touch*
+    - tests/host/check-bcd-touch*
+    - tests/host/check-bcd-control-share.py
+    - tests/host/check-cursor-pack-desktop.py
+    - tests/host/check-x86-entry-code.py
+    - .github/workflows/touch-pipeline.yml
+    - build/**
+    - tools/patch-*.py
+    - packs/**
+    - schema/**
+    - .gitmodules
+    - wine
+    - FEX
+    - dxmt
+    - madeira-dock
+    - schemas/**

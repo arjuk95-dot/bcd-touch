@@ -88,6 +88,9 @@ ENGINE_BOUND |= {"BCDGyroLive.swift"}
 # the touch controls and the session are the engine side.
 # Modified for WO-BCD-TOUCH-001 (2026-11-01): keep pack engine hooks out of the stock UI preview.
 ENGINE_BOUND |= {"BCDControlPackLive.swift", "BCDControlPackSurface.swift", "BCDTurboLive.swift", "BCDInputLive.swift", "BCDPlayersLive.swift", "BCDRadialLive.swift", "BCDTouchExtrasLive.swift"}
+# The cursor settings view reads and writes the live pack store. It is compiled
+# with that store by both fork touch checks; it is not a stock/sample-data view.
+ENGINE_BOUND |= {"BCDCursorPackSettings.swift"}
 
 # The in-game menu's round-604 items: the values and rules (BCDSessionFeel, BCDDebugChannels, BCDGestureHelp, BCDMagnifier, BCDWindows),
 # the touch feel model and the magnifier's bar are plain Swift and build here; everything that reads or drives the engine stays out.

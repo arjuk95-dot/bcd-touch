@@ -14,7 +14,7 @@ jobs:
     - name: Run real per-game GL picker persistence check
       run: python3 tests/opengl/check-game-setting.py
   policy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
     - name: Check active upstream GL integration
@@ -29,22 +29,56 @@ jobs:
         python3 tests/host/check-cursor-pack-desktop.py'
     - name: Check real Wine ARM64EC hybrid metadata and native ARM64 headers
       run: python3 tests/opengl/check-pe.py
-    - run: sudo apt-get update -qq && sudo apt-get install -y gcc-mingw-w64-i686 gcc-mingw-w64-x86-64
+    - name: Install checksum-pinned official LLVM-MinGW (no apt mirrors)
+      timeout-minutes: 8
+      shell: bash
+      run: "set -euo pipefail\narchive=llvm-mingw-20260421-ucrt-ubuntu-22.04-x86_64.tar.xz\nsha=f8b8cce779affeab47bcaec6ce6e9e768b166094a366123ef64b2d0b389cc121\n\
+        url=\"https://github.com/mstorsjo/llvm-mingw/releases/download/20260421/$archive\"\n# Verified against official release\
+        \ asset 401855784, API sha256 digest.\nmkdir -p \"$RUNNER_TEMP/bcd-gl-toolchain\" build-out\ncurl --fail --location\
+        \ --proto '=https' --proto-redir '=https' \\\n  --connect-timeout 20 --max-time 300 --retry 2 --retry-max-time 360\
+        \ \\\n  \"$url\" -o \"$RUNNER_TEMP/bcd-gl-toolchain/$archive\"\necho \"$sha  $RUNNER_TEMP/bcd-gl-toolchain/$archive\"\
+        \ | sha256sum --check --strict\ntar -xJf \"$RUNNER_TEMP/bcd-gl-toolchain/$archive\" -C \"$RUNNER_TEMP/bcd-gl-toolchain\"\
+        \ntoolchain=\"$RUNNER_TEMP/bcd-gl-toolchain/${archive%.tar.xz}/bin\"\ntest -x \"$toolchain/i686-w64-mingw32-clang\"\
+        \ntest -x \"$toolchain/x86_64-w64-mingw32-clang\"\necho \"$toolchain\" >> \"$GITHUB_PATH\"\nprintf 'source_commit=%s\\\
+        nurl=%s\\nsha256=%s\\n' \\\n  \"$(git rev-parse HEAD)\" \"$url\" \"$sha\" > build-out/gl-toolchain-provenance.txt\n\
+        \"$toolchain/x86_64-w64-mingw32-clang\" --version >> build-out/gl-toolchain-provenance.txt\n"
     - name: Compile real Windows GL smoke programs (not executed on host)
       run: 'mkdir -p build-out
 
-        i686-w64-mingw32-gcc -std=c11 -Wall -O2 tests/opengl/smoke.c -o build-out/bcd-opengl-smoke-x86.exe -lopengl32 -lgdi32
+        i686-w64-mingw32-clang -std=c11 -Wall -O2 tests/opengl/smoke.c -o build-out/bcd-opengl-smoke-x86.exe -lopengl32 -lgdi32
         -luser32
 
-        x86_64-w64-mingw32-gcc -std=c11 -Wall -O2 tests/opengl/smoke.c -o build-out/bcd-opengl-smoke-x64.exe -lopengl32 -lgdi32
-        -luser32
+        x86_64-w64-mingw32-clang -std=c11 -Wall -O2 tests/opengl/smoke.c -o build-out/bcd-opengl-smoke-x64.exe -lopengl32
+        -lgdi32 -luser32
 
         '
     - uses: actions/upload-artifact@v4
       with:
         name: OpenGL-Windows-smoke-programs
-        path: build-out/*.exe
+        path: 'build-out/*.exe
+
+          build-out/gl-toolchain-provenance.txt
+
+          '
+        if-no-files-found: error
         retention-days: 14
+    timeout-minutes: 20
 'on':
-- push
-- workflow_dispatch
+  workflow_dispatch: {}
+  push:
+    paths:
+    - app/**
+    - tests/opengl/**
+    - tests/host/check-*gl*.py
+    - tests/host/check-cursor-pack-desktop.py
+    - tools/opengl/**
+    - build/mesa-ios/**
+    - build/moltenvk-ios/**
+    - .github/workflows/opengl-checks.yml
+    - build/**
+    - tools/patch-*.py
+    - .gitmodules
+    - wine
+    - FEX
+    - dxmt
+    - madeira-dock

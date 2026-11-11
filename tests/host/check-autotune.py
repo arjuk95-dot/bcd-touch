@@ -43,6 +43,9 @@ Behaviour (swiftc; --require-swift makes its absence a failure):
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 import importlib.util
+import hashlib
+import platform
+import time
 import json
 import os
 import re
@@ -51,6 +54,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from autotune_test_compiler import CORE_FLAGS, verify_checked_optimization
 
 R = Path(__file__).resolve().parents[2]
 APP = R / "app/Madeira"
@@ -59,10 +63,21 @@ CORE, GLUE, VIEWS, RULES_SWIFT = (APP / "AutoTuneCore.swift", APP / "AutoTune.sw
                                   APP / "AutoTuneViews.swift", APP / "AutoTuneRules.generated.swift")
 ap = argparse.ArgumentParser()
 ap.add_argument("--require-swift", action="store_true")
+ap.add_argument("--suite", choices=("all", "core", "glue"), default="all",
+                help="explicit split: core=replay+engine, glue=Apple app integration; default all")
+ap.add_argument("--parity-output", type=Path, help="write full core results for cross-platform comparison")
+ap.add_argument("--optimize-core", action="store_true",
+                help="test replay/engine only: -O with Debug assertions, verified by runtime negative probes")
 ap.add_argument("--jobs", type=int, choices=range(1, 4), default=1,
                 help="bounded fixture replay workers (1–3; default: serial)")
 ap.add_argument("--bless", nargs="*", default=None)
 args = ap.parse_args()
+if args.parity_output and (args.suite == "glue" or args.bless is not None):
+    ap.error("parity output requires core coverage and forbids --bless")
+if args.suite == "glue" and platform.system() != "Darwin":
+    ap.error("app glue requires Darwin/os and must run on macOS")
+if args.optimize_core and args.suite == "glue":
+    ap.error("core optimization is not applicable to the Mac app-glue suite")
 ok = True
 
 
@@ -367,7 +382,7 @@ runner = subprocess.run([sys.executable, str(R / "tests/host/check-autotune-runn
 check("bounded replay runner preserves all fixtures and comparisons", runner.returncode == 0, runner.stdout + runner.stderr)
 swiftc = shutil.which("swiftc")
 if not swiftc:
-    if args.require_swift:
+    if args.require_swift or args.suite != "all" or args.parity_output or args.optimize_core:
         check("Swift compiler available", False)
     else:
         print("SKIP: Swift compiler unavailable locally; macOS CI must run this check with --require-swift")
@@ -375,10 +390,13 @@ if not swiftc:
     sys.exit(0 if ok else 1)
 
 
-def build(tmp, name, sources):
+def build(tmp, name, sources, optimized=False):
     exe = Path(tmp) / name
-    b = subprocess.run([swiftc, "-parse-as-library", "-swift-version", "5", "-o", str(exe)] + [str(s) for s in sources],
+    started = time.monotonic()
+    print(f"Compiling {name}", flush=True)
+    b = subprocess.run([swiftc, "-parse-as-library", "-swift-version", "5", "-o", str(exe)] + (CORE_FLAGS if optimized else []) + [str(s) for s in sources],
                        capture_output=True, text=True)
+    print(f"Compiled {name} in {time.monotonic()-started:.2f}s", flush=True)
     check(f"{name} compiles", b.returncode == 0, b.stderr[-3000:])
     return exe if b.returncode == 0 else None
 
@@ -391,11 +409,12 @@ def uk(exp):
     return ["--user-keys", ",".join(exp["userKeys"])] if exp.get("userKeys") else []
 
 
-def replay_fixture(replay, p):
+def replay_fixture(replay, p, records=False):
     """Read-only replay: one worker owns all chunk sizes and the normal-end rerun."""
     results = []
     exp = json.loads((FIX / (p.stem + ".expect")).read_text())
     runs = {}
+    normal = None
     for chunk in (0, 4093, 7):
         r = subprocess.run([str(replay), "--chunk", str(chunk), "--end", json.dumps(exp["end"])] + uk(exp) + [str(p)],
                            capture_output=True, text=True)
@@ -413,18 +432,30 @@ def replay_fixture(replay, p):
     if exp.get("end", {}).get("killed") and exp["outcome"] in ("crashed", "exited-early") and exp["matched"]:
         r = subprocess.run([str(replay), "--end", "{}"] + uk(exp) + [str(p)], capture_output=True, text=True)
         alt = json.loads(r.stdout)
+        normal = alt
         results.append((f"{p.stem}: a normal end gives the same rules ({alt['outcome']})",
               alt["outcome"] in ("crashed", "hung", "exited-early") and alt["matched"] == exp["matched"], ""))
-    return results
+    return (results, {"fixture": p.stem, "chunks": runs, "normal_end": normal}) if records else results
 
 
+parity = {"format": 1, "platform": platform.system(), "source": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=R, text=True).strip(),
+          "swift": subprocess.check_output([swiftc, "--version"], text=True).strip(), "fixtures": [], "engine": None}
+inputs = [CORE, RULES_SWIFT, R / "tests/host/autotune_replay.swift", R / "tests/host/autotune_engine_checks.swift",
+          R / "tests/host/check-autotune.py", R / "tests/host/check-autotune-runner.py",
+          R / "tests/host/autotune_test_compiler.py", R / "tests/host/check-autotune-compiler.py"] + sorted(FIX.glob("*.log")) + sorted(FIX.glob("*.expect"))
+parity["inputs"] = {str(p.relative_to(R)): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
 with tempfile.TemporaryDirectory(prefix="madeira-autotune-") as tmp:
-    replay = build(tmp, "replay", [CORE, RULES_SWIFT, R / "tests/host/autotune_replay.swift"])
-    engine = build(tmp, "engine", [CORE, RULES_SWIFT, R / "tests/host/autotune_engine_checks.swift"])
+    parity["core_flags"] = CORE_FLAGS if args.optimize_core else []
+    parity["assertion_probe"] = verify_checked_optimization(swiftc, tmp) if args.optimize_core else None
+    if args.optimize_core:
+        print("PASS: optimized core tests retain checked assert and precondition failures", flush=True)
+    replay = build(tmp, "replay", [CORE, RULES_SWIFT, R / "tests/host/autotune_replay.swift"], optimized=args.optimize_core) if args.suite != "glue" else None
+    engine = build(tmp, "engine", [CORE, RULES_SWIFT, R / "tests/host/autotune_engine_checks.swift"], optimized=args.optimize_core) if args.suite != "glue" else None
     glue_exe = build(tmp, "madeira-autotune-glue-check",
-                     [GLUE, CORE, RULES_SWIFT, R / "tests/host/autotune_glue_stubs.swift", R / "tests/host/autotune_glue_checks.swift"])
-    if not all((replay, engine, glue_exe)):
-        print("FAILED: auto-tune compile preflight; no fixtures replayed")
+                     [GLUE, CORE, RULES_SWIFT, R / "tests/host/autotune_glue_stubs.swift", R / "tests/host/autotune_glue_checks.swift"]) if args.suite != "core" else None
+    required = ([replay, engine] if args.suite != "glue" else []) + ([glue_exe] if args.suite != "core" else [])
+    if not all(required):
+        print("FAILED: auto-tune compile preflight; no fixtures replayed", flush=True)
         sys.exit(1)
     if replay:
         if args.bless is not None:
@@ -439,11 +470,13 @@ with tempfile.TemporaryDirectory(prefix="madeira-autotune-") as tmp:
         print(f"Replaying all {len(logs)} fixtures with {args.jobs} worker(s); chunks 0, 4093, 7 and normal-end reruns", flush=True)
         with ThreadPoolExecutor(max_workers=args.jobs) as pool:
             # map preserves fixture order; only this thread reports or updates `ok`.
-            for results in pool.map(lambda p: replay_fixture(replay, p), logs):
+            for results, record in pool.map(lambda p: replay_fixture(replay, p, records=True), logs):
+                parity["fixtures"].append(record)
                 for result in results:
                     check(*result)
     if engine:
         r = subprocess.run([str(engine)], capture_output=True, text=True)
+        parity["engine"] = {"returncode": r.returncode, "stdout": r.stdout, "stderr": r.stderr}
         check("the engine checks pass", r.returncode == 0, "\n".join(l for l in r.stdout.splitlines() if not l.startswith("ok"))[-3000:])
     if glue_exe:
         for mode in ("off", "on", "default"):
@@ -462,5 +495,9 @@ with tempfile.TemporaryDirectory(prefix="madeira-autotune-") as tmp:
             check(f"the app side with auto-tune {mode}", r.returncode == 0,
                   "\n".join(l for l in r.stdout.splitlines() if not l.startswith("ok"))[-3000:] + r.stderr[-1000:])
 
-print("PASS: auto-tune" if ok else "FAILED: auto-tune")
+if args.parity_output:
+    parity["passed"] = ok
+    args.parity_output.parent.mkdir(parents=True, exist_ok=True)
+    args.parity_output.write_text(json.dumps(parity, sort_keys=True, indent=2) + "\n")
+print(f"{ 'PASS' if ok else 'FAILED' }: auto-tune ({args.suite})")
 sys.exit(0 if ok else 1)
