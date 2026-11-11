@@ -33,7 +33,7 @@ struct BCDGameSetting {
  enum Kind {case choice([BCDGameChoice])}
  var id:String;var title:String;var kind:Kind;var value:String;var defaultValue:String;var note:String
 }
-'''+(r/'app/Madeira/BCDOpenGL.swift').read_text()+'\n'+storage+'\nfinal class Fixture {\nfunc entry(for game:BCDGame)->LibraryEntry? {game.entry}\n'+block(live,'    private func setLine(')+'\n'+block(live,'    private static func line(')+'''
+'''+(r/'app/Madeira/BCDOpenGL.swift').read_text()+'\n'+storage+'\nfinal class Fixture {\nfunc entry(for game:BCDGame)->LibraryEntry? {game.entry}\n'+block(live,'    func setLine(')+'\n'+block(live,'    private static func line(')+'''
 static func glRow(_ profile:GameProfile)->BCDGameSetting { return '''+row[0][:-1]+''' }
 func set(_ setting:String,to value:String,for game:BCDGame) {
  switch setting {

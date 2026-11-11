@@ -178,7 +178,7 @@ check("Timer(timeInterval: interval" in sampler and "timer.tolerance = interval 
 check("guard timer == nil else { return }" in start and "schedule()" in start, "start() makes the timer once")
 check("timer?.invalidate()" in stop and "timer = nil" in stop and "madeira_gpu_meter_enable(0)" in stop and "isBatteryMonitoringEnabled = false" in stop
       and "feed.plan = nil" in stop and "frames.removeAll()" in stop, "stop() ends the timer, the GPU meter and the battery monitor and drops the frames")
-check("if needs.contains(.cpu) {" in sampler and "if gpuOn { sampleGPU" in sampler and "if needs.contains(.jit) {" in sampler
+check("if needs.contains(.cpu) {" in sampler and re.search(r"if gpuOn \{\s+sampleGPU", sampler) is not None and "if needs.contains(.jit) {" in sampler
       and "if needs.contains(.swap) {" in sampler and "if needs.contains(.gpuMemory) {" in sampler and "if needs.contains(.lows) {" in sampler
       and "if needs.contains(.graph) {" in sampler, "the CPU, GPU, JIT, swap, GPU-memory, lows and graph are read only for a layout that shows them")
 check("let wantGPU = needs.contains(.gpu)" in sampler and "madeira_gpu_meter_enable(wantGPU ? 1 : 0)" in sampler,

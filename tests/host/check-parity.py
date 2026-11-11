@@ -229,7 +229,8 @@ check("if #available(iOS 26.0, *) { return BCDDownloadNotes.background(continues
 
 # ---- 5. links ------------------------------------------------------------------------------
 schemes = [s for t in info.get("CFBundleURLTypes", []) for s in t.get("CFBundleURLSchemes", [])]
-check(schemes == ["bcd"], "the app answers bcd:// links", str(schemes))
+check(schemes in (["bcd"], ["bcdtouchlab"]), "the app answers its stock or fork callback scheme", str(schemes))
+callback_scheme = schemes[0] if len(schemes) == 1 else "invalid"
 shortcuts = (APP / "SavesAndShortcuts.swift").read_text()
 check('c.scheme = "bcd"' in block(shortcuts, "static func link(for windowsPath: String) -> String"),
       "Home Screen links are bcd://play links")
@@ -237,7 +238,7 @@ app = (APP / "MadeiraApp.swift").read_text()
 check(".onOpenURL { url in if !JITNetworkShortcut.shared.handle(url) { ShortcutRouter.shared.handle(url) } }" in app,
       "links reach the JIT shortcut's callback first, then Home Screen shortcuts")
 net = (APP / "JITNetwork.swift").read_text()
-check(all(f'"bcd://jit-network/{w}"' in net for w in ("success", "error", "cancel")),
+check(all(f'"{callback_scheme}://jit-network/{w}"' in net for w in ("success", "error", "cancel")),
       "the JIT shortcut comes back through bcd://jit-network")
 
 # ---- 6. messages shown in BCD's interface name no classic-only place -----------------------

@@ -127,7 +127,7 @@ fn = fn[:fn.index('\n    }\n') + 7]
 check('called once a poll, right after the no-input hint, while the Wine process runs',
       src.count('watchWindowedHint()') == 2 and '            watchNoInputHint()\n            watchWindowedHint()\n' in src)
 check('once per start, after 60 presents, not while launching',
-      'guard !launching, let id = current, windowedHintFor != id, madeira_frame_count() > launchPresent + 60 else { return }' in fn
+      'guard !launching, let id = current, windowedHintFor != id, madeira_get_present_count() > launchPresent + 60 else { return }' in fn
       and 'windowedHintFor = id' in fn)
 check('the window must stay so for 5 s (a start often passes through such a window), and the session line must be free',
       'guard winios_windowed_too_big(&w, &h, &screenW, &screenH) != 0 else { windowedSince = nil; return }' in fn

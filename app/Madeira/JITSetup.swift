@@ -493,7 +493,8 @@ final class JITCoordinator: ObservableObject {
 enum LocalDevVPN {
     static let appStore = URL(string: "https://apps.apple.com/us/app/localdevvpn/id6755608044")!
     /// `enable` connects the VPN; `scheme` has LocalDevVPN return to Madeira a second later.
-    static let connect = URL(string: "localdevvpn://enable?scheme=bcd")!
+    // The raw touch app and the existing-slot package both register this callback.
+    static let connect = URL(string: "localdevvpn://enable?scheme=bcdtouchlab")!
 
     static var isInstalled: Bool { UIApplication.shared.canOpenURL(URL(string: "localdevvpn://")!) }
     static var actionTitle: String { isInstalled ? "Connect LocalDevVPN" : "Get LocalDevVPN" }

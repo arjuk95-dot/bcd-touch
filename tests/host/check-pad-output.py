@@ -331,7 +331,12 @@ need('#import "PadOutput.h"' in bridge, 'bridging header must import PadOutput.h
 swift = (root / 'app/Madeira/GamepadInput.swift').read_text()
 need('madeira_pad_output_configure(' in swift and 'madeira_pad_output_set_slot(Int32(i), controllers[i])' in swift
      and 'madeira_pad_output_set_active(' in swift, 'GamepadInput.swift must drive PadOutput')
-need(swift.count('beginPadOutput(') == 4, 'every beginPadSession exit configures the output once')
+cursor_exit = re.search(r'if Self\.packKeyboardMouseSession \{(.*?)\n        \}', swift, re.S)
+need(swift.count('beginPadOutput(') == 4 or
+     (swift.count('beginPadOutput(') == 5 and cursor_exit is not None
+      and cursor_exit.group(1).count('beginPadOutput(xinput:false,hid:false,value:"cursor-pack")') == 1
+      and 'return' in cursor_exit.group(1)),
+     'every beginPadSession exit configures output once, including the cursor-pack disabled-output exit')
 need('MadeiraConfig.get("env.MADEIRA_PAD_OUTPUT")' in swift, 'the switch must be readable by the config catalog')
 
 driver = (root / 'build/win32u-unix/driver_ios.c').read_text()

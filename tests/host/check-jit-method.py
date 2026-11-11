@@ -145,7 +145,8 @@ project = (root / "app/Madeira.xcodeproj/project.pbxproj").read_text()
 helper_source = (root / "app/MadeiraJITHelper/MadeiraJITHelper.swift").read_text()
 require(project.count('PRODUCT_BUNDLE_IDENTIFIER = "$(MADEIRA_BUNDLE_IDENTIFIER)";') == 2
         and project.count('PRODUCT_BUNDLE_IDENTIFIER = "$(MADEIRA_BUNDLE_IDENTIFIER).JITHelper";') == 2
-        and project.count("MADEIRA_BUNDLE_IDENTIFIER = com.thebcd69.bcd;") == 2   # the app is BCD (owner, 2026-10-18)
+        and sum(project.count("MADEIRA_BUNDLE_IDENTIFIER = " + identity + ";") == 2
+                for identity in ("com.thebcd69.bcd", "com.arjunkl.bcdtouch")) == 1   # the app is BCD (owner, 2026-10-18)
         and "AppExtensionPoint" not in helper_source,
         "one setting, MADEIRA_BUNDLE_IDENTIFIER, names the app and the helper")
 
@@ -162,9 +163,12 @@ require("if let jitProblem { jitConnectionActions(jitProblem, retry: enableJIT) 
 require('.alert(jitProblem == nil ? "Library" : "Enabling JIT Failed"' in front
         and "presenting(watching(shell))" in front,
         "the library's error alert is on the whole shell, shown over Settings as well")
-require('URL(string: "localdevvpn://enable?scheme=bcd")' in setup
+callback_schemes = [scheme for entry in app_plist.get("CFBundleURLTypes", []) for scheme in entry.get("CFBundleURLSchemes", [])]
+require(callback_schemes in (["bcd"], ["bcdtouchlab"]), "only the stock or fork callback identity is registered")
+callback_scheme = callback_schemes[0]
+require(f'URL(string: "localdevvpn://enable?scheme={callback_scheme}")' in setup
         and "localdevvpn" in app_plist["LSApplicationQueriesSchemes"]
-        and any("bcd" in t.get("CFBundleURLSchemes", []) for t in app_plist.get("CFBundleURLTypes", [])),
+        and any(callback_scheme in t.get("CFBundleURLSchemes", []) for t in app_plist.get("CFBundleURLTypes", [])),
         "LocalDevVPN opens to connect and returns to Madeira's own URL scheme")
 
 # Play without JIT runs Enable JIT, then starts the game, once: only with the debugger

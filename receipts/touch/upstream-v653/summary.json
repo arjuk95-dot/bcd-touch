@@ -1,5 +1,5 @@
 {
-  "status": "local-candidate-awaiting-native-CI",
+  "status": "published-candidate-awaiting-full-native-archive",
   "upstream": "c3c2d152fca4d491b703b910d112ab54299c36c1",
   "forkBaseline": "733333d1d822b2e46798ce54021711d52c27add9",
   "upstreamSourceArchiveSHA256": "ec50285e4fd853748fcfb8f339a186d0df243a1f35501b4706959704f444dd56",
@@ -14,23 +14,40 @@
     "pinned unchanged 7-Zip files"
   ],
   "notExecuted": [
-    "Swift fixture execution",
-    "iOS SDK compilation",
-    "simulator previews",
-    "production publisher simulator fixture",
-    "full native archive",
-    "sideload packaging",
+    "complete native archive",
+    "v653 sideload packaging",
     "device installation and JIT",
     "Noita gameplay and Direct3D device regression"
   ],
   "publication": {
-    "state": "blocked",
-    "reason": "GitHub integration create_branch returned 403 Resource not accessible by integration; local git has no HTTPS write credentials",
-    "remoteBranchCreated": false
+    "state": "published",
+    "remoteBranchCreated": true,
+    "branch": "wo-bcd-upstream-653-001",
+    "initialCommit": "0498210aa9a2e4a422ec46c8c022777ef0480203",
+    "sourceTree": "064ddf2bdc5b6199eccdc2dc959af2649a6824c8"
   },
   "notes": [
     "Upstream fixture/patch whitespace remains unchanged; no new merge markers or integration-only whitespace errors.",
     "Four missing reference documents reconstructed from public source/notices and labelled as such.",
-    "No signing identity, account, saves, pack data or game files were changed on a device."
-  ]
+    "No signing identity, account, saves, pack data or game files were changed on a device.",
+    "LocalDevVPN callback now targets bcdtouchlab, which is registered in both raw and existing-slot packages; static JIT checks pass, device callback remains untested."
+  ],
+  "initialNativeCI": {
+    "commit": "0498210aa9a2e4a422ec46c8c022777ef0480203",
+    "touchChecks": {
+      "state": "passed",
+      "run": 43044075541
+    },
+    "simulatorPreviews": {
+      "state": "passed",
+      "run": 43044075818
+    },
+    "glPresenterSDKCompile": "passed",
+    "glPersistenceFixture": "stale method-visibility extraction fixed; rerun pending",
+    "productionPublisher": "new upstream boundary stubs added; rerun pending",
+    "archive": {
+      "state": "failed before engine builds on GL fixture extraction",
+      "run": 43044075635
+    }
+  }
 }

@@ -189,7 +189,13 @@ starters = (r"\brunWineFullSequence\b",
             r"\bstartLibraryEntry\b", r"\blaunchLibraryEntry\b",
             r"requestLaunch", r"(?<!CATransaction)(?<!press\?)\.begin\(", r"configureLaunch", r"applyEnvironment", r"BCDLaunch\.",
             r"wine_process_(?!is_running\b)")
-found = {name: [w for w in starters if re.search(w, code(text))] for name, text in live_files.items()}
+def launch_scan(name, text):
+    stripped = code(text)
+    if name == "BCDControlPackSurface.swift":
+        # Only this exact input gesture call is not an engine/session start.
+        stripped = stripped.replace("engine.begin(identity,at:point,time:receivedAt ?? time)", "cursorGestureBegin")
+    return stripped
+found = {name: [w for w in starters if re.search(w, launch_scan(name, text))] for name, text in live_files.items()}
 check(not any(found.values()), "no BCD file starts a game, a session or BCD Dock itself", str({k: v for k, v in found.items() if v}))
 check("func startDock(_ game: DockGame, _ compactPool: Bool) { settled { [weak self] in self?.dockStart?(game, compactPool) } }" in live_files["BCDLiveStore.swift"]
       and "live.dockStart = startDock" in live_files["BCDLiveFrontEnd.swift"]
@@ -316,9 +322,15 @@ recorder_text = live_files["BCDSessionRecorderLive.swift"]
 recorder_leaves = ("UIApplication.didEnterBackgroundNotification" in recorder_text and "self?.lifecycle(background: true)" in recorder_text
                    and not any(w in code(recorder_text) for w in ("Steam", "Download", "BGTaskScheduler", "beginBackgroundTask", "BGContinuedProcessingTask")))
 check(recorder_leaves, "the session recorder only notes that the app left the front (the marker, a partial summary line); no download task")
+pack_text = live_files.get("BCDControlPackSurface.swift", "")
+pack_leaves = ("self?.gameFocused = false; GamepadInput.shared.packFocusLost()" in pack_text
+               and "NotificationCenter.default.post(name: Self.didLoseFocus, object: nil)" in pack_text
+               and not any(w in code(pack_text) for w in untouchable if w != "didEnterBackgroundNotification"))
+check(not pack_text or pack_leaves, "the control pack releases input on focus loss without touching download tasks")
 touching = {name: [w for w in untouchable if w in code(text) and not (hub_leaves and name == "BCDControllerHub.swift"
                                                                       and w == "didEnterBackgroundNotification")
-                   and not (recorder_leaves and name == "BCDSessionRecorderLive.swift" and w == "didEnterBackgroundNotification")]
+                   and not (recorder_leaves and name == "BCDSessionRecorderLive.swift" and w == "didEnterBackgroundNotification")
+                   and not (pack_leaves and name == "BCDControlPackSurface.swift" and w == "didEnterBackgroundNotification")]
             for name, text in live_files.items()}
 check(not any(touching.values()), "no BCD file touches the background download task (only the engine does)",
       str({k: v for k, v in touching.items() if v}))
