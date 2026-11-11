@@ -9,7 +9,13 @@ The full run 43073552781 ended in failure at 18:35:37 UTC on 2026-11-11. Its
 retained round-624 aggregate could not retrieve an exact historical DXMT commit
 from the migrated origin. There is no active full-build head start to preserve.
 The selected route fixes that source lookup and builds a clearly labeled TEST
-IPA while broad regressions remain pending. No failed gate was removed to hide
+IPA while broad regressions remain pending. The first TEST attempt, run
+43082543311, then stopped at a timing-dependent HUD test assertion before native
+engine compilation. The reader could start after every producer had finished.
+This follow-up changes only the host test: capture its cursor before producers
+start, drain the stable tail after they finish, and test the forced late-reader
+schedule explicitly. The production ring and every original assertion remain
+unchanged. No failed gate was removed to hide
 that failure, and no full-suite success or phone validation is claimed.
 
 Avoiding 441 broad Check stages should remove substantial test work, but native
@@ -39,7 +45,8 @@ hashes. Every retained original step keeps its relative order.
 ## What remains exact
 
 All production sources, submodule pins and build scripts remain unchanged. The
-source fix changes only four host-test helper/regression files. The early guard
+historical-source fix changes four host-test helper/regression files. The
+follow-up adds the test-only reader scheduling correction described above. The early guard
 hashes every other Git tree record, excludes only the four option files and two
 controlled workflow filters, verifies those filter files' exact hashes, rejects
 tracked worktree changes, and requires complete matching recursive submodules.
@@ -111,7 +118,7 @@ is introduced.
 
 ## Exactly one intended launch
 
-Target branch: `wo-bcd-v653-test-first-001`.
+Target branch: `wo-bcd-v653-test-first-002`.
 
 Only this branch is in the new workflow's push filter. Its job additionally
 requires the exact repository/ref, event push, created=true and deleted=false.
@@ -153,5 +160,15 @@ negative mutations of mandatory patches, cache keys, triggers, concurrency,
 artifact paths and exclusion scope. The resolver was also smoke-tested against
 both real missing current-origin refs, upstream fallbacks and verified cache hits.
 
-Not run: the new Mac build, the whole broad regression suite, native signing/
+Not run: the corrected Mac build, the whole broad regression suite, native signing/
 packaging on this lane, installation or phone behavior. These remain pending.
+
+## Follow-up HUD test validation
+
+The test-only correction preserves all 32 original assertions and adds three.
+The original delayed-reader schedule failed 5/5 times. Corrected ASan/UBSan
+stress passed 50/50 runs and ThreadSanitizer passed 20/20 runs locally. Restoring
+the late cursor initialization or removing the final drain each failed 5/5
+negative runs. These are Linux host results, not Mac or phone validation.
+LeakSanitizer was disabled because the local ptraced environment cannot run it;
+ASan, UBSan and TSan remained enabled. Native CI sanitizer settings are unchanged.

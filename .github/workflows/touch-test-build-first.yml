@@ -3,7 +3,7 @@ name: BCD TEST IPA build-first (full suite pending)
 'on':
   push:
     branches:
-    - wo-bcd-v653-test-first-001
+    - wo-bcd-v653-test-first-002
 concurrency:
   group: bcd-touch-build-first-test-${{ github.ref }}
   cancel-in-progress: false
@@ -27,11 +27,11 @@ jobs:
       run: "set -euo pipefail\npython3 - <<'PY'\nimport hashlib, os, pathlib, subprocess\nallowed = ['.github/workflows/opengl-checks.yml',\
         \ '.github/workflows/touch-checks.yml', '.github/workflows/touch-test-build-first.yml', 'docs/touch-build-first-inventory.json',\
         \ 'docs/touch-build-first-option.md', 'tools/check-build-first-option.py']\ncontrolled = {'.github/workflows/touch-checks.yml':\
-        \ '71dc8a29d5efc7132270b00d2b930303cf0e7ac708aad99159a62bb94af8d645', '.github/workflows/opengl-checks.yml': 'dcd25e874e9c51615588955e7a0195f468cb340c7a0b1db339776be9eb6410f1'}\n\
+        \ '2e77de7780088fbb223bc0040477eff9805960ac087c6f9eb80e6de129c68546', '.github/workflows/opengl-checks.yml': '9f1ffacc8b50f6cbbe21e9733adc67e4f9de1f2beb701e75fa5e84f0e1a6f322'}\n\
         for path, expected in controlled.items():\n    assert hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()\
         \ == expected, 'Unexpected trigger-filter change: ' + path\nrecords = subprocess.check_output(['git', 'ls-tree', '-rz',\
         \ 'HEAD']).split(b'\\0')\nactual = b''.join(r + b'\\0' for r in records if r and r.split(b'\\t', 1)[1].decode() not\
-        \ in allowed)\nassert hashlib.sha256(actual).hexdigest() == '72f47b8823b97249ce90398031587436228efa8dca12e86a57ee523554efef15',\
+        \ in allowed)\nassert hashlib.sha256(actual).hexdigest() == '452715859b9f2b06197b95a96e86df201733be4be07f695d34656fb0541499f1',\
         \ 'Native/source tree or submodule pins differ from the audited baseline'\nsubprocess.run(['git', 'diff', '--exit-code',\
         \ '--ignore-submodules=none'], check=True)\nsubmodules = subprocess.check_output(['git', 'submodule', 'status', '--recursive'],\
         \ text=True)\nassert all(line.startswith(' ') for line in submodules.splitlines()), 'Missing or mismatched submodule\
@@ -1833,5 +1833,5 @@ jobs:
           build-out/TEST-FULL-SUITE-PENDING.txt'
         if-no-files-found: warn
         retention-days: 7
-    if: github.repository == 'arjuk95-dot/bcd-touch' && github.ref == 'refs/heads/wo-bcd-v653-test-first-001' && github.event_name
+    if: github.repository == 'arjuk95-dot/bcd-touch' && github.ref == 'refs/heads/wo-bcd-v653-test-first-002' && github.event_name
       == 'push' && github.event.created == true && github.event.deleted == false

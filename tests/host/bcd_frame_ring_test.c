@@ -7,6 +7,7 @@
 
 #include <inttypes.h>
 #include <pthread.h>
+#include <sched.h>
 #include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,21 +37,32 @@ static _Atomic int g_reading = 1;
 static uint64_t g_drained, g_lost;
 static int g_out_of_order;
 
-static void *reader(void *p) {
-    (void)p;
-    bcd_frame_reader r = bcd_frame_reader_start();
-    uint64_t buf[256], last = 0;
-    while (atomic_load(&g_reading)) {
-        uint64_t lost = 0;
-        uint32_t n = bcd_frame_ring_drain(&r, buf, 256, &lost);
-        g_lost += lost;
-        for (uint32_t i = 0; i < n; i++) {
-            if (buf[i] <= last) g_out_of_order++;
-            last = buf[i];
-        }
-        g_drained += n;
+static uint32_t drain_reader(bcd_frame_reader *r, uint64_t *last) {
+    uint64_t buf[256], lost = 0;
+    uint32_t n = bcd_frame_ring_drain(r, buf, 256, &lost);
+    g_lost += lost;
+    for (uint32_t i = 0; i < n; i++) {
+        if (buf[i] <= *last) g_out_of_order++;
+        *last = buf[i];
     }
+    g_drained += n;
+    return n;
+}
+
+static void *reader(void *p) {
+    // The caller captures the cursor before any producer starts. This thread need not run first.
+    bcd_frame_reader *r = p;
+    uint64_t last = 0;
+    while (atomic_load(&g_reading)) drain_reader(r, &last);
+    // The stop flag follows all producer joins. Drain the stable tail even if the loop never ran.
+    while (drain_reader(r, &last)) {}
     return NULL;
+}
+
+static void *late_reader(void *p) {
+    // Force the schedule that used to fail: no reads until every producer has finished.
+    while (atomic_load(&g_reading)) sched_yield();
+    return reader(p);
 }
 
 int main(void) {
@@ -141,6 +153,24 @@ int main(void) {
     }
     CHECK(total_lost > 5000 && got > 3500 && got + total_lost == 9999, "a reader 10000 presents behind loses the old ones and says how many");
 
+    // ---- a reader whose thread is not scheduled until all presents have finished -------------------------------
+    bcd_frame_reader late = bcd_frame_reader_start();
+    uint64_t late_start = late.cursor;
+    pthread_t delayed;
+    g_drained = g_lost = 0;
+    g_out_of_order = 0;
+    atomic_store(&g_reading, 1);
+    pthread_create(&delayed, NULL, late_reader, &late);
+    for (int i = 1; i <= 10000; i++) bcd_frame_ring_push_at(10000000000ull + (uint64_t)i * 1000);
+    atomic_store(&g_reading, 0);
+    pthread_join(delayed, NULL);
+    printf("note: late reader drained=%" PRIu64 " lost=%" PRIu64 " start=%" PRIu64 " cursor=%" PRIu64 "\n",
+           g_drained, g_lost, late_start, late.cursor);
+    CHECK(g_drained > 3500 && g_lost > 5000 && g_drained + g_lost == 9999,
+          "a late reader drains the retained tail and accounts for every overwritten present");
+    CHECK(late.cursor == late_start + 9999 && g_out_of_order == 0,
+          "a late reader reaches the held newest present without duplicates or backwards timestamps");
+
     // ---- many presenting threads and a reader at once ----------------------------------------------------------
     bcd_frame_stats_begin();
     uint64_t before = bcd_frame_ring_count();
@@ -148,14 +178,18 @@ int main(void) {
     producer_arg args[4];
     g_drained = g_lost = 0;
     g_out_of_order = 0;
+    bcd_frame_reader racing = bcd_frame_reader_start();
     atomic_store(&g_reading, 1);
-    pthread_create(&readers, NULL, reader, NULL);
+    pthread_create(&readers, NULL, reader, &racing);
     for (int i = 0; i < 4; i++) { args[i].id = i; args[i].n = 200000; pthread_create(&threads[i], NULL, producer, &args[i]); }
     for (int i = 0; i < 4; i++) pthread_join(threads[i], NULL);
     atomic_store(&g_reading, 0);
     pthread_join(readers, NULL);
+    printf("note: racing reader drained=%" PRIu64 " lost=%" PRIu64 " start=%" PRIu64 " cursor=%" PRIu64 "\n",
+           g_drained, g_lost, before, racing.cursor);
     CHECK(bcd_frame_ring_count() - before == 800000, "800000 presents from four threads are all counted");
     CHECK(g_drained + g_lost <= 800000 && g_drained > 0, "the reader saw some and counted what it lost");
+    CHECK(racing.cursor == before + 799999, "the reader drains the stable tail up to the held newest present");
     CHECK(g_out_of_order == 0, "the reader never hands out a timestamp that is not newer than the last");
     bcd_frame_stats_read(&s);
     printf("note: %" PRIu64 " gaps counted of 800000 presents from four racing threads\n", s.frames);

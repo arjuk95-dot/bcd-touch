@@ -2,7 +2,7 @@
   "baseline_local_commit": "2b8c45cba26bd34783de41340e46e726d37c84f0",
   "baseline_remote_commit": "01aaaa5c187052db06352fa77a51b5c0d8944e2b",
   "baseline_tree": "6e86b8507da1bfb53dd1154f63f8c46dc76050d8",
-  "source_fingerprint_sha256": "72f47b8823b97249ce90398031587436228efa8dca12e86a57ee523554efef15",
+  "source_fingerprint_sha256": "452715859b9f2b06197b95a96e86df201733be4be07f695d34656fb0541499f1",
   "allowed_new_files": [
     ".github/workflows/touch-test-build-first.yml",
     "docs/touch-build-first-option.md",
@@ -12,15 +12,15 @@
   "branch_exclusions": {
     ".github/workflows/touch-checks.yml": {
       "original_sha256": "5b45c284efbbd870416bcf86a09496fe08c08234c191e7c84e249544a30249ae",
-      "modified_sha256": "71dc8a29d5efc7132270b00d2b930303cf0e7ac708aad99159a62bb94af8d645"
+      "modified_sha256": "2e77de7780088fbb223bc0040477eff9805960ac087c6f9eb80e6de129c68546"
     },
     ".github/workflows/opengl-checks.yml": {
       "original_sha256": "8c6be24bbcfaa4b7ca1bbe391d73c61929746bc64c5aeb9837fe39bf6b71e430",
-      "modified_sha256": "dcd25e874e9c51615588955e7a0195f468cb340c7a0b1db339776be9eb6410f1"
+      "modified_sha256": "9f1ffacc8b50f6cbbe21e9733adc67e4f9de1f2beb701e75fa5e84f0e1a6f322"
     }
   },
-  "launch_branch": "wo-bcd-v653-test-first-001",
-  "launch_guard": "github.repository == 'arjuk95-dot/bcd-touch' && github.ref == 'refs/heads/wo-bcd-v653-test-first-001' && github.event_name == 'push' && github.event.created == true && github.event.deleted == false",
+  "launch_branch": "wo-bcd-v653-test-first-002",
+  "launch_guard": "github.repository == 'arjuk95-dot/bcd-touch' && github.ref == 'refs/heads/wo-bcd-v653-test-first-002' && github.event_name == 'push' && github.event.created == true && github.event.deleted == false",
   "baseline_workflow": ".github/workflows/touch-ipa.yml",
   "baseline_workflow_sha256": "ea3320b2cd0081eae01c9c768319cc25a6c32d97339d79243a9c22048d888340",
   "original_step_count": 746,
@@ -9071,5 +9071,15 @@
     "The pinned DXMT checkout is absent locally, so the Metal-atomics mutation is retained conservatively rather than claiming its occurrence at this pin.",
     "Actual cache hits and timing are unknown. New branch cannot use integration-branch-only caches.",
     "The exact branch-creation push route is prepared but not yet published/executed. Parent owns the one authorized publication and verification that only one Mac job started."
-  ]
+  ],
+  "hud_reader_regression": {
+    "file": "tests/host/bcd_frame_ring_test.c",
+    "failed_run": 43082543311,
+    "failure": "reader thread can start after producers stop",
+    "runtime_changed": false,
+    "original_assertions_preserved": 32,
+    "new_assertions": 3,
+    "asan_ubsan_repetitions": 50,
+    "tsan_repetitions": 20
+  }
 }
