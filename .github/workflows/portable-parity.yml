@@ -1,0 +1,34 @@
+name: Validate portable checks on Linux
+on:
+  workflow_dispatch:
+  push:
+    branches: [wo-bcd-portable-ci-653-001]
+permissions:
+  contents: read
+jobs:
+  portable:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out experiment runner
+        uses: actions/checkout@v4
+        with:
+          path: experiment
+      - name: Check out the exact active archive source
+        uses: actions/checkout@v4
+        with:
+          ref: 93503459c8af122b388944838d71e1aabbad5c55
+          submodules: recursive
+          path: source
+      - name: Verify runner rejects missing coverage
+        run: python3 experiment/tools/ci/test-portable-runner.py
+      - name: Run all selected checks without platform skips
+        run: python3 experiment/tools/ci/run-portable-checks.py --repo source --output portable-receipt
+      - name: Keep complete per-check results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: portable-checks-93503459-linux
+          path: portable-receipt/
+          if-no-files-found: error
+          retention-days: 7

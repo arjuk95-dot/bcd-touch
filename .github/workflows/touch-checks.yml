@@ -1,5 +1,8 @@
 name: Touch fork checks
-on: [workflow_dispatch, push]
+on:
+  workflow_dispatch: {}
+  push:
+    branches-ignore: [wo-bcd-portable-ci-653-001]
 jobs:
   touch:
     runs-on: macos-15-intel

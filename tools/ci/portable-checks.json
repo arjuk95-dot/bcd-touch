@@ -1,0 +1,441 @@
+{
+  "schema": 1,
+  "baseline_commit": "93503459c8af122b388944838d71e1aabbad5c55",
+  "scope": "Pre-engine checks only; no Apple-dependent or optional-Swift checks. Migration requires Linux and macOS passes on identical sources.",
+  "checks": [
+    {
+      "name": "Check the desktop session's guest-log mirror for the Start menu tests",
+      "argv": [
+        "python3",
+        "tests/host/check-desktop-guest-log.py"
+      ]
+    },
+    {
+      "name": "Check the DirectX test programs",
+      "argv": [
+        "python3",
+        "tests/host/check-dx-tests.py"
+      ]
+    },
+    {
+      "name": "Check 7-Zip (pinned source, no RAR code, the tracked programs)",
+      "argv": [
+        "python3",
+        "tests/host/check-7zip.py"
+      ]
+    },
+    {
+      "name": "Check the keyboard's Done button",
+      "argv": [
+        "python3",
+        "tests/host/check-bcd-keyboard-done.py"
+      ]
+    },
+    {
+      "name": "Check the memory limit notice",
+      "argv": [
+        "python3",
+        "tests/host/check-memory-rights-notice.py"
+      ]
+    },
+    {
+      "name": "Check Epic's masks",
+      "argv": [
+        "python3",
+        "tests/host/check-epic-mask.py"
+      ]
+    },
+    {
+      "name": "Check the alpha IPA tool",
+      "argv": [
+        "python3",
+        "tests/host/check-alpha-ipa.py"
+      ]
+    },
+    {
+      "name": "Check audio downmix",
+      "argv": [
+        "python3",
+        "tests/host/check-audio-downmix.py"
+      ]
+    },
+    {
+      "name": "Check audio wow64",
+      "argv": [
+        "python3",
+        "tests/host/check-audio-wow64.py"
+      ]
+    },
+    {
+      "name": "Check child desktop",
+      "argv": [
+        "python3",
+        "tests/host/check-child-desktop.py"
+      ]
+    },
+    {
+      "name": "Check child ntdll alias",
+      "argv": [
+        "python3",
+        "tests/host/check-child-ntdll-alias.py"
+      ]
+    },
+    {
+      "name": "Check console headless",
+      "argv": [
+        "python3",
+        "tests/host/check-console-headless.py"
+      ]
+    },
+    {
+      "name": "Check d9 upload commit",
+      "argv": [
+        "python3",
+        "tests/host/check-d9-upload-commit.py"
+      ]
+    },
+    {
+      "name": "Check dns trace",
+      "argv": [
+        "python3",
+        "tests/host/check-dns-trace.py"
+      ]
+    },
+    {
+      "name": "Check ec conhost",
+      "argv": [
+        "python3",
+        "tests/host/check-ec-conhost.py"
+      ]
+    },
+    {
+      "name": "Check fex callret 8mb",
+      "argv": [
+        "python3",
+        "tests/host/check-fex-callret-8mb.py"
+      ]
+    },
+    {
+      "name": "Check filtering cap",
+      "argv": [
+        "python3",
+        "tests/host/check-filtering-cap.py"
+      ]
+    },
+    {
+      "name": "Check fixed base guard",
+      "argv": [
+        "python3",
+        "tests/host/check-fixed-base-guard.py"
+      ]
+    },
+    {
+      "name": "Check free delay",
+      "argv": [
+        "python3",
+        "tests/host/check-free-delay.py"
+      ]
+    },
+    {
+      "name": "Check gamepad",
+      "argv": [
+        "python3",
+        "tests/host/check-gamepad.py"
+      ]
+    },
+    {
+      "name": "Check image retire",
+      "argv": [
+        "python3",
+        "tests/host/check-image-retire.py"
+      ]
+    },
+    {
+      "name": "Check jit dump optin",
+      "argv": [
+        "python3",
+        "tests/host/check-jit-dump-optin.py"
+      ]
+    },
+    {
+      "name": "Check jit env",
+      "argv": [
+        "python3",
+        "tests/host/check-jit-env.py"
+      ]
+    },
+    {
+      "name": "Check jit method",
+      "argv": [
+        "python3",
+        "tests/host/check-jit-method.py"
+      ]
+    },
+    {
+      "name": "Check power gov",
+      "argv": [
+        "python3",
+        "tests/host/check-power-gov.py"
+      ]
+    },
+    {
+      "name": "Check readonly link",
+      "argv": [
+        "python3",
+        "tests/host/check-readonly-link.py"
+      ]
+    },
+    {
+      "name": "Check sc grant growth",
+      "argv": [
+        "python3",
+        "tests/host/check-sc-grant-growth.py"
+      ]
+    },
+    {
+      "name": "Check Social Club aligned 1 GB slot",
+      "argv": [
+        "python3",
+        "tests/host/check-sc-align1g.py"
+      ]
+    },
+    {
+      "name": "Check wow census",
+      "argv": [
+        "python3",
+        "tests/host/check-wow-census.py"
+      ]
+    },
+    {
+      "name": "Check guest image tail",
+      "argv": [
+        "python3",
+        "tests/host/check-guest-image-tail.py"
+      ]
+    },
+    {
+      "name": "Check wow pressure release",
+      "argv": [
+        "python3",
+        "tests/host/check-wow-pressure-release.py"
+      ]
+    },
+    {
+      "name": "Check wow hold for",
+      "argv": [
+        "python3",
+        "tests/host/check-wow-hold-for.py"
+      ]
+    },
+    {
+      "name": "Check oversize reserve",
+      "argv": [
+        "python3",
+        "tests/host/check-oversize-reserve.py"
+      ]
+    },
+    {
+      "name": "Check sc render handler",
+      "argv": [
+        "python3",
+        "tests/host/check-sc-render-handler.py"
+      ]
+    },
+    {
+      "name": "Check scene batching",
+      "argv": [
+        "python3",
+        "tests/host/check-scene-batching.py"
+      ]
+    },
+    {
+      "name": "Check small va band",
+      "argv": [
+        "python3",
+        "tests/host/check-small-va-band.py"
+      ]
+    },
+    {
+      "name": "Check stack spill",
+      "argv": [
+        "python3",
+        "tests/host/check-stack-spill.py"
+      ]
+    },
+    {
+      "name": "Check stale heal owner",
+      "argv": [
+        "python3",
+        "tests/host/check-stale-heal-owner.py"
+      ]
+    },
+    {
+      "name": "Check thread create failure",
+      "argv": [
+        "python3",
+        "tests/host/check-thread-create-failure.py"
+      ]
+    },
+    {
+      "name": "Check unixlib binder",
+      "argv": [
+        "python3",
+        "tests/host/check-unixlib-binder.py"
+      ]
+    },
+    {
+      "name": "Check vcrt arm64 key",
+      "argv": [
+        "python3",
+        "tests/host/check-vcrt-arm64-key.py"
+      ]
+    },
+    {
+      "name": "Check vmon identity",
+      "argv": [
+        "python3",
+        "tests/host/check-vmon-identity.py"
+      ]
+    },
+    {
+      "name": "Check waiter read",
+      "argv": [
+        "python3",
+        "tests/host/check-waiter-read.py"
+      ]
+    },
+    {
+      "name": "Check win32u zero bits",
+      "argv": [
+        "python3",
+        "tests/host/check-win32u-zero-bits.py"
+      ]
+    },
+    {
+      "name": "Check window coordinates",
+      "argv": [
+        "python3",
+        "tests/host/check-window-coordinates.py"
+      ]
+    },
+    {
+      "name": "Check wow context",
+      "argv": [
+        "python3",
+        "tests/host/check-wow-context.py"
+      ]
+    },
+    {
+      "name": "Check wow cpu area",
+      "argv": [
+        "python3",
+        "tests/host/check-wow-cpu-area.py"
+      ]
+    },
+    {
+      "name": "Check wow sweep",
+      "argv": [
+        "python3",
+        "tests/host/check-wow-sweep.py"
+      ]
+    },
+    {
+      "name": "Check x18 arith",
+      "argv": [
+        "python3",
+        "tests/host/check-x18-arith.py"
+      ]
+    },
+    {
+      "name": "Check the EA app installer's Dock session",
+      "argv": [
+        "python3",
+        "tests/host/check-dock-ea-installer.py"
+      ]
+    },
+    {
+      "name": "Check the rumble's CoreHaptics guard",
+      "argv": [
+        "python3",
+        "tests/host/check-pad-output-haptics-guard.py"
+      ]
+    },
+    {
+      "name": "Check pso warm",
+      "argv": [
+        "python3",
+        "tests/host/check-pso-warm.py"
+      ]
+    },
+    {
+      "name": "Check replay split",
+      "argv": [
+        "python3",
+        "tests/host/check-replay-split.py"
+      ]
+    },
+    {
+      "name": "Check wine media dlls",
+      "argv": [
+        "python3",
+        "tests/host/check-wine-media-dlls.py"
+      ]
+    },
+    {
+      "name": "Check band census",
+      "argv": [
+        "python3",
+        "tests/host/check-band-census.py"
+      ]
+    },
+    {
+      "name": "Check bg qos",
+      "argv": [
+        "python3",
+        "tests/host/check-bg-qos.py"
+      ]
+    },
+    {
+      "name": "Check monitor cadence",
+      "argv": [
+        "python3",
+        "tests/host/check-monitor-cadence.py"
+      ]
+    },
+    {
+      "name": "Check srv doorbell",
+      "argv": [
+        "python3",
+        "tests/host/check-srv-doorbell.py"
+      ]
+    },
+    {
+      "name": "Check swap coverage",
+      "argv": [
+        "python3",
+        "tests/host/check-swap-coverage.py"
+      ]
+    },
+    {
+      "name": "Check LOVE's GC64 LuaJIT substitution",
+      "argv": [
+        "python3",
+        "tests/host/check-luajit-compat.py"
+      ]
+    },
+    {
+      "name": "Check BCD's spelling",
+      "argv": [
+        "python3",
+        "tests/host/check-bcd-spelling.py"
+      ]
+    },
+    {
+      "name": "Check the app sources are in the Xcode project",
+      "argv": [
+        "python3",
+        "tests/host/check-xcode-sources.py"
+      ]
+    }
+  ]
+}
