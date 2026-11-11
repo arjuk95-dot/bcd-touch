@@ -375,24 +375,10 @@
       ]
     },
     {
-      "name": "Check monitor cadence",
-      "argv": [
-        "python3",
-        "tests/host/check-monitor-cadence.py"
-      ]
-    },
-    {
       "name": "Check srv doorbell",
       "argv": [
         "python3",
         "tests/host/check-srv-doorbell.py"
-      ]
-    },
-    {
-      "name": "Check swap coverage",
-      "argv": [
-        "python3",
-        "tests/host/check-swap-coverage.py"
       ]
     },
     {
@@ -429,13 +415,22 @@
     {
       "path": "tests/host/check-vcrt-arm64-key.py",
       "reason": "GCC -Werror emits a string-bound warning not yet evaluated for parity with Apple Clang; retain Mac coverage."
+    },
+    {
+      "path": "tests/host/check-monitor-cadence.py",
+      "reason": "The harness exercises platform-specific pthread thread naming. Linux pass is useful but does not replace the Apple API behavior check."
+    },
+    {
+      "path": "tests/host/check-swap-coverage.py",
+      "reason": "Mac executes real Mach VM and F_PUNCHHOLE paths; Linux uses different VM inspection and a fallocate shim. Preserve native coverage."
     }
   ],
   "linux_evidence": {
-    "run": 43057859544,
-    "artifact": 13871883219,
-    "artifact_sha256": "ebb9927335cc7c9248bdafd279f8146de76382b7edd79f74e4fd4dffd7dde446",
+    "run": 43058821116,
+    "artifact": 13873665597,
+    "artifact_sha256": "09e6317c4c6cdae8f761e89a5eb7f063832c3ee12cab3e4dbe5419861e801230",
     "passed_candidates": 59,
-    "seconds_for_original_62": 35.373
+    "seconds_for_original_59": 32.997,
+    "selected_after_api_audit": 57
   }
 }

@@ -1,0 +1,23 @@
+name: Validate stock UI preview boundary
+on:
+  workflow_dispatch:
+  push:
+    branches: [wo-bcd-portable-ci-653-001]
+    paths:
+      - tools/ui-preview.py
+      - tests/host/check-ui-preview-cache.py
+      - .github/workflows/ui-boundary-preflight.yml
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: macos-15-intel
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select the archive toolchain
+        run: sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+      - name: Validate boundary and cache invalidation
+        run: python3 tests/host/check-ui-preview-cache.py
+      - name: Compile and check the in-game UI preview
+        run: python3 tests/host/check-bcd-session.py --require-swift --require-preview

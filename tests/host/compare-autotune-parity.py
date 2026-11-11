@@ -17,7 +17,7 @@ def compare(left, right):
         'app/Madeira/AutoTuneCore.swift', 'app/Madeira/AutoTuneRules.generated.swift',
         'tests/host/autotune_replay.swift', 'tests/host/autotune_engine_checks.swift',
         'tests/host/check-autotune.py', 'tests/host/check-autotune-runner.py'}
-    assert set(left['inputs']) == expected_inputs, 'incomplete source/fixture manifest' 
+    assert set(left['inputs']) == expected_inputs, 'incomplete source/fixture manifest'
     for path, digest in left['inputs'].items():
         assert hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == digest, f'input changed: {path}'
     expected = {p.stem: json.loads(p.read_text()) for p in (ROOT / 'tests/fixtures/autotune').glob('*.expect')}
