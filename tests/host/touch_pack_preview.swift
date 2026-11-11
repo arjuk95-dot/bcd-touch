@@ -598,8 +598,17 @@ private extension TouchPackPreview {
         view.moveTouch("move",to:CGPoint(x:left.x+40,y:left.y),time:now+0.02)
         assert(pad.sample.lx>0)
         tap("right-tap",open);tap("left-tap",left)
-        try await Task.sleep(nanoseconds:260_000_000)
-        assert(count()==initial+2 && pad.sample.rt==0 && pad.sample.lt==255 && pad.sample.lx>0,"Movement/Aim and two distinct RT pulses did not coexist")
+        // A busy CI simulator can delay UIKit timer delivery. Pulse deadlines
+        // intentionally begin at publication, never collapse overdue neutral gaps.
+        // Wait for completion rather than treating a fixed sleep as a latency test.
+        let drainStarted=ProcessInfo.processInfo.systemUptime
+        while (count()<initial+2 || pad.sample.rt != 0) && ProcessInfo.processInfo.systemUptime-drainStarted<3 {
+            assert(count()<=initial+2 && pad.sample.lt==255 && pad.sample.lx>0,"Queued tap lost held movement/Aim or repeated Attack")
+            try await Task.sleep(nanoseconds:20_000_000)
+        }
+        let timing="Timer-driven tap drain: seconds=\(ProcessInfo.processInfo.systemUptime-drainStarted) pulses=\(count()-initial) rt=\(pad.sample.rt) lt=\(pad.sample.lt) lx=\(pad.sample.lx). Simulator fixture, not a latency measurement."
+        try Data(timing.utf8).write(to:FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0].appendingPathComponent("tenebris-tap-timing-regression.txt"),options:.atomic)
+        assert(count()==initial+2 && pad.sample.rt==0 && pad.sample.lt==255 && pad.sample.lx>0,"Movement/Aim and two distinct RT pulses did not coexist: \(timing)")
         view.endTouch("move",at:CGPoint(x:left.x+40,y:left.y),cancelled:false,time:now+0.3)
         assert(count()==initial+2 && pad.sample.lx==0 && view.movementVisual==nil)
         let before=count(),t=ProcessInfo.processInfo.systemUptime
