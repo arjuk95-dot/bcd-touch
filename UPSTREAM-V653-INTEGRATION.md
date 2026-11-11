@@ -20,9 +20,11 @@ Upstream now supplies recommended Noita settings and a diagnostic-driven `env.MA
 
 The receipt in `receipts/touch/upstream-v653/` distinguishes host checks, skipped Swift/SDK execution and physical tests. Passed local checks include synthetic cursor/window coordinates, bounded x86 failure diagnostics, GL routing/present counting and source UI checks, architecture metadata, worker/schema/state validation, project source registration and move-safety wiring.
 
-No Swift compiler, macOS SDK, iOS SDK, device or running Windows guest was available in the local executor. SDK compilation, simulator previews, publisher tests, complete native archive and sideload packaging are pending. No device installation, JIT, gameplay, frame rate, thermal or data-preservation result is claimed.
+No Swift compiler, macOS SDK, iOS SDK, device or running Windows guest was available in the local executor. CI has since passed touch-source SDK checks, production-renderer simulator previews and the OpenGL SDK/persistence checks. The production publisher fixture, complete native archive and sideload packaging remain pending on the final candidate. No device installation, JIT, gameplay, frame rate, thermal or data-preservation result is claimed.
 
-Four small reference documents were reconstructed from public code/notices because the upstream public Git tree and exact release source archive omit them while the checks require them. Each document labels that provenance; none claims to reproduce unavailable upstream prose or device evidence.
+Missing reference documents were reconstructed from public code/notices where the upstream public Git tree and exact release source archive omit them while the checks require them. Each note labels that provenance; none claims to reproduce unavailable upstream prose or device evidence. Vendor licence/readme files are recovered only when their exact recorded checksums match.
+
+The public release also omits the upstream log-intake backend and log-triage tools. The mobile workflow uses explicit `--public-source` client validation for log upload, feedback, help and screenshots: available client/Swift/privacy checks remain required, while missing backend checks are named as unvalidated. Backend-only log triage is reported NOT RUN. This is not a full validation of the upstream server, and no substitute backend is fabricated.
 
 ## Build and package
 

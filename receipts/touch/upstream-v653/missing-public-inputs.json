@@ -1,0 +1,21 @@
+{
+  "archiveSHA256": "ec50285e4fd853748fcfb8f339a186d0df243a1f35501b4706959704f444dd56",
+  "upstreamCommit": "c3c2d152fca4d491b703b910d112ab54299c36c1",
+  "absentFromPublicTreeAndArchive": [
+    "bcd-logs/worker/worker.js",
+    "bcd-logs/worker/worker.test.mjs",
+    "bcd-logs/worker/wrangler.toml",
+    "tools/cluster-logs.py",
+    "tools/log-facts.py",
+    "tools/pull-logs.py",
+    "tools/fetch-vcruntime.md",
+    "third-party/d3d8to9/LICENSE.md",
+    "third-party/d3d8to9/README.md",
+    "third-party/cnc-ddraw/README.md",
+    "docs/VULKAN.md",
+    "docs/KEYBOARD_MOUSE.md",
+    "docs/LIBRARY.md",
+    "app/Madeira/vulkan/README.md"
+  ],
+  "meaning": "Absent inputs are not a passed validation. Exact vendor files are recovered by recorded hashes; notes reconstructed from public code are labelled; missing private backend tests remain explicitly unvalidated."
+}

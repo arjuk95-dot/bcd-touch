@@ -1,7 +1,6 @@
 // Engine spies for the production GamepadInput publisher. This is not a Wine guest.
 import Foundation
 import GameController
-import UIKit
 struct winios_gamepad { var connected:Int32=0;var buttons:UInt16=0;var left_trigger:UInt8=0;var right_trigger:UInt8=0;var lx:Int16=0;var ly:Int16=0;var rx:Int16=0;var ry:Int16=0 }
 struct winios_hidpad { var connected:Int32=0;var buttons:UInt32=0;var left_trigger:UInt8=0;var right_trigger:UInt8=0;var lx:Int16=0;var ly:Int16=0;var rx:Int16=0;var ry:Int16=0;var battery:UInt8=0;var charging:UInt8=0 }
 let WINIOS_HIDPAD_BATTERY_UNKNOWN=255
@@ -66,4 +65,3 @@ final class BCDAimStick {
     func padSample(_ state:inout winios_gamepad) {}
 }
 enum BCDDuoFeatures { static let active=false }
-@MainActor enum GamepadEventClaim { static func install(on window: UIWindow) {} }

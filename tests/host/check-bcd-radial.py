@@ -91,7 +91,10 @@ check("case .menu: LibraryModel.shared.showMenu()" in runner and "case .keyboard
       "BCD's menu, the iOS keyboard, the key bar and the controller press use the code that already does them")
 
 # ---- 5. where a player finds it ----------------------------------------------------------------------------
-check("BCDRadialHost.shared.configure(profile.radial, running: entry != nil && !library.launching, title: title)" in input_live, "the session's hook tells the ring what the game chose")
+check("BCDRadialHost.shared.configure(profile.radial, running: entry != nil && !library.launching, title: title)" in input_live or
+      ('let usingPack = BCDPackStore.shared.pack != nil && BCDPackStore.shared.enabled' in input_live
+       and "BCDRadialHost.shared.configure(profile.radial, running: !usingPack && entry != nil && !library.launching, title: title)" in input_live),
+      "the session preserves stock radial settings and suppresses its ring only when an enabled custom pack owns input")
 check('BCDGameSettingGroup(id: "radial", title: "Radial menu"' in page and '"radial-place"' in page and '"radial-\\(n)"' in page, "the game page has the Radial menu with its place and eight slots")
 check('id: "in.radial", title: "Radial menu"' in menu and "in.radial-place" in menu, "the in-game menu has it")
 check("BCDRadialSettings.lineNames.contains(line) { return radial }" in profile, "its lines are routed to the radial feature")

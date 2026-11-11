@@ -24,6 +24,11 @@ Source (every host):
   7. CI runs this check.
 
   check-bcd-screenshot.py [--require-swift]
+
+Public releases: --public-source reports absent, explicitly listed private backend
+or maintainer inputs as unavailable. Every available client and Swift check still
+runs; --require-swift remains mandatory in build CI. Without --public-source,
+missing private inputs fail. This mode does not validate the deployed backend.
 """
 import argparse
 import importlib.util
@@ -42,7 +47,30 @@ R = Path(__file__).resolve().parents[2]
 APP = R / "app/Madeira"
 ap = argparse.ArgumentParser()
 ap.add_argument("--require-swift", action="store_true")
+ap.add_argument("--public-source", action="store_true",
+                help="Run every available client check; report omitted private backend/pull-tool coverage explicitly")
 args = ap.parse_args()
+
+# Public releases omit the private intake and maintainer pull tool. Never synthesize
+# their behavior or count unavailable backend checks as passing client checks.
+PRIVATE_SOURCE_PATHS = ['bcd-logs/worker/worker.js', 'bcd-logs/worker/worker.test.mjs', 'tools/pull-logs.py']
+public_skips = []
+def public_skip(label):
+    public_skips.append(label)
+    print("SKIP unavailable private source: " + label)
+
+def private_source(relative):
+    path = R / relative
+    if args.public_source and relative in PRIVATE_SOURCE_PATHS and not path.is_file():
+        return None
+    return path.read_text()  # default mode remains strict, including missing files
+
+# Validate only private-source availability here; available client inputs remain mandatory.
+for private_path in PRIVATE_SOURCE_PATHS:
+    if private_source(private_path) is None:
+        public_skip(private_path + " omitted from public source")
+
+
 failures = 0
 
 
@@ -78,7 +106,7 @@ shot_text = (APP / "BCDScreenshotLive.swift").read_text()
 shot = code(shot_text)
 upload = code((APP / "LogUpload.swift").read_text())
 comp = code((APP / "BCDComponents.swift").read_text())
-worker = (R / "bcd-logs/worker/worker.js").read_text()
+worker = private_source("bcd-logs/worker/worker.js")
 sessionlive = code((APP / "BCDSessionLive.swift").read_text())
 plist = (APP / "Info.plist").read_text()
 workflow = (R / ".github/workflows/build-ipa.yml").read_text()
@@ -189,95 +217,112 @@ else:
             check(r.returncode == 0 and len(oks) >= 20, f"the small copy: {len(oks)} checks (steps, the search, real pictures: size, shape, no metadata, the floor)", "\n      ".join(bad[:12]))
 
 # ---- 4/5. the intake ----------------------------------------------------------------------------------------------
-check("POST /v1/shots" in worker and 'url.pathname === "/v1/shots"' in worker and "export const MAX_SHOT_BYTES = 160 * 1024;" in worker,
-      "the intake takes POST /v1/shots, 160 KB at most")
-check('SHOT_META = ["build", "game", "device", "os", "kind", "log"]' in worker and "/v1/admin/shots/" in worker and 'trim(env, SHOT_BUDGET_BYTES, SHOT_TRIM_TO_BYTES, "shots/")' in worker,
-      "known metadata only, its own admin routes and its own budget in the hourly trim")
-check("BCDScreenshotRules.maxSendBytes" in upload and "static let maxSendBytes = 160 * 1024" in code((APP / "BCDSessionCore.swift").read_text()),
-      "the app's limit and the intake's are the same 160 KB")
-node = shutil.which("node") or str(Path.home() / "madeira-local/tools/node/bin/node")
-if Path(node).exists():
-    r = subprocess.run([node, "--test", str(R / "bcd-logs/worker/worker.test.mjs")], capture_output=True, text=True)
-    check(r.returncode == 0 and "a screenshot is stored under shots/" in (R / "bcd-logs/worker/worker.test.mjs").read_text(),
-          "the intake's node tests pass, with the screenshot's", (r.stdout + r.stderr)[-1500:])
+if worker is not None:
+    check("POST /v1/shots" in worker and 'url.pathname === "/v1/shots"' in worker and "export const MAX_SHOT_BYTES = 160 * 1024;" in worker,
+          "the intake takes POST /v1/shots, 160 KB at most")
 else:
-    print("SKIP the Worker's node tests: no node")
+    public_skip('screenshot intake route and size limit')
+if worker is not None:
+    check('SHOT_META = ["build", "game", "device", "os", "kind", "log"]' in worker and "/v1/admin/shots/" in worker and 'trim(env, SHOT_BUDGET_BYTES, SHOT_TRIM_TO_BYTES, "shots/")' in worker,
+          "known metadata only, its own admin routes and its own budget in the hourly trim")
+else:
+    public_skip('screenshot backend metadata/admin/retention')
+check("BCDScreenshotRules.maxSendBytes" in upload and "static let maxSendBytes = 160 * 1024" in code((APP / "BCDSessionCore.swift").read_text()),
+      "the client enforces the 160 KB send limit")
+if worker is not None and (R / "bcd-logs/worker/worker.test.mjs").is_file():
+    node = shutil.which("node") or str(Path.home() / "madeira-local/tools/node/bin/node")
+    if Path(node).exists():
+        r = subprocess.run([node, "--test", str(R / "bcd-logs/worker/worker.test.mjs")], capture_output=True, text=True)
+        check(r.returncode == 0 and "a screenshot is stored under shots/" in (R / "bcd-logs/worker/worker.test.mjs").read_text(),
+              "the intake's node tests pass, with the screenshot's", (r.stdout + r.stderr)[-1500:])
+    else:
+        print("SKIP the Worker's node tests: no node")
+
+else:
+    public_skip('screenshot Worker node tests')
 
 # ---- 6. pull-logs.py, against a fake bucket --------------------------------------------------------------------------
-spec = importlib.util.spec_from_file_location("pull_logs", R / "tools/pull-logs.py")
-pull = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(pull)
-JPEG = b"\xff\xd8\xff" + b"\x11" * 400 + b"\xff\xd9"
+if private_source("tools/pull-logs.py") is not None:
+    spec = importlib.util.spec_from_file_location("pull_logs", R / "tools/pull-logs.py")
+    pull = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(pull)
+    JPEG = b"\xff\xd8\xff" + b"\x11" * 400 + b"\xff\xd9"
 
 
-class Bucket:
-    def __init__(self, objects):
-        self.objects = objects      # key -> (bytes, meta)
-        self.deleted = []
-        self.gets = []
+    class Bucket:
+        def __init__(self, objects):
+            self.objects = objects      # key -> (bytes, meta)
+            self.deleted = []
+            self.gets = []
 
-    def call(self, path, key=None, method="GET", data=None, headers=None):
-        route, _, query = path.partition("?")
-        params = urllib.parse.parse_qs(query)
-        if route == "/v1/admin/shots/list":
-            return 200, json.dumps({"objects": [{"key": k, "size": len(v[0]), "uploaded": "2026-10-25T20:00:00Z", "meta": v[1]}
-                                                  for k, v in sorted(self.objects.items())], "cursor": None}).encode()
-        if route == "/v1/admin/shots/get":
-            self.gets.append(params["key"][0])
-            return 200, self.objects[params["key"][0]][0]
-        if route == "/v1/admin/shots/delete":
-            self.deleted.append(params["key"][0])
-            return 200, b"{}"
-        return 404, b"{}"
-
-
-def run(bucket, out, delete=True):
-    pull.call = bucket.call
-    buf = io.StringIO()
-    with redirect_stdout(buf):
-        new = pull.pull_shots("k" * 40, out, delete)
-    return new, buf.getvalue()
+        def call(self, path, key=None, method="GET", data=None, headers=None):
+            route, _, query = path.partition("?")
+            params = urllib.parse.parse_qs(query)
+            if route == "/v1/admin/shots/list":
+                return 200, json.dumps({"objects": [{"key": k, "size": len(v[0]), "uploaded": "2026-10-25T20:00:00Z", "meta": v[1]}
+                                                      for k, v in sorted(self.objects.items())], "cursor": None}).encode()
+            if route == "/v1/admin/shots/get":
+                self.gets.append(params["key"][0])
+                return 200, self.objects[params["key"][0]][0]
+            if route == "/v1/admin/shots/delete":
+                self.deleted.append(params["key"][0])
+                return 200, b"{}"
+            return 404, b"{}"
 
 
-with tempfile.TemporaryDirectory(prefix="bcd-pull-shots-") as t:
-    out = Path(t)
-    (out / "2026-10-24").mkdir()
-    (out / "2026-10-24" / "K7Q2MX.txt").write_text("a log")
-    b = Bucket({"shots/2026-10-25/AAAAAA.jpg": (JPEG, {"log": "K7Q2MX", "build": "603", "game": "x.exe", "kind": "screenshot"}),
-                "shots/2026-10-25/BBBBBB.jpg": (JPEG, {"log": "ZZZZZZ"}),
-                "shots/2026-10-25/CCCCCC.jpg": (b"not a picture at all" * 20, {"log": "K7Q2MX"}),
-                "shots/2026-10-25/DDDDDD.jpg": (JPEG, {"log": "../../etc/x"}),
-                "shots/2026-10-25/EEEEEE.jpg": (JPEG, {})})
-    new, text = run(b, out)
-    beside = out / "2026-10-24" / "K7Q2MX.shot-AAAAAA.jpg"
-    check(beside.is_file() and beside.read_bytes() == JPEG, "a picture is saved beside its log (the day the log is filed under)")
-    check(beside.with_suffix(".json").is_file() and json.loads(beside.with_suffix(".json").read_text())["key"] == "shots/2026-10-25/AAAAAA.jpg",
-          "... with a record naming its bucket key")
-    check((out / "2026-10-25" / "ZZZZZZ.shot-BBBBBB.jpg").is_file(), "a picture whose log is not on the Mac goes under its own day, named for the log's code")
-    check(not (out / "2026-10-25" / "CCCCCC.jpg").exists() and not list(out.rglob("*CCCCCC*")) and "shots/2026-10-25/CCCCCC.jpg" not in b.deleted,
-          "something that is not a whole JPEG is not saved and stays in the bucket", text)
-    check((out / "2026-10-25" / "shot-DDDDDD.jpg").is_file() and not list(out.rglob("etc")) and (out / "2026-10-25" / "shot-EEEEEE.jpg").is_file(),
-          "a log code that is not six letters or digits never reaches a path: the picture is filed by its own code")
-    check(sorted(b.deleted) == ["shots/2026-10-25/AAAAAA.jpg", "shots/2026-10-25/BBBBBB.jpg", "shots/2026-10-25/DDDDDD.jpg", "shots/2026-10-25/EEEEEE.jpg"],
-          "each picture that is on the Mac is removed from the bucket, and only those", b.deleted)
-    check(len(new) == 4, "four new pictures reported", text)
-    again = Bucket(dict(b.objects))
-    new2, _ = run(again, out)
-    check(again.gets == ["shots/2026-10-25/CCCCCC.jpg"] and not new2 and sorted(again.deleted) == sorted(b.deleted),
-          "a second run downloads nothing it already has (only the one that was not a JPEG is tried again) and removes what a failed delete left", (again.gets, again.deleted))
-    kept = Bucket({"shots/2026-10-26/FFFFFF.jpg": (JPEG, {"log": "K7Q2MX"})})
-    run(kept, out, delete=False)
-    check(not kept.deleted and (out / "2026-10-24" / "K7Q2MX.shot-FFFFFF.jpg").is_file(), "--keep leaves the bucket as it is")
-    old = Bucket({})
-    old.call = lambda path, key=None, method="GET", data=None, headers=None: (404, b'{"error":"not found"}')
-    new3, text3 = run(old, out)
-    check(new3 == [] and "no screenshot route yet" in text3, "an intake without the route is no failure: logs were pulled already, the note says to deploy the Worker", text3)
-    check(pull.shot_dest({"key": "logs/2026-10-25/AAAAAA.gz"}, out) is None, "a key that is not a screenshot's is not taken for one")
-    check(re.fullmatch(r"[0-9A-Z]{6}", "K7Q2MX") is not None and pull.CODE.match("k7q2mx") is None, "codes are upper case letters and digits")
+    def run(bucket, out, delete=True):
+        pull.call = bucket.call
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            new = pull.pull_shots("k" * 40, out, delete)
+        return new, buf.getvalue()
 
-check("pull_shots(key, a.out, delete)" in (R / "tools/pull-logs.py").read_text() and "[screenshot]" in (R / "tools/pull-logs.py").read_text(),
-      "the normal run of pull-logs.py pulls pictures too and marks a log that has one")
+
+    with tempfile.TemporaryDirectory(prefix="bcd-pull-shots-") as t:
+        out = Path(t)
+        (out / "2026-10-24").mkdir()
+        (out / "2026-10-24" / "K7Q2MX.txt").write_text("a log")
+        b = Bucket({"shots/2026-10-25/AAAAAA.jpg": (JPEG, {"log": "K7Q2MX", "build": "603", "game": "x.exe", "kind": "screenshot"}),
+                    "shots/2026-10-25/BBBBBB.jpg": (JPEG, {"log": "ZZZZZZ"}),
+                    "shots/2026-10-25/CCCCCC.jpg": (b"not a picture at all" * 20, {"log": "K7Q2MX"}),
+                    "shots/2026-10-25/DDDDDD.jpg": (JPEG, {"log": "../../etc/x"}),
+                    "shots/2026-10-25/EEEEEE.jpg": (JPEG, {})})
+        new, text = run(b, out)
+        beside = out / "2026-10-24" / "K7Q2MX.shot-AAAAAA.jpg"
+        check(beside.is_file() and beside.read_bytes() == JPEG, "a picture is saved beside its log (the day the log is filed under)")
+        check(beside.with_suffix(".json").is_file() and json.loads(beside.with_suffix(".json").read_text())["key"] == "shots/2026-10-25/AAAAAA.jpg",
+              "... with a record naming its bucket key")
+        check((out / "2026-10-25" / "ZZZZZZ.shot-BBBBBB.jpg").is_file(), "a picture whose log is not on the Mac goes under its own day, named for the log's code")
+        check(not (out / "2026-10-25" / "CCCCCC.jpg").exists() and not list(out.rglob("*CCCCCC*")) and "shots/2026-10-25/CCCCCC.jpg" not in b.deleted,
+              "something that is not a whole JPEG is not saved and stays in the bucket", text)
+        check((out / "2026-10-25" / "shot-DDDDDD.jpg").is_file() and not list(out.rglob("etc")) and (out / "2026-10-25" / "shot-EEEEEE.jpg").is_file(),
+              "a log code that is not six letters or digits never reaches a path: the picture is filed by its own code")
+        check(sorted(b.deleted) == ["shots/2026-10-25/AAAAAA.jpg", "shots/2026-10-25/BBBBBB.jpg", "shots/2026-10-25/DDDDDD.jpg", "shots/2026-10-25/EEEEEE.jpg"],
+              "each picture that is on the Mac is removed from the bucket, and only those", b.deleted)
+        check(len(new) == 4, "four new pictures reported", text)
+        again = Bucket(dict(b.objects))
+        new2, _ = run(again, out)
+        check(again.gets == ["shots/2026-10-25/CCCCCC.jpg"] and not new2 and sorted(again.deleted) == sorted(b.deleted),
+              "a second run downloads nothing it already has (only the one that was not a JPEG is tried again) and removes what a failed delete left", (again.gets, again.deleted))
+        kept = Bucket({"shots/2026-10-26/FFFFFF.jpg": (JPEG, {"log": "K7Q2MX"})})
+        run(kept, out, delete=False)
+        check(not kept.deleted and (out / "2026-10-24" / "K7Q2MX.shot-FFFFFF.jpg").is_file(), "--keep leaves the bucket as it is")
+        old = Bucket({})
+        old.call = lambda path, key=None, method="GET", data=None, headers=None: (404, b'{"error":"not found"}')
+        new3, text3 = run(old, out)
+        check(new3 == [] and "no screenshot route yet" in text3, "an intake without the route is no failure: logs were pulled already, the note says to deploy the Worker", text3)
+        check(pull.shot_dest({"key": "logs/2026-10-25/AAAAAA.gz"}, out) is None, "a key that is not a screenshot's is not taken for one")
+        check(re.fullmatch(r"[0-9A-Z]{6}", "K7Q2MX") is not None and pull.CODE.match("k7q2mx") is None, "codes are upper case letters and digits")
+
+    check("pull_shots(key, a.out, delete)" in private_source("tools/pull-logs.py") and "[screenshot]" in private_source("tools/pull-logs.py"),
+          "the normal run of pull-logs.py pulls pictures too and marks a log that has one")
+else:
+    public_skip("maintainer screenshot pull/download/validation tests")
+
 check("python3 tests/host/check-bcd-screenshot.py" in workflow, "CI runs this check")
+
+if public_skips:
+    print("PUBLIC-SOURCE COVERAGE: available client checks ran (see Swift requirement result above); private backend/maintainer coverage NOT validated: " + "; ".join(public_skips))
 
 print("check-bcd-screenshot: " + ("PASS" if failures == 0 else f"{failures} FAILED"))
 sys.exit(0 if failures == 0 else 1)

@@ -116,7 +116,9 @@ check("stopDeviceMotionUpdates()" in func(live, "private func stopIfNeeded()") a
 check("static var stickActive = false" in live and "static var padNeeded = false" in live, "the two flags GamepadInput reads start false")
 check("Self.stickActive = on && wanted.target == .stick" in refresh and "Self.padNeeded = on && (wanted.target == .stick || !wanted.hold.isEmpty)" in refresh,
       "... and are true only while the gyro is on")
-check("let gyroConnected = i == 0 && BCDGyroLive.stickActive" in gamepad and "guard pad != nil || touchConnected || gyroConnected || aimConnected else {" in gamepad,
+check("let gyroConnected = i == 0 && BCDGyroLive.stickActive" in gamepad and ("guard pad != nil || touchConnected || gyroConnected || aimConnected else {" in gamepad
+      or ("let packConnected = i == 0 && packState.connected" in gamepad
+          and "guard pad != nil || touchConnected || gyroConnected || packConnected || aimConnected else {" in gamepad)),
       "GamepadInput connects player 1 for the gyro stick only while it drives it")
 check("if i == 0, BCDGyroLive.padNeeded, active, keyboardMouse == nil, !LibraryController.shared.ownsInput {\n                BCDGyroLive.shared.padSample(&state)\n            }" in gamepad,
       "... and looks at the controller only then (not in keyboard-and-mouse mode, nor under the library's menu)")

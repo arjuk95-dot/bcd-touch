@@ -6,7 +6,7 @@ name: BCD Touch v653 integration IPA
     - wo-bcd-upstream-653-001
 concurrency:
   group: bcd-touch-v653-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: macos-15-intel
@@ -108,21 +108,21 @@ jobs:
     - name: Check parity with the classic interface
       run: python3 tests/host/check-parity.py --require-swift
     - name: Check Send logs to BCD
-      run: python3 tests/host/check-log-upload.py --require-swift
+      run: python3 tests/host/check-log-upload.py --require-swift --public-source
     - name: Check the performance trace
-      run: python3 tests/host/check-bcd-perftrace.py --require-swift
+      run: python3 tests/host/check-bcd-perftrace.py --require-swift --public-source
     - name: Check help with a game
-      run: python3 tests/host/check-bcd-help.py --require-swift
+      run: python3 tests/host/check-bcd-help.py --require-swift --public-source
     - name: Check shareable control layouts
       run: python3 tests/host/check-bcd-control-share.py --require-swift
     - name: Check the performance HUD
       run: python3 tests/host/check-bcd-hud.py --require-swift
     - name: Check the session summary and the question after an unexpected close
-      run: python3 tests/host/check-bcd-session-record.py --require-swift
+      run: python3 tests/host/check-bcd-session-record.py --require-swift --public-source
     - name: Check screenshots with Send Log
-      run: python3 tests/host/check-bcd-screenshot.py --require-swift
+      run: python3 tests/host/check-bcd-screenshot.py --require-swift --public-source
     - name: "Check Settings \u203A Feedback"
-      run: python3 tests/host/check-feedback.py --require-swift
+      run: python3 tests/host/check-feedback.py --require-swift --public-source
     - name: Check the update notice
       run: python3 tests/host/check-update-check.py --require-swift
     - name: Check the memory limit notice
@@ -216,7 +216,7 @@ jobs:
 
         python3 tests/host/check-win-text.py
 
-        python3 tests/host/check-cluster-logs.py
+        if [ -f tools/cluster-logs.py ] && [ -f tools/log-facts.py ]; then python3 tests/host/check-cluster-logs.py; else echo "::notice::NOT RUN: upstream private log triage sources are absent from the public release"; fi
 
         python3 tests/host/check-fex-fault-diag.py
 

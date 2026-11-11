@@ -102,7 +102,10 @@ check(func(live, "static func filter(").index("pencil.handle") < func(live, "sta
       "the Pencil is looked at first, then gestures watch, then the aim finger is taken")
 
 # ---- 5. where a player finds them ----------------------------------------------------------------------------
-check("BCDTouchExtras.configure(aim: profile.aim, gestures: profile.gestures, pencil: profile.pencil, title: title)" in input_live, "the session's hook tells them what the game chose")
+check("BCDTouchExtras.configure(aim: profile.aim, gestures: profile.gestures, pencil: profile.pencil, title: title)" in input_live or
+      ('let usingPack = BCDPackStore.shared.pack != nil && BCDPackStore.shared.enabled' in input_live
+       and "BCDTouchExtras.configure(aim: usingPack ? BCDAimSettings() : profile.aim, gestures: usingPack ? BCDGestureSettings() : profile.gestures, pencil: usingPack ? BCDPencilSettings() : profile.pencil, title: title)" in input_live),
+      "the session preserves each stock choice and resets competing extras only for an enabled custom pack")
 for gid, title in (("aim", "Aim mode"), ("gestures", "Touch gestures"), ("pencil", "Apple Pencil")):
     check(f'BCDGameSettingGroup(id: "{gid}", title: "{title}"' in page, f"the game page has {title}")
 check('id: "in.aim-zone"' in menu and 'id: "in.pencil"' in menu and 'id: "in.gestures.note"' in menu, "the in-game menu has them (the gestures' bindings are set on the page)")

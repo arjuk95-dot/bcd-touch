@@ -21,6 +21,11 @@ Source (every host):
   4. The hooks are the ones listed; CI runs this check.
 
   check-bcd-help.py [--require-swift]
+
+Public releases: --public-source reports absent, explicitly listed private backend
+or maintainer inputs as unavailable. Every available client and Swift check still
+runs; --require-swift remains mandatory in build CI. Without --public-source,
+missing private inputs fail. This mode does not validate the deployed backend.
 """
 import argparse
 import importlib.util
@@ -37,7 +42,30 @@ R = Path(__file__).resolve().parents[2]
 APP = R / "app/Madeira"
 ap = argparse.ArgumentParser()
 ap.add_argument("--require-swift", action="store_true")
+ap.add_argument("--public-source", action="store_true",
+                help="Run every available client check; report omitted private backend/pull-tool coverage explicitly")
 args = ap.parse_args()
+
+# Public releases omit the private intake and maintainer pull tool. Never synthesize
+# their behavior or count unavailable backend checks as passing client checks.
+PRIVATE_SOURCE_PATHS = ['bcd-logs/worker/worker.js', 'tools/pull-logs.py']
+public_skips = []
+def public_skip(label):
+    public_skips.append(label)
+    print("SKIP unavailable private source: " + label)
+
+def private_source(relative):
+    path = R / relative
+    if args.public_source and relative in PRIVATE_SOURCE_PATHS and not path.is_file():
+        return None
+    return path.read_text()  # default mode remains strict, including missing files
+
+# Validate only private-source availability here; available client inputs remain mandatory.
+for private_path in PRIVATE_SOURCE_PATHS:
+    if private_source(private_path) is None:
+        public_skip(private_path + " omitted from public source")
+
+
 failures = 0
 
 
@@ -140,9 +168,15 @@ check("BCDDebugRunLive.shared.arm(run)" in start and "onNotice?()" in start and 
 send = block(pl, "private func helpSendFeedback(_ game: BCDGame) {")
 check('FeedbackUpload.send(kind: "other", text: text, log: log)' in send and send.count("FeedbackUpload.send(") == 1,
       "feedback goes through the existing intake, kind 'other'")
-check("static func send(kind: String, text: String, log: String? = nil" in code((APP / "FeedbackUpload.swift").read_text()) and "feedback/" in (R / "bcd-logs/worker/worker.js").read_text(), "... which exists as it was (the Worker is unchanged)")
+check("static func send(kind: String, text: String, log: String? = nil" in code((APP / "FeedbackUpload.swift").read_text()), "the existing client feedback send API remains available")
 check(send.count("LogUpload.send(") == 1 and "guard draft.attachLog else { return post(log: nil) }" in send, "the log goes first only when the player ticked it")
-check("kind: \"other\"" in pl and "FEEDBACK_KINDS = [\"bug\", \"idea\", \"other\"]" in (R / "bcd-logs/worker/worker.js").read_text(), "'other' is a kind the intake takes")
+check("kind: \"other\"" in pl, "'other' is a kind the intake takes")
+worker = private_source("bcd-logs/worker/worker.js")
+if worker is not None:
+    check("feedback/" in worker and 'FEEDBACK_KINDS = ["bug", "idea", "other"]' in worker,
+          "the Worker still accepts game feedback with kind other")
+else:
+    public_skip("game-help feedback Worker route and kind")
 numbers = block(pl, "enum BCDHelpNumbers {")
 check("tailBytes: Int = 512 * 1024" in numbers and "BCDSessionSummary.fields(" in numbers, "the numbers come from the tail of the log's own [session] line")
 check("var readiness: String? = nil" in page and "if let readiness = details.readiness { notes.append(Note(text: readiness, warning: true)) }" in page
@@ -277,14 +311,20 @@ else:
             check(scan(e) == ["modules=0 files=1 complete=true", "findings="], "a folder with no program file has nothing to say", str(scan(e)))
 
             # tools/pull-logs.py reads the message the app writes
-            spec = importlib.util.spec_from_file_location("pull_logs", R / "tools/pull-logs.py")
-            pl_mod = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(pl_mod)
-            summary = pl_mod.game_feedback_summary(note) if note else None
-            check(summary is not None and summary.startswith("Hollow Knight: runs, small problems (slow, sound)") and "avg=58.7" in summary and "low1=41.2" in summary,
-                  "tools/pull-logs.py --feedback shows the message the app writes in one line", str(summary))
-            check(pl_mod.game_feedback_summary("hello there") is None and pl_mod.game_feedback_summary("[game-feedback] result=fine") is None,
-                  "... and shows anything else as it did")
+            if private_source("tools/pull-logs.py") is not None:
+                spec = importlib.util.spec_from_file_location("pull_logs", R / "tools/pull-logs.py")
+                pl_mod = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(pl_mod)
+                summary = pl_mod.game_feedback_summary(note) if note else None
+                check(summary is not None and summary.startswith("Hollow Knight: runs, small problems (slow, sound)") and "avg=58.7" in summary and "low1=41.2" in summary,
+                      "tools/pull-logs.py --feedback shows the message the app writes in one line", str(summary))
+                check(pl_mod.game_feedback_summary("hello there") is None and pl_mod.game_feedback_summary("[game-feedback] result=fine") is None,
+                      "... and shows anything else as it did")
+            else:
+                public_skip("maintainer pull-tool game-feedback summary")
+
+if public_skips:
+    print("PUBLIC-SOURCE COVERAGE: available client checks ran (see Swift requirement result above); private backend/maintainer coverage NOT validated: " + "; ".join(public_skips))
 
 print("PASS: help with a game" if failures == 0 else f"FAILED: help with a game ({failures})")
 sys.exit(1 if failures else 0)

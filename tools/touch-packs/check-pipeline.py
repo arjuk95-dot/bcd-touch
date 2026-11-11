@@ -3,10 +3,22 @@ from pathlib import Path
 import json
 import os
 import plistlib
+import re
+import sys
 import subprocess
 import tempfile
 import time
 ROOT=Path(__file__).resolve().parents[2]
+# Fixture boundaries must not shadow a production type compiled in this target.
+# This preflight also runs on hosts without the Apple SDK.
+def declared_types(path):
+    return set(re.findall(r"\b(?:class|struct|enum)\s+(\w+)\s*[:{]", path.read_text()))
+production_types=declared_types(ROOT/'app/Madeira/GamepadInput.swift')
+fixture_types=declared_types(ROOT/'tests/host/gamepad_pipeline_stubs.swift')
+assert not production_types & fixture_types, f'Duplicate pipeline fixture types: {sorted(production_types & fixture_types)}'
+print('PASS: production publisher fixture boundaries do not redeclare production types',flush=True)
+if '--check-boundaries' in sys.argv:
+    sys.exit(0)
 out=ROOT/'touch-evidence';out.mkdir(exist_ok=True)
 def run(args):return subprocess.check_output(args,text=True).strip()
 sdk=run(['xcrun','--sdk','iphonesimulator','--show-sdk-path'])

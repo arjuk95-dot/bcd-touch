@@ -23,6 +23,11 @@ Source (every host):
   5. CI runs this check.
 
   check-bcd-session-record.py [--require-swift]
+
+Public releases: --public-source reports absent, explicitly listed private backend
+or maintainer inputs as unavailable. Every available client and Swift check still
+runs; --require-swift remains mandatory in build CI. Without --public-source,
+missing private inputs fail. This mode does not validate the deployed backend.
 """
 import argparse
 import importlib.util
@@ -38,7 +43,28 @@ R = Path(__file__).resolve().parents[2]
 APP = R / "app/Madeira"
 ap = argparse.ArgumentParser()
 ap.add_argument("--require-swift", action="store_true")
+ap.add_argument("--public-source", action="store_true", help="Report missing private triage checks; retain all client and Swift checks")
 args = ap.parse_args()
+
+# Public releases omit the private intake and maintainer pull tool. Never synthesize
+# their behavior or count unavailable backend checks as passing client checks.
+PRIVATE_SOURCE_PATHS = ['tools/log-facts.py']
+public_skips = []
+def public_skip(label):
+    public_skips.append(label)
+    print("SKIP unavailable private source: " + label)
+
+def private_source(relative):
+    path = R / relative
+    if args.public_source and relative in PRIVATE_SOURCE_PATHS and not path.is_file():
+        return None
+    return path.read_text()  # default mode remains strict, including missing files
+
+# Validate only private-source availability here; available client inputs remain mandatory.
+for private_path in PRIVATE_SOURCE_PATHS:
+    if private_source(private_path) is None:
+        public_skip(private_path + " omitted from public source")
+
 failures = 0
 
 
@@ -220,19 +246,6 @@ else:
             line = next((l[len("note: "):] for l in r.stdout.splitlines() if l.startswith("note: [session]")), "")
 
         # tools/log-facts.py reads the line the app writes
-        spec = importlib.util.spec_from_file_location("log_facts", R / "tools/log-facts.py")
-        facts = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(facts)
-        parsed = facts.parse_session("[21:05:03.123] [INFO] " + line) if line else None
-        check(parsed is not None and parsed.get("avg") == "58.7" and parsed.get("low1") == "41.2" and parsed.get("low01") == "22.5"
-              and parsed.get("stalls") == "2/14s" and parsed.get("api") == "D3D11/64" and parsed.get("game") == "Hollow Knight" and parsed.get("thermal") == "fair",
-              "log-facts.py reads the line the app writes, field for field", str(parsed))
-        words = facts.session_words(parsed or {})
-        check("20 min played" in words and "58.7 FPS avg" in words and "1% low 41.2" in words and "0.1% low 22.5" in words and "worst 215ms" in words
-              and "stalls 2/14s" in words and "peak 3412MB of 5800MB" in words and "thermal fair" in words and "API D3D11/64" in words and "cap 60" in words,
-              "... and says it in words", words)
-        check(facts.parse_session("[session] the last session of X did not end cleanly (in front); asking") is None
-              and facts.parse_session("[present] count=3") is None, "... and nothing else is a summary")
         log = [
             "[bcd] library launch Hollow Knight: x",
             "[session] length=300s partial=1 play=250s frames=15000 avg=60.0 low1=50.0 worst=40ms stalls=0/0s peak=2000MB limit=5800MB thermal=nominal lpm=0 game=Hollow Knight",
@@ -240,9 +253,27 @@ else:
             "[session] the last session of Old Game did not end cleanly (in front); asking whether to send its log",
             "[screenshot] saved Hollow Knight 2026-10-25 21.05.03.jpg 1864x860 412 KB photos=asked black=0",
         ]
-        found, unclean, shots = facts.session_facts(log)
-        check(len(found) == 2 and len(unclean) == 1 and shots == 1 and found[-1][1].get("partial") is None and found[0][1].get("partial") == "1",
-              "log-facts.py finds the partial and the whole summary, the unclean-close line and the screenshots", f"{found} {unclean} {shots}")
+
+        if private_source("tools/log-facts.py") is not None:
+            spec = importlib.util.spec_from_file_location("log_facts", R / "tools/log-facts.py")
+            facts = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(facts)
+            parsed = facts.parse_session("[21:05:03.123] [INFO] " + line) if line else None
+            check(parsed is not None and parsed.get("avg") == "58.7" and parsed.get("low1") == "41.2" and parsed.get("low01") == "22.5"
+                  and parsed.get("stalls") == "2/14s" and parsed.get("api") == "D3D11/64" and parsed.get("game") == "Hollow Knight" and parsed.get("thermal") == "fair",
+                  "log-facts.py reads the line the app writes, field for field", str(parsed))
+            words = facts.session_words(parsed or {})
+            check("20 min played" in words and "58.7 FPS avg" in words and "1% low 41.2" in words and "0.1% low 22.5" in words and "worst 215ms" in words
+                  and "stalls 2/14s" in words and "peak 3412MB of 5800MB" in words and "thermal fair" in words and "API D3D11/64" in words and "cap 60" in words,
+                  "... and says it in words", words)
+            check(facts.parse_session("[session] the last session of X did not end cleanly (in front); asking") is None
+                  and facts.parse_session("[present] count=3") is None, "... and nothing else is a summary")
+            found, unclean, shots = facts.session_facts(log)
+            check(len(found) == 2 and len(unclean) == 1 and shots == 1 and found[-1][1].get("partial") is None and found[0][1].get("partial") == "1",
+                  "log-facts.py finds the partial and the whole summary, the unclean-close line and the screenshots", f"{found} {unclean} {shots}")
+
+        else:
+            public_skip("private log-facts triage comparison")
 
         # the scanner behind `pull-logs.py --replay`
         replay = t / "replay"
@@ -262,6 +293,9 @@ else:
                 except (IndexError, ValueError, KeyError):
                     got = None
                 check(got == want, f"the replay's scanner reads the summary ({name}): average, 1% low, seconds played, partial", f"{got} want {want} {r.stderr[-200:]}")
+
+if public_skips:
+    print("PUBLIC-SOURCE COVERAGE: available client checks ran (see Swift requirement result above); private maintainer coverage NOT validated: " + "; ".join(public_skips))
 
 print("check-bcd-session-record: " + ("PASS" if failures == 0 else f"{failures} FAILED"))
 sys.exit(0 if failures == 0 else 1)

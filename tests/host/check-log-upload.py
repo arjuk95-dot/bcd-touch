@@ -21,6 +21,11 @@ Checks:
     the list shows; the Xcode project builds both files; every file is marked FORK-ONLY;
     CI runs this check.
 The Swift part is skipped when swiftc is missing (--require-swift makes that a failure).
+
+Public releases: --public-source reports absent, explicitly listed private backend
+or maintainer inputs as unavailable. Every available client and Swift check still
+runs; --require-swift remains mandatory in build CI. Without --public-source,
+missing private inputs fail. This mode does not validate the deployed backend.
 """
 import argparse
 import gzip
@@ -36,7 +41,30 @@ from pathlib import Path
 R = Path(__file__).resolve().parents[2]
 ap = argparse.ArgumentParser()
 ap.add_argument("--require-swift", action="store_true")
+ap.add_argument("--public-source", action="store_true",
+                help="Run every available client check; report omitted private backend/pull-tool coverage explicitly")
 args = ap.parse_args()
+
+# Public releases omit the private intake and maintainer pull tool. Never synthesize
+# their behavior or count unavailable backend checks as passing client checks.
+PRIVATE_SOURCE_PATHS = ['bcd-logs/worker/worker.js', 'bcd-logs/worker/wrangler.toml', 'bcd-logs/worker/worker.test.mjs', 'tools/pull-logs.py']
+public_skips = []
+def public_skip(label):
+    public_skips.append(label)
+    print("SKIP unavailable private source: " + label)
+
+def private_source(relative):
+    path = R / relative
+    if args.public_source and relative in PRIVATE_SOURCE_PATHS and not path.is_file():
+        return None
+    return path.read_text()  # default mode remains strict, including missing files
+
+# Validate only private-source availability here; available client inputs remain mandatory.
+for private_path in PRIVATE_SOURCE_PATHS:
+    if private_source(private_path) is None:
+        public_skip(private_path + " omitted from public source")
+
+
 ok = True
 
 
@@ -48,8 +76,8 @@ def check(what, cond, detail=""):
 
 core = (R / "app/Madeira/LogUploadCore.swift").read_text()
 app = (R / "app/Madeira/LogUpload.swift").read_text()
-worker = (R / "bcd-logs/worker/worker.js").read_text()
-toml = (R / "bcd-logs/worker/wrangler.toml").read_text()
+worker = private_source("bcd-logs/worker/worker.js")
+toml = private_source("bcd-logs/worker/wrangler.toml")
 
 spec = importlib.util.spec_from_file_location("fixture", R / "tools/autotune-fixture.py")
 fx = importlib.util.module_from_spec(spec)
@@ -63,7 +91,11 @@ check("LogUploadCore's rules are SCRUB's, in its order",
       swift_rules)
 check("the app sends to the deployed intake with the intake header",
       'URL(string: "https://bcd.bcd-logs.workers.dev/v1/logs")' in app
-      and 'static let intake = "madeira-bcd/2"' in app and 'export const INTAKE = "madeira-bcd/2";' in worker)
+      and 'static let intake = "madeira-bcd/2"' in app)
+if worker is not None:
+    check("the Worker agrees with the client intake header", 'export const INTAKE = "madeira-bcd/2";' in worker)
+else:
+    public_skip("log intake header agreement")
 up = app[app.index("session.uploadTask(with: req, fromFile: gz)"):]
 check("the compressed copy is deleted as soon as the upload ends, sent or not",
       up.index("try? FileManager.default.removeItem(at: gz)") < up.index("if let error"))
@@ -90,20 +122,31 @@ for f in ("LogUpload.swift", "LogUploadCore.swift"):
     check(f"the Xcode project builds {f}", pbx.count(f"/* {f} in Sources */") == 2 and pbx.count(f"path = {f};") == 1)
 for f in ("app/Madeira/LogUpload.swift", "app/Madeira/LogUploadCore.swift", "bcd-logs/worker/worker.js",
           "bcd-logs/worker/wrangler.toml", "bcd-logs/worker/worker.test.mjs", "tools/pull-logs.py"):
-    check(f"{f} is marked FORK-ONLY", "FORK-ONLY" in (R / f).read_text()[:800])
-check("the Worker's R2 binding is its own bucket, with an hourly trim",
-      'bucket_name = "bcd-logs"' in toml and 'crons = ["17 * * * *"]' in toml and "macosvm" not in toml)
+    contents = private_source(f)
+    if contents is None:
+        public_skip(f + " license marker")
+    else:
+        check(f"{f} is marked FORK-ONLY", "FORK-ONLY" in contents[:800])
+if toml is not None:
+    check("the Worker's R2 binding is its own bucket, with an hourly trim",
+          'bucket_name = "bcd-logs"' in toml and 'crons = ["17 * * * *"]' in toml and "macosvm" not in toml)
+else:
+    public_skip('intake bucket binding and retention')
 CI = R / ".github/workflows/build-ipa.yml"
 if CI.exists():
     check("CI runs this check", "run: python3 tests/host/check-log-upload.py --require-swift" in CI.read_text())
 
 # ---- the Worker under node ---------------------------------------------------------------
-node = shutil.which("node") or str(Path.home() / "madeira-local/tools/node/bin/node")
-if Path(node).exists():
-    r = subprocess.run([node, "--test", str(R / "bcd-logs/worker/worker.test.mjs")], capture_output=True, text=True)
-    check("the intake Worker's tests pass under node", r.returncode == 0, (r.stdout + r.stderr)[-2000:])
+if worker is not None and (R / "bcd-logs/worker/worker.test.mjs").is_file():
+    node = shutil.which("node") or str(Path.home() / "madeira-local/tools/node/bin/node")
+    if Path(node).exists():
+        r = subprocess.run([node, "--test", str(R / "bcd-logs/worker/worker.test.mjs")], capture_output=True, text=True)
+        check("the intake Worker's tests pass under node", r.returncode == 0, (r.stdout + r.stderr)[-2000:])
+    else:
+        print("SKIP the Worker's node tests: no node")
+
 else:
-    print("SKIP the Worker's node tests: no node")
+    public_skip('intake Worker node tests')
 
 # ---- scrub and gzip, Swift against Python ---------------------------------------------
 corpus = [
@@ -234,6 +277,9 @@ else:
             check("an empty trailer adds nothing (the log's own end is kept as it was)", got == "line one\nline two", got[:200])
             check("a line that needs no scrub passes byte for byte, and the prefilter misses nothing a rule changes",
                   all(fx.scrub(l) == l for l in corpus if "Handled self" in l or l.startswith("[xp]") or l.startswith("self-")))
+
+if public_skips:
+    print("PUBLIC-SOURCE COVERAGE: available client checks ran (see Swift requirement result above); private backend/maintainer coverage NOT validated: " + "; ".join(public_skips))
 
 print("PASS: log upload" if ok else "FAILED: log upload")
 sys.exit(0 if ok else 1)
