@@ -1,4 +1,4 @@
-# Selected one-shot TEST lane. Only the first creation push of the exact branch may run; not native-validated.
+# Isolated TEST lane. Intentional repair pushes reuse this exact branch and its completed caches.
 name: BCD TEST IPA build-first (full suite pending)
 'on':
   push:
@@ -31,15 +31,16 @@ jobs:
         for path, expected in controlled.items():\n    assert hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()\
         \ == expected, 'Unexpected trigger-filter change: ' + path\nrecords = subprocess.check_output(['git', 'ls-tree', '-rz',\
         \ 'HEAD']).split(b'\\0')\nactual = b''.join(r + b'\\0' for r in records if r and r.split(b'\\t', 1)[1].decode() not\
-        \ in allowed)\nassert hashlib.sha256(actual).hexdigest() == 'a203452d652dfb2e8619e9d4019da8302a887c6a6864cb452fce55e3528fd365',\
+        \ in allowed)\nassert hashlib.sha256(actual).hexdigest() == '6fbf2f11494dba2c4a32a4033c657077eee39c64bce42a91a5e55cb7c249dbb5',\
         \ 'Native/source tree or submodule pins differ from the audited baseline'\nsubprocess.run(['git', 'diff', '--exit-code',\
         \ '--ignore-submodules=none'], check=True)\nsubmodules = subprocess.check_output(['git', 'submodule', 'status', '--recursive'],\
         \ text=True)\nassert all(line.startswith(' ') for line in submodules.splitlines()), 'Missing or mismatched submodule\
         \ checkout'\nwith open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:\n    out.write('## TEST IPA only: full suite\
-        \ pending\\n\\nThis workflow is a partial build lane, not full regression approval. Native source and pins match audited\
-        \ tree 6e86b8507da1bfb53dd1154f63f8c46dc76050d8. Last full regression run: 43073552781 FAILED; complete validation\
-        \ has not passed and no full-suite rerun is scheduled. Device testing has not run.\\n')\nprint('::warning::TEST IPA\
-        \ ONLY. Full suite pending. Phone/device validation has not run.')\nPY\n"
+        \ pending\\n\\nThis workflow is a partial build lane, not full regression approval. Exact source includes the reviewed\
+        \ host-test fixes and upstream-v653 display-shim restoration; all engine pins remain unchanged. Last full regression\
+        \ run: 43073552781 FAILED; complete validation has not passed and no full-suite rerun is scheduled. Device testing\
+        \ has not run.\\n')\nprint('::warning::TEST IPA ONLY. Full suite pending. Phone/device validation has not run.')\n\
+        PY\n"
     - name: Verify exact historical patch sources before UI and native builds
       run: 'python3 tests/host/check-overlay-base.py
 
@@ -60,6 +61,9 @@ jobs:
     - name: Compile GL presenter before engine builds
       run: xcrun --sdk iphoneos clang -arch arm64 -miphoneos-version-min=17.0 -fobjc-arc -fmodules -Wall -c app/Madeira/Winios/WiniosGL.m
         -o /tmp/WiniosGL.o
+    - name: Compile upstream display shim before engine builds
+      run: xcrun --sdk iphoneos clang -arch arm64 -miphoneos-version-min=17.0 -fobjc-arc -fmodules -Wall -c app/Madeira/IOSDisplayShim.m
+        -o /tmp/IOSDisplayShim.o
     - name: Build number
       id: bn
       shell: bash
@@ -1834,4 +1838,4 @@ jobs:
         if-no-files-found: warn
         retention-days: 7
     if: github.repository == 'arjuk95-dot/bcd-touch' && github.ref == 'refs/heads/wo-bcd-v653-test-first-004' && github.event_name
-      == 'push' && github.event.created == true && github.event.deleted == false
+      == 'push' && github.event.deleted == false

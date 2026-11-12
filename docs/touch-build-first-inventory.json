@@ -2,7 +2,7 @@
   "baseline_local_commit": "2b8c45cba26bd34783de41340e46e726d37c84f0",
   "baseline_remote_commit": "01aaaa5c187052db06352fa77a51b5c0d8944e2b",
   "baseline_tree": "6e86b8507da1bfb53dd1154f63f8c46dc76050d8",
-  "source_fingerprint_sha256": "a203452d652dfb2e8619e9d4019da8302a887c6a6864cb452fce55e3528fd365",
+  "source_fingerprint_sha256": "6fbf2f11494dba2c4a32a4033c657077eee39c64bce42a91a5e55cb7c249dbb5",
   "allowed_new_files": [
     ".github/workflows/touch-test-build-first.yml",
     "docs/touch-build-first-option.md",
@@ -20,14 +20,14 @@
     }
   },
   "launch_branch": "wo-bcd-v653-test-first-004",
-  "launch_guard": "github.repository == 'arjuk95-dot/bcd-touch' && github.ref == 'refs/heads/wo-bcd-v653-test-first-004' && github.event_name == 'push' && github.event.created == true && github.event.deleted == false",
+  "launch_guard": "github.repository == 'arjuk95-dot/bcd-touch' && github.ref == 'refs/heads/wo-bcd-v653-test-first-004' && github.event_name == 'push' && github.event.deleted == false",
   "baseline_workflow": ".github/workflows/touch-ipa.yml",
   "baseline_workflow_sha256": "ea3320b2cd0081eae01c9c768319cc25a6c32d97339d79243a9c22048d888340",
   "original_step_count": 746,
   "retained_original_steps": 304,
   "deferred_original_steps": 442,
-  "added_steps": 4,
-  "candidate_step_count": 308,
+  "added_steps": 5,
+  "candidate_step_count": 309,
   "checks_retained": 80,
   "checks_deferred": 441,
   "full_suite_run_id": 43073552781,
@@ -9090,5 +9090,12 @@
     "all_existing_conditions_preserved": true,
     "optional_required_cases_passed": 6,
     "original_typeerror_reproductions": 6
+  },
+  "display_shim_restoration": {
+    "upstream_commit": "c3c2d152fca4d491b703b910d112ab54299c36c1",
+    "path": "app/Madeira/IOSDisplayShim.m",
+    "sha256": "fe39f204198dc76f812c0ee742a531cee599861df5f71a1d7718943ebcb5dcce",
+    "failed_run_id": 43192691622,
+    "early_compile_step": "Compile upstream display shim before engine builds"
   }
 }

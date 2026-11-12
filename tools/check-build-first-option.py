@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Locally validate the selected one-shot TEST IPA workflow. Needs PyYAML.
+"""Locally validate the isolated TEST IPA workflow. Needs PyYAML.
 
 This does not run native code, dispatch CI, or certify the broad regression suite.
 """
@@ -28,12 +28,13 @@ RETAIN_CHECKS = {8, 9, 10, 25, 26, 27, 28, 33, 34, 68, 70, 72, 78, 79,
                  631, 645, 646, 678, 688, 729}
 ADDED = ["Require exact audited source and declare full suite pending",
          "Verify exact historical patch sources before UI and native builds",
+         "Compile upstream display shim before engine builds",
          "Mark IPA metadata as TEST with full suite pending",
          "Verify TEST markers and record partial validation only"]
 LAUNCH_BRANCH = "wo-bcd-v653-test-first-004"
 LAUNCH_GUARD = ("github.repository == 'arjuk95-dot/bcd-touch' && "
                 "github.ref == 'refs/heads/wo-bcd-v653-test-first-004' && "
-                "github.event_name == 'push' && github.event.created == true && "
+                "github.event_name == 'push' && "
                 "github.event.deleted == false")
 
 
@@ -70,7 +71,7 @@ def validate(candidate):
     actual = [s for s in steps if s.get("name") not in ADDED]
     assert actual == retained, "Retained recipes, conditions, caches, artifact inputs or ordering changed"
     assert [s["name"] for s in steps if s.get("name") in ADDED] == ADDED
-    assert len(actual) == 304 and len(steps) == 308
+    assert len(actual) == 304 and len(steps) == 309
     assert {s["id"] for s in original if "id" in s} == {s["id"] for s in steps if "id" in s}
     identifiers = {s["id"] for s in steps if "id" in s}
     for referenced in re.findall(r"steps\.([\w-]+)\.", json.dumps(candidate)):
@@ -80,8 +81,8 @@ def validate(candidate):
     assert steps[2]["run"] == ("python3 tests/host/check-overlay-base.py\n"
                                "python3 tests/host/check-overlay-base.py --verify-checkouts")
     positions = {s.get("name"): i for i, s in enumerate(steps)}
-    assert positions[ADDED[2]] + 1 == positions["Archive (unsigned)"]
-    assert positions["Prepare verified update for the existing BCD slot"] + 1 == positions[ADDED[3]]
+    assert positions[ADDED[3]] + 1 == positions["Archive (unsigned)"]
+    assert positions["Prepare verified update for the existing BCD slot"] + 1 == positions[ADDED[4]]
     added = {s["name"]: s for s in steps if s.get("name") in ADDED}
     guard = added[ADDED[0]]["run"]
     assert inventory["source_fingerprint_sha256"] in guard
@@ -93,6 +94,12 @@ def validate(candidate):
     for s in added.values():
         if "python3 - <<'PY'" in s["run"]:
             compile(python_body(s["run"]), s["name"], "exec")
+    assert added[ADDED[2]] == {"name": ADDED[2], "run": 'xcrun --sdk iphoneos clang -arch arm64 -miphoneos-version-min=17.0 -fobjc-arc -fmodules -Wall -c app/Madeira/IOSDisplayShim.m -o /tmp/IOSDisplayShim.o'}
+    assert positions[ADDED[2]] == positions["Compile GL presenter before engine builds"] + 1
+    assert positions[ADDED[2]] < positions["Check BCD's in-game layer"]
+    shim = ROOT / "app/Madeira/IOSDisplayShim.m"
+    assert hashlib.sha256(shim.read_bytes()).hexdigest() == 'fe39f204198dc76f812c0ee742a531cee599861df5f71a1d7718943ebcb5dcce', "Display shim differs from reviewed upstream v653"
+    assert len(re.findall(r"CAMetalLayer \*madeira_display_layer_for_hwnd\(void \*hwnd\) \{", shim.read_text())) == 1
     audit_other_workflows(inventory)
     return inventory, added
 
@@ -140,7 +147,7 @@ def receipt_tests(added):
         original = dict(CFBundleIdentifier="com.arjunkl.bcdtouch", CFBundleVersion="653",
                         CFBundleDisplayName="BCD Touch Lab", MadeiraCommit="test-source")
         plist.write_bytes(plistlib.dumps(original))
-        marker = python_body(added[ADDED[2]]["run"])
+        marker = python_body(added[ADDED[3]]["run"])
         subprocess.run(["python3", "-c", marker], cwd=root, check=True)
         marked = plistlib.loads(plist.read_bytes())
         assert all(marked[k] == v for k, v in original.items()), "Marker changed identity/version/source"
@@ -154,7 +161,7 @@ def receipt_tests(added):
             with zipfile.ZipFile(out / name, "w") as archive:
                 archive.writestr("Payload/Madeira.app/Info.plist", plistlib.dumps(data))
         env = dict(os.environ, GITHUB_SHA="test-source", GITHUB_STEP_SUMMARY=str(root / "summary.txt"))
-        receipt = python_body(added[ADDED[3]]["run"])
+        receipt = python_body(added[ADDED[4]]["run"])
         subprocess.run(["python3", "-c", receipt], cwd=root, env=env, check=True)
         data = json.loads((out / "TEST-FULL-SUITE-PENDING.json").read_text())
         assert data["full_suite"] == "pending" and data["phone_validation"] == "not_run"
@@ -173,7 +180,7 @@ def main():
     args = parser.parse_args()
     candidate = yaml.safe_load(args.candidate.read_text())
     inventory, added = validate(candidate)
-    # HEAD contains exactly the baseline plus the four reviewed option files.
+    # HEAD binds the baseline, reviewed source fixes, and isolated lane files.
     records = subprocess.check_output(["git", "ls-tree", "-rz", "HEAD"], cwd=ROOT).split(b"\0")
     excluded = set(inventory["allowed_new_files"]) | set(inventory["branch_exclusions"])
     raw = b"".join(r + b"\0" for r in records if r and r.split(b"\t", 1)[1].decode() not in excluded)
@@ -187,9 +194,10 @@ def main():
         "tests/host/dxmt_base.py", "tests/host/fexpatch_eval.py",
         "tests/host/overlay_base.py", "tests/host/check-overlay-base.py",
         "tests/host/bcd_frame_ring_test.c",
-        "tests/host/check-bcd-menu-items.py"}, "Unexpected production/source change"
+        "tests/host/check-bcd-menu-items.py",
+        "app/Madeira/IOSDisplayShim.m"}, "Unexpected production/source change"
     receipt_tests(added)
-    print("PASS: 304 retained source steps, 442 explicitly deferred, all 17 IDs and cache/recipe bodies preserved")
+    print("PASS: 304 retained source steps, 442 explicitly deferred, all 17 IDs and cache/recipe bodies preserved; upstream display shim restored and early compile required")
     print("PASS: selected trigger isolation, source fingerprint, shell syntax, TEST-marker/receipt fixtures and missing-marker rejection")
     print("NOT RUN: native Mac build, full regression suite, signed packaging or phone validation")
 

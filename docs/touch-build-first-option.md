@@ -1,4 +1,4 @@
-# Selected one-shot TEST IPA lane
+# Isolated TEST IPA lane
 
 Prepared for one intentional Mac build. Publication and runner startup must be
 verified before reporting the build as running.
@@ -19,7 +19,7 @@ unchanged. No failed gate was removed to hide
 that failure, and no full-suite success or phone validation is claimed.
 
 Avoiding 441 broad Check stages should remove substantial test work, but native
-compilation, retained gates, new-branch cache misses and queue time remain. No
+compilation, retained gates, cache misses and queue time remain. No
 precise completion-time estimate is justified. This lane does not launch a
 second full Mac build.
 
@@ -27,15 +27,16 @@ second full Mac build.
 
 - Historical-source fix: `2b8c45cba26bd34783de41340e46e726d37c84f0`.
 - Audited fixed tree: `6e86b8507da1bfb53dd1154f63f8c46dc76050d8`.
-- Unchanged production baseline: `01aaaa5c187052db06352fa77a51b5c0d8944e2b`.
+- Original integration baseline: `01aaaa5c187052db06352fa77a51b5c0d8944e2b`.
 - Existing full workflow: `.github/workflows/touch-ipa.yml`, unchanged.
 - TEST workflow: `.github/workflows/touch-test-build-first.yml`.
 - Original 746 steps: 304 retained and 442 deferred. Of 521 Check stages,
   80 remain and 441 are deferred. The remaining deferred step uploads the omitted
   auto-tune parity report. Both optional parity jobs are absent.
-- Four additions: exact-source guard, early historical-source regression/live
-  availability checks, TEST metadata, and verified partial-validation receipts.
-- Candidate total: 308 steps. LLVM setup moves from original step 225 to step 60.
+- Five additions: exact-source guard, early historical-source regression/live
+  availability checks, early upstream display-shim compile, TEST metadata, and
+  verified partial-validation receipts.
+- Candidate total: 309 steps. All 304 original retained recipes remain exact.
 
 `docs/touch-build-first-inventory.json` lists all 746 original steps individually,
 with retain/defer reason, script paths, condition, ID and exact recipe hash. It
@@ -44,9 +45,11 @@ hashes. Every retained original step keeps its relative order.
 
 ## What remains exact
 
-All production sources, submodule pins and build scripts remain unchanged. The
-historical-source fix changes four host-test helper/regression files. The
-follow-up adds the test-only reader scheduling correction described above. The early guard
+All submodule pins and engine build scripts remain unchanged. The one runtime
+correction restores IOSDisplayShim.m byte-for-byte to upstream v0.1.653, removing
+a duplicate helper left during integration. The historical-source fix changes
+four host-test helper/regression files. Other follow-ups correct the HUD reader
+scheduling and three menu-test argument orders described below. The early guard
 hashes every other Git tree record, excludes only the four option files and two
 controlled workflow filters, verifies those filter files' exact hashes, rejects
 tracked worktree changes, and requires complete matching recursive submodules.
@@ -116,39 +119,33 @@ receipt, provenance, catalog, GL provenance and log paths remain; the two TEST
 receipt files are added. No release, upload-to-third-party or installation step
 is introduced.
 
-## Exactly one intended launch
+## Controlled repair launch and cache reuse
 
 Target branch: `wo-bcd-v653-test-first-004`.
 
-Only this branch is in the new workflow's push filter. Its job additionally
-requires the exact repository/ref, event push, created=true and deleted=false.
-There is no manual, schedule, create or workflow_run trigger. Later ordinary
-pushes have created=false and cannot allocate another Mac runner. A separate
-non-cancelling concurrency group cannot cancel another workflow.
+Only this branch is in the TEST workflow's push filter. Its job additionally
+requires the exact repository/ref, push event and deleted=false. The previous
+creation-only requirement is removed so an intentional repair push can reuse
+the completed engine caches from failed run 43192691622. Every later push to
+this branch can run the TEST lane, so publish only a final reviewed source
+change when a new native build is needed. There is no manual, scheduled,
+create or workflow_run trigger. Non-cancelling concurrency prevents overlap
+within this branch without cancelling another workflow.
 
-GitHub documents the push payload's created/deleted booleans:
-https://docs.github.com/en/webhooks/webhook-events-and-payloads#push
+In this branch only, touch-checks.yml and opengl-checks.yml exclude this exact
+branch. Their jobs, paths and other events remain identical. The validator
+compares every retained recipe, branch exclusion and all other automatic
+workflow filters. Default and integration refs remain untouched.
 
-In this branch only, touch-checks.yml and opengl-checks.yml each gain the exact
-branch in branches-ignore. Their jobs, paths and other events remain identical.
-The validator removes only that new filter and compares the entire parsed
-workflow against the fixed baseline, then checks every other workflow's push
-branch filters. Full/preview/pipeline remain restricted to the integration branch;
-other native workflows target main/other named branches or manual invocation.
-The validator lives at tools/check-build-first-option.py, outside broad touch
-path filters, but runner isolation does not depend on path-diff assumptions.
+Publication plan: confirm the previous build is terminal and the branch still
+points to the expected reviewed parent; upload one reviewed repair commit;
+fast-forward the same branch with an expected-head lease. Verify exactly one
+Mac run for that final SHA. Do not recreate the branch, dispatch duplicate
+runs, broaden cache keys or bypass a failed write authorization.
 
-Publication plan: upload the reviewed objects/commit without moving existing
-refs; verify the target branch does not exist; create that new branch directly
-at the final reviewed commit. Do not create a seed branch and then update it,
-since that later push correctly fails the creation-only guard. Verify exactly
-one Mac build for the final SHA. If no push run appears, inspect the actual
-publication event/permissions; do not blindly repush, recreate the branch, add a
-manual dispatch or broaden the guard. Default/integration refs stay untouched.
-
-GitHub cache scope is unchanged: the new branch may read matching default-branch
-caches but not integration-branch-only caches. There is no sharing of unfinished
-job outputs and no cache-key broadening.
+All cache keys/paths/conditions stay unchanged. Reusing the same branch allows
+its completed caches to be restored. A hit remains a runtime observation,
+not a promise, and no unfinished job outputs are shared.
 
 ## Validation and outstanding work
 
@@ -201,3 +198,21 @@ condition/label call. These are host/script checks, not native or phone approval
 The exact source fingerprint now binds the corrected test as well. Branch 004
 launches one isolated replacement; no active run or existing ref is modified.
 Full regressions remain pending and phone validation remains not run.
+
+## Display-shim repair after run 43192691622
+
+The native engines, OpenGL/Vulkan staging, licensing and version gates passed.
+The final archive failed on duplicate `madeira_display_layer_for_hwnd` definitions
+in IOSDisplayShim.m. Integration had retained the fork's obsolete helper beside
+upstream's replacement. Removing only the old ten-line block restores the whole
+file byte-for-byte to upstream c3c2d152fca4d491b703b910d112ab54299c36c1 (v0.1.653).
+The local validator binds that file hash and requires exactly one definition.
+A new iPhone-SDK compile immediately after the existing GL presenter compile
+will catch this class of error before UI checks or engine builds. No touch,
+input, save-data or layout code changes in this repair.
+
+The diagnostic artifact confirms the host-tools recipe's nonexistent `__tools__`
+target fell back to building full host Wine, taking 42m43. That optimization is
+not included here: preserving its now-completed cache is the narrowest route.
+Full regression and phone validation remain pending. No IPA was produced by
+the failed run, and completed engine builds do not imply device capability.
