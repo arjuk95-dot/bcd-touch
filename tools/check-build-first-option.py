@@ -30,9 +30,9 @@ ADDED = ["Require exact audited source and declare full suite pending",
          "Verify exact historical patch sources before UI and native builds",
          "Mark IPA metadata as TEST with full suite pending",
          "Verify TEST markers and record partial validation only"]
-LAUNCH_BRANCH = "wo-bcd-v653-test-first-003"
+LAUNCH_BRANCH = "wo-bcd-v653-test-first-004"
 LAUNCH_GUARD = ("github.repository == 'arjuk95-dot/bcd-touch' && "
-                "github.ref == 'refs/heads/wo-bcd-v653-test-first-003' && "
+                "github.ref == 'refs/heads/wo-bcd-v653-test-first-004' && "
                 "github.event_name == 'push' && github.event.created == true && "
                 "github.event.deleted == false")
 
@@ -186,7 +186,8 @@ def main():
     assert set(source_fix) - excluded == {
         "tests/host/dxmt_base.py", "tests/host/fexpatch_eval.py",
         "tests/host/overlay_base.py", "tests/host/check-overlay-base.py",
-        "tests/host/bcd_frame_ring_test.c"}, "Unexpected production/source change"
+        "tests/host/bcd_frame_ring_test.c",
+        "tests/host/check-bcd-menu-items.py"}, "Unexpected production/source change"
     receipt_tests(added)
     print("PASS: 304 retained source steps, 442 explicitly deferred, all 17 IDs and cache/recipe bodies preserved")
     print("PASS: selected trigger isolation, source fingerprint, shell syntax, TEST-marker/receipt fixtures and missing-marker rejection")

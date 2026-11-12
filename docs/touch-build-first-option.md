@@ -118,7 +118,7 @@ is introduced.
 
 ## Exactly one intended launch
 
-Target branch: `wo-bcd-v653-test-first-003`.
+Target branch: `wo-bcd-v653-test-first-004`.
 
 Only this branch is in the new workflow's push filter. Its job additionally
 requires the exact repository/ref, event push, created=true and deleted=false.
@@ -185,3 +185,19 @@ submodule pins, the HUD test correction, every retained build/check step,
 and TEST/full-suite-pending markers are unchanged from commit
 `3f8ac7d76761110a7508081f28a2f8dfb02635f0`.
 No prior run, branch, default-branch file, or production source is modified.
+
+## Menu harness correction after run 43186580068
+
+The Mac run passed the corrected HUD test, preserved touch controls, OpenGL
+checks, and the menu's 101 behavior checks, gate sanitizers and six iPhone
+source compiles. It stopped on a Python TypeError in an optional unbuilt-Wine
+reporting path before engine compilation. Three calls had reversed the existing
+`check(condition, label)` arguments. This revision corrects only their argument
+order; all conditions, assertions, native/runtime files and submodule pins remain
+unchanged. All six optional/required fallback cases pass locally and the six
+original cases reproduce the TypeError. A read-only audit of all 341 Python
+scripts directly invoked by the retained workflow found no other reversed
+condition/label call. These are host/script checks, not native or phone approval.
+The exact source fingerprint now binds the corrected test as well. Branch 004
+launches one isolated replacement; no active run or existing ref is modified.
+Full regressions remain pending and phone validation remains not run.
