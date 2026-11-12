@@ -3,7 +3,7 @@ name: BCD TEST IPA build-first (full suite pending)
 'on':
   push:
     branches:
-    - wo-bcd-v653-test-first-002
+    - wo-bcd-v653-test-first-003
 concurrency:
   group: bcd-touch-build-first-test-${{ github.ref }}
   cancel-in-progress: false
@@ -27,7 +27,7 @@ jobs:
       run: "set -euo pipefail\npython3 - <<'PY'\nimport hashlib, os, pathlib, subprocess\nallowed = ['.github/workflows/opengl-checks.yml',\
         \ '.github/workflows/touch-checks.yml', '.github/workflows/touch-test-build-first.yml', 'docs/touch-build-first-inventory.json',\
         \ 'docs/touch-build-first-option.md', 'tools/check-build-first-option.py']\ncontrolled = {'.github/workflows/touch-checks.yml':\
-        \ '2e77de7780088fbb223bc0040477eff9805960ac087c6f9eb80e6de129c68546', '.github/workflows/opengl-checks.yml': '9f1ffacc8b50f6cbbe21e9733adc67e4f9de1f2beb701e75fa5e84f0e1a6f322'}\n\
+        \ 'f94c78c3e9562bae7dbeb8cd208ae90ba9a19774a1a6a83a9306c56748b6d037', '.github/workflows/opengl-checks.yml': 'e619e32a301b89a86927ba7edd0d756854703344a5b2bdb7b46b111f92d75351'}\n\
         for path, expected in controlled.items():\n    assert hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()\
         \ == expected, 'Unexpected trigger-filter change: ' + path\nrecords = subprocess.check_output(['git', 'ls-tree', '-rz',\
         \ 'HEAD']).split(b'\\0')\nactual = b''.join(r + b'\\0' for r in records if r and r.split(b'\\t', 1)[1].decode() not\
@@ -1833,5 +1833,5 @@ jobs:
           build-out/TEST-FULL-SUITE-PENDING.txt'
         if-no-files-found: warn
         retention-days: 7
-    if: github.repository == 'arjuk95-dot/bcd-touch' && github.ref == 'refs/heads/wo-bcd-v653-test-first-002' && github.event_name
+    if: github.repository == 'arjuk95-dot/bcd-touch' && github.ref == 'refs/heads/wo-bcd-v653-test-first-003' && github.event_name
       == 'push' && github.event.created == true && github.event.deleted == false

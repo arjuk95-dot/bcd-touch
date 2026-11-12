@@ -118,7 +118,7 @@ is introduced.
 
 ## Exactly one intended launch
 
-Target branch: `wo-bcd-v653-test-first-002`.
+Target branch: `wo-bcd-v653-test-first-003`.
 
 Only this branch is in the new workflow's push filter. Its job additionally
 requires the exact repository/ref, event push, created=true and deleted=false.
@@ -172,3 +172,16 @@ the late cursor initialization or removing the final drain each failed 5/5
 negative runs. These are Linux host results, not Mac or phone validation.
 LeakSanitizer was disabled because the local ptraced environment cannot run it;
 ASan, UBSan and TSan remained enabled. Native CI sanitizer settings are unchanged.
+
+## Fresh launch after stalled GitHub queue (2026-11-12)
+
+Run 43097430578 for the prior `wo-bcd-v653-test-first-002` branch remained
+queued with no jobs after approximately twelve hours. GitHub's signed-in
+web UI returned `Failed to cancel workflow`. The owner authorized one fresh
+build despite the possibility that the stale run may eventually start too.
+This launch changes only the exact one-shot branch references, their
+validated suppression hashes, and this record. App/runtime sources,
+submodule pins, the HUD test correction, every retained build/check step,
+and TEST/full-suite-pending markers are unchanged from commit
+`3f8ac7d76761110a7508081f28a2f8dfb02635f0`.
+No prior run, branch, default-branch file, or production source is modified.

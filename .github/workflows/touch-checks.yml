@@ -44,7 +44,7 @@ jobs:
   workflow_dispatch: {}
   push:
     branches-ignore:
-    - wo-bcd-v653-test-first-002
+    - wo-bcd-v653-test-first-003
     paths:
     - app/**
     - tools/touch-packs/**

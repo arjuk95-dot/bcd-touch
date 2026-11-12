@@ -30,9 +30,9 @@ ADDED = ["Require exact audited source and declare full suite pending",
          "Verify exact historical patch sources before UI and native builds",
          "Mark IPA metadata as TEST with full suite pending",
          "Verify TEST markers and record partial validation only"]
-LAUNCH_BRANCH = "wo-bcd-v653-test-first-002"
+LAUNCH_BRANCH = "wo-bcd-v653-test-first-003"
 LAUNCH_GUARD = ("github.repository == 'arjuk95-dot/bcd-touch' && "
-                "github.ref == 'refs/heads/wo-bcd-v653-test-first-002' && "
+                "github.ref == 'refs/heads/wo-bcd-v653-test-first-003' && "
                 "github.event_name == 'push' && github.event.created == true && "
                 "github.event.deleted == false")
 
