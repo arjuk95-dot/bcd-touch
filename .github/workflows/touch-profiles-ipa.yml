@@ -1,4 +1,4 @@
-# Build655 retry: separate generic cache fixtures from approved-default routing.
+# Build655 fresh dispatch after GitHub hosted-runner acquisition failure; unchanged app-only gates.
 name: BCD touch app-only update with retained v653 native runtime
 'on':
   push:
