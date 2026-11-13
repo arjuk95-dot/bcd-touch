@@ -27,3 +27,8 @@ hover-only inspection, and must never replace approved safe pointer inspection.
 Portable test: cc -std=c11 -Wall -Wextra -Werror
  tests/host/table_native_utilities_checks.c -o /tmp/table-native && /tmp/table-native
 Native Swift/UIKit/guest runtime execution remains untested.
+
+## Exact STS2 project input recovered
+Full retained PCK SHA256 c60f672ee7804e6aefa1e19a582fa1c80b126a7b0eef4d084d3abf110df2eab7 (1990705700 bytes) matches transferred manifest. Its project.binary at offset1989151520,length24693 hashes88bc2e4f6a2627204b20a714cb8746a269c009e48255dcfc7a0eaef9503d2227. Exact Godot InputEventJoypadButton device=-1 records establish east1=B,select4=View. Combined with native IL these enable only Cancel/Map. Installed proof reads the bounded project block plus exact code DLL, rather than rehashing2GB of unrelated assets. Current remaps and physical runtime still require device testing.
+
+SKALD exact managed filename is SKALDAssembly.dll (1043968 bytes), not Assembly-CSharp.dll. Startup input asset is409276bytes. Runtime utility verifier path corrected.

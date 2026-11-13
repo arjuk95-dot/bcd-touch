@@ -117,6 +117,7 @@ final class BCDPackView: UIView {
         var slideFired = false
         var didDrag = false
         var sulfurSprint = BCDSulfurSprintState()
+        var sideMovement = BCDChroniclesMovementState()
         var surfaceTap: BCDPackSurfaceTap? = nil
     }
     private var pack: BCDControlPack?
@@ -482,7 +483,12 @@ final class BCDPackView: UIView {
         if (role == "look" || role == "fireAim") && pack.lookMode != "relativeMouse" {
             GamepadInput.shared.packLook(owner: finger.owner, phase: 0, time: time, receivedAt: receivedAt)
         }
-        if role == "move" { GamepadInput.shared.packTouch(owner: finger.owner, value: TouchPadAction.sample("LS")) }
+        if role == "move" {
+            GamepadInput.shared.packTouch(owner: finger.owner, value: TouchPadAction.sample("LS"))
+            if pack.id == "chronicles-reviewed-controller-v6" {
+                _=BCDChroniclesMovementBegin(&finger.sideMovement,Double(point.x),Double(point.y),Double(max(1,unit*CGFloat(control?.radius ?? 0.14))))
+            }
+        }
         if let control, let binding = action(control.action), role == "button" || role == "fireAim" {
             if binding.behavior == "tap" { pulse(binding) }
             else if binding.behavior == "hold" { send(binding, owner: finger.owner) }
@@ -558,7 +564,12 @@ final class BCDPackView: UIView {
             updateSlide(&finger, at: point)
         } else if finger.role == "move" {
             let radius = max(CGFloat(1), unit * CGFloat(finger.control?.radius ?? 0.14))
-            GamepadInput.shared.packTouch(owner: finger.owner, value: TouchPadAction.sample("LS", x: Double((point.x - finger.start.x) / radius), y: Double((finger.start.y - point.y) / radius)))
+            if pack?.id == "chronicles-reviewed-controller-v6" {
+                let output=BCDChroniclesMovementUpdate(&finger.sideMovement,Double(point.x),Double(point.y))
+                GamepadInput.shared.packTouch(owner:finger.owner,value:TouchPadAction.sample("LS",x:Double(output.horizontal),y:output.crouch != 0 ? -1:0))
+            } else {
+                GamepadInput.shared.packTouch(owner: finger.owner, value: TouchPadAction.sample("LS", x: Double((point.x - finger.start.x) / radius), y: Double((finger.start.y - point.y) / radius)))
+            }
         } else if finger.role == "radial", !radialActions.isEmpty {
             let previous = finger.selection
             let center=finger.radialCenter ?? finger.start

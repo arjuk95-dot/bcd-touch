@@ -176,7 +176,11 @@ struct BCDTableUtilityRail: View {
                 Button {BCDTablePad.shared.pulse(BCDTableJournal)} label: {Label("Journal",systemImage:"book")}
             }
             if store.tableSurface == "spire2" {
-                Button {store.tableCancelSequence += 1} label: {Label("Cancel",systemImage:"xmark")}
+                Button {
+                    if store.spireUtilitiesVerified && BCDTableInputActivity.contacts == 0 {BCDTablePad.shared.pulse(BCDTableCancel)}
+                    else {store.tableCancelSequence += 1}
+                } label: {Label("Cancel",systemImage:"xmark")}
+                if store.spireUtilitiesVerified {Button {BCDTablePad.shared.pulse(BCDTableMap)} label: {Label("Map",systemImage:"map")}}
             }
         }.font(.caption).buttonStyle(.bordered).padding(6)
             .background(.ultraThinMaterial,in:RoundedRectangle(cornerRadius:14))
@@ -279,10 +283,14 @@ struct BCDInscryptionExploreControls:View {
     }
     func pulse(_ utility:BCDTableNativeUtility) {
         let store=BCDPackStore.shared
-        guard store.enabled,store.tableSurface == "skald",store.skaldUtilitiesVerified,
+        let skald=store.tableSurface == "skald"
+        let verified=skald ? store.skaldUtilitiesVerified : (store.tableSurface == "spire2" && store.spireUtilitiesVerified)
+        guard store.enabled,verified,
               !LibraryModel.shared.blocksGameplayTouch,BCDTableInputActivity.contacts == 0,
               UIApplication.shared.applicationState == .active,BCDPackFocus.shared.refresh() else{return}
-        let mask=BCDTableNativeButton(BCDTableSkald,utility,"a9929c9e7e7f06829692ae7c23df2c147d64ea050bdf18649adbd44e1fbcd075","faca117d2bcfacc1ea980de701253fff20b8c7fb93e01b7033a1f3820697f6a8",0)
+        let mask=BCDTableNativeButton(skald ? BCDTableSkald:BCDTableSTS2,utility,
+            skald ? "a9929c9e7e7f06829692ae7c23df2c147d64ea050bdf18649adbd44e1fbcd075":"0861bfa1df347538d932f22d580e75420f08082792eb914e53b4882764acdbe9",
+            skald ? "faca117d2bcfacc1ea980de701253fff20b8c7fb93e01b7033a1f3820697f6a8":"88bc2e4f6a2627204b20a714cb8746a269c009e48255dcfc7a0eaef9503d2227",0)
         guard mask != 0 else{return}
         let owner=UUID();owners.insert(owner)
         GamepadInput.shared.configurePack(enabled:true,accepting:true,calibration:BCDMouseJoystick.Calibration())

@@ -66,11 +66,32 @@ enum BCDSkaldUtilityVerifier {
               (try? executable.resourceValues(forKeys:[.isRegularFileKey]).isRegularFile) == true else{return false}
         let root=executable.deletingLastPathComponent().resolvingSymlinksInPath()
         let data=root.appendingPathComponent(executable.deletingPathExtension().lastPathComponent+"_Data")
-        let specs=[("Managed/Assembly-CSharp.dll","a9929c9e7e7f06829692ae7c23df2c147d64ea050bdf18649adbd44e1fbcd075"),("globalgamemanagers","faca117d2bcfacc1ea980de701253fff20b8c7fb93e01b7033a1f3820697f6a8")]
+        let specs=[("Managed/SKALDAssembly.dll","a9929c9e7e7f06829692ae7c23df2c147d64ea050bdf18649adbd44e1fbcd075"),("globalgamemanagers","faca117d2bcfacc1ea980de701253fff20b8c7fb93e01b7033a1f3820697f6a8")]
         return specs.allSatisfy { path,hash in
             let file=data.appendingPathComponent(path)
             guard let size=try? file.resourceValues(forKeys:[.fileSizeKey]).fileSize else{return false}
             return BCDSulfurInstalledVerifier.matches(file:file,within:root,expectedSize:size,sha256:hash)
         }
+    }
+}
+
+/// Only bytes carrying input definitions are read from the large PCK, not all
+/// game assets. Both the PCK size and exact project block location are pinned.
+enum BCDSpireUtilityVerifier {
+    static func verify(_ executable:URL?) -> Bool {
+        guard let executable,executable.lastPathComponent.lowercased() == "slaythespire2.exe" else{return false}
+        let root=executable.deletingLastPathComponent().resolvingSymlinksInPath()
+        let dll=root.appendingPathComponent("data_sts2_windows_x86_64/sts2.dll")
+        guard BCDSulfurInstalledVerifier.matches(file:dll,within:root,expectedSize:9757184,sha256:"0861bfa1df347538d932f22d580e75420f08082792eb914e53b4882764acdbe9") else{return false}
+        let pck=root.appendingPathComponent("SlayTheSpire2.pck").resolvingSymlinksInPath()
+        guard pck.path.hasPrefix(root.path+"/"),
+              let info=try? pck.resourceValues(forKeys:[.isRegularFileKey,.fileSizeKey]),info.isRegularFile == true,info.fileSize == 1990705700,
+              let f=try? FileHandle(forReadingFrom:pck) else{return false}
+        defer {try? f.close()}
+        do {
+            try f.seek(toOffset:1989151520)
+            guard let bytes=try f.read(upToCount:24693),bytes.count == 24693 else{return false}
+            return SHA256.hash(data:bytes).map {String(format:"%02x",$0)}.joined() == "88bc2e4f6a2627204b20a714cb8746a269c009e48255dcfc7a0eaef9503d2227"
+        } catch {return false}
     }
 }

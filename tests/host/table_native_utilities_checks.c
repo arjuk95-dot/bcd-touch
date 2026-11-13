@@ -12,6 +12,14 @@ int main(void) {
   assert(!BCDTableNativeButton(BCDTableSkald,u,0,i,1));
  }
  assert(!BCDTableNativeButton(BCDTableSkald,BCDTableInventory,c,i,0));
+ const char *sc="0861bfa1df347538d932f22d580e75420f08082792eb914e53b4882764acdbe9";
+ const char *si="88bc2e4f6a2627204b20a714cb8746a269c009e48255dcfc7a0eaef9503d2227";
+ for(int u=0;u<7;u++) {
+   assert(BCDTableNativeButton(BCDTableSTS2,u,sc,si,0)==(u==BCDTableCancel?0x2000:u==BCDTableMap?0x20:0));
+   assert(!BCDTableNativeButton(BCDTableSTS2,u,"bad",si,0));
+   assert(!BCDTableNativeButton(BCDTableSTS2,u,sc,"bad",0));
+ }
+ assert(BCDTableNativeButton(BCDTableSTS2,BCDTableMap,"0861bfa1df347538d932f22d580e75420f08082792eb914e53b4882764acdbe9","88bc2e4f6a2627204b20a714cb8746a269c009e48255dcfc7a0eaef9503d2227",0)==0x20);
  assert(!BCDTableNativeButton(99,BCDTableSelect,c,i,1));
  assert(!BCDTableNativeButton(BCDTableSkald,99,c,i,1));
 }

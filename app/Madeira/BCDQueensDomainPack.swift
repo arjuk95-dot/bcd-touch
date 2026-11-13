@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import Foundation
 
-/// Bindings verified against shipped v1.01.03 DefaultInput.ini; not inferred from genre.
+/// Bindings verified against shipped v1.01.03 DefaultInput.ini and custom DefaultBindings_DA; not inferred from genre.
 enum BCDQueensDomainPack {
     static func matches(_ identity: BCDControlPack.Identity) -> Bool {
         let executable = identity.executable.lowercased().replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "’", with: "").replacingOccurrences(of: "'", with: "")
@@ -23,12 +23,13 @@ enum BCDQueensDomainPack {
             ("next-dagger","Next dagger","arrow.left","D←","tap"),
             ("next-weapon","Next weapon","arrow.right","D→","tap"),
             ("equipment","Equipment","bag","View","tap"),
+            ("run","Run","figure.run","L3","tap"),
             ("pause","Pause","pause","Menu","tap")
         ]
         var actions = definitions.map { id,label,icon,output,behavior in
             BCDControlPack.Action(id:id,label:label,icon:icon,output:output,behavior:behavior,evidence:"shipped-input",contexts:["onFoot"])
         }
-        var unresolved = ["Run has no shipped controller binding; no invented sprint latch.","Phone gameplay and simultaneous controller/mouse look still require testing."]
+        var unresolved = ["Custom bindings default to L3 tap-to-run. Run is available in the radial; automatic forward latch awaits verified stop/reset behavior.","Phone gameplay and simultaneous controller/mouse look still require testing."]
         // Only caller-verified personal controller remaps are accepted. Never inject keyboard J.
         for index in actions.indices {
             if let output = bindings[actions[index].id], BCDControlPack.padOutputs.contains(output), !["LS","RS"].contains(output), actions[index].id != "move" {
@@ -40,7 +41,7 @@ enum BCDQueensDomainPack {
             actions.append(.init(id:"journal",label:"Journal",icon:"book",output:journal,behavior:"tap",evidence:"verified-remaps",contexts:["onFoot"]))
             gestures.append(.init(kind:"twoFingerDoubleTap",action:"journal"))
         } else { unresolved.append("Journal defaults to J with no controller binding. Double tap remains disabled until a verified controller remap exists.") }
-        let radial=["use-item","ultra","throw-dagger","next-item","last-item","next-dagger","next-weapon"]
+        let radial=["use-item","ultra","throw-dagger","next-item","last-item","next-dagger","next-weapon","run"]
         func layout() -> BCDControlPack.Layout {
             func c(_ id:String,_ role:String,_ x:Double,_ y:Double,_ r:Double) -> BCDControlPack.Control {
                 .init(id:id,action:id,role:role,x:x,y:y,radius:r,hitRadius:r,opacity:0.7,labelPlacement:"inside")
@@ -58,7 +59,7 @@ enum BCDQueensDomainPack {
             ],movementRect:.init(x:0,y:0.25,width:0.42,height:0.75))
         }
         return .init(version:6,id:"queens-domain-v6",title:"Queen's Domain",identity:identity,inputMode:"controller",aim:.init(),actions:actions,phone:layout(),pad:layout(),gestures:gestures,radial:radial,contexts:["onFoot"],evidence:[
-            .init(id:"shipped-input",source:"Queen's Domain v1.01.03 shipped DefaultInput.ini",detail:"Verified locally against PAK entry SHA1 d4e7a3684b94a91d144903de3c1a6da3d0838197. Status=Back; Journal=J/controller None; no Map action. Primary RT, secondary LT, jump A, interact X, item B, ultra Y, dagger LB, wind dash RB. Movement left stick; camera mouse. Run has no controller binding."),
+            .init(id:"shipped-input",source:"Queen's Domain v1.01.03 shipped DefaultInput.ini",detail:"Verified locally against PAK entry SHA1 d4e7a3684b94a91d144903de3c1a6da3d0838197. Status=Back; Journal=J/controller None; no Map action. Primary RT, secondary LT, jump A, interact X, item B, ultra Y, dagger LB, wind dash RB. Movement left stick; camera mouse. Custom DefaultBindings_DA overrides Run to Gamepad_LeftThumbstick (L3); Journal remains None."),
             .init(id:"verified-remaps",source:"Caller-verified personal controller bindings",detail:"Optional remaps must come from actual game configuration; absent mappings retain shipped defaults. Journal is enabled only with a verified controller remap.")
         ],unresolved:unresolved,lookMode:"relativeMouse")
     }

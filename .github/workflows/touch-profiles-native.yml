@@ -28,11 +28,4 @@ jobs:
         path: touch-evidence
         retention-days: 7
 'on':
-  push:
-    branches:
-    - wo-bcd-profiles-native-001
-    paths:
-    - app/**
-    - tests/**
-    - tools/touch-packs/**
-    - packs/**
+  workflow_dispatch: {}

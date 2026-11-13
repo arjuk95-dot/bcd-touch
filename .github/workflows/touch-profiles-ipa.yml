@@ -1,4 +1,4 @@
-name: BCD approved profiles TEST IPA
+name: BCD full approved batch validation and TEST IPA
 'on':
   push:
     branches:
@@ -24,28 +24,17 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - name: Require exact native-validated source before spending engine build time
-      run: 'python3 - <<''CHECK''
-
-        import json,subprocess,urllib.request
-
-        sha=''c95ea6b34947cd23ae82d8e70c72eefa262740d5''
-
-        r=json.load(urllib.request.urlopen(''https://api.github.com/repos/arjuk95-dot/bcd-touch/actions/runs/43385855503'',timeout=30))
-
-        assert r[''head_sha'']==sha and r[''conclusion'']==''success''
-
-        changed=subprocess.check_output([''git'',''diff'',''--name-only'',sha,''HEAD''],text=True).splitlines()
-
-        assert set(changed)<=set([''.github/workflows/touch-profiles-native.yml'',''.github/workflows/touch-profiles-ipa.yml'']),changed
-
-        subprocess.run([''git'',''diff'',''--exit-code'',''--ignore-submodules=none''],check=True)
-
+    - name: Verify clean source before combined native validation and build
+      run: 'git diff --exit-code --ignore-submodules=none
+    
+        python3 - <<''CHECK''
+    
+        import subprocess
+    
         assert all(s.startswith('' '') for s in subprocess.check_output([''git'',''submodule'',''status'',''--recursive''],text=True).splitlines())
-
-        print(''Native model/UIKit/renderer passed at exact source. Full regression and phone testing still pending. TEST
-        IPA only.'')
-
+    
+        print(''One combined source validation and TEST IPA build. Phone testing still required.'')
+    
         CHECK'
     - name: Verify exact historical patch sources before UI and native builds
       run: 'python3 tests/host/check-overlay-base.py
@@ -94,6 +83,14 @@ jobs:
         python3 tests/host/check-x86-entry-code.py
 
         python3 tests/opengl/check-game-setting.py'
+    - name: Validate production touch renderer and essential interaction ownership
+      run: python3 tools/touch-packs/simulator-preview.py
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: approved-profile-native-evidence
+        path: touch-evidence
+        retention-days: 7
     - name: Check control presets
       run: python3 tests/host/check-control-presets.py
     - name: Check preview build cache correctness

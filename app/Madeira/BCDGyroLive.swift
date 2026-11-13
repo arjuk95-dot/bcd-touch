@@ -95,7 +95,7 @@ final class BCDGyroLive: @unchecked Sendable {
         if observers.isEmpty { appActive = UIApplication.shared.applicationState == .active }
         let playing = library.current != nil && !library.desktopHome && !library.launching && !library.menu && appActive
         let store=BCDPackStore.shared
-        let pointerSurface = store.enabled && (!store.tableSurface.isEmpty || (store.pack?.id.hasPrefix("sulfur") == true && store.context == "inventory"))
+        let pointerSurface = store.enabled && (!store.tableSurface.isEmpty || store.pack?.lookMode == "none" || (store.pack?.id.hasPrefix("sulfur") == true && store.context == "inventory"))
         let on = wanted.isOn && playing && entry != nil && !pointerSurface
         let wasStick = Self.stickActive
         lock.lock()

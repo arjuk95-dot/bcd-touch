@@ -12,7 +12,7 @@ func checkSulfurInstalledVerifier() throws {
     assert(!BCDSkaldUtilityVerifier.verify(skald), "Missing installed proofs must disable native utilities")
     let data=root.appendingPathComponent("SKALD_Data/Managed")
     try manager.createDirectory(at:data,withIntermediateDirectories:true)
-    try Data("not reviewed assembly".utf8).write(to:data.appendingPathComponent("Assembly-CSharp.dll"))
+    try Data("not reviewed assembly".utf8).write(to:data.appendingPathComponent("SKALDAssembly.dll"))
     try Data("not reviewed inputs".utf8).write(to:data.deletingLastPathComponent().appendingPathComponent("globalgamemanagers"))
     assert(!BCDSkaldUtilityVerifier.verify(skald), "Unreviewed exact files must fail closed")
     let file = root.appendingPathComponent("fixture.bin")

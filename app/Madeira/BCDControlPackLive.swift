@@ -58,8 +58,9 @@ import UniformTypeIdentifiers
     @Published var tableInspectOnly=false
     @Published var tableCancelSequence=0
     @Published var tableSurface = ""
-    var usesController:Bool {pack?.inputMode == "controller" || tableSurface == "skald"}
+    var usesController:Bool {pack?.inputMode == "controller" || tableSurface == "skald" || tableSurface == "spire2"}
     @Published var skaldUtilitiesVerified=false
+    @Published var spireUtilitiesVerified=false
     var hasSurface: Bool { pack != nil || !tableSurface.isEmpty }
     func tableKind(_ entry: LibraryEntry) -> String {
         let name=entry.launchRelativePath.lowercased()
@@ -175,7 +176,7 @@ import UniformTypeIdentifiers
         let genre = BCDPackCatalog.genres.contains { $0.0 == proposed } ? proposed : "third-person"
         let choice = authoringChoice(entry, key: "mode")
         let mode = choice == "keyboardMouse" || (choice == "auto" && req.requirements["mode"]?.hasPrefix("keyboardMouse") == true) ? "keyboardMouse" : "controller"
-        let preset = (try? BCDSulfurPack.make(identity:req.identity)) ?? (BCDQueensDomainPack.matches(req.identity) ? BCDQueensDomainPack.make(identity:req.identity) : BCDNoitaPack.matches(req.identity) ? BCDNoitaPack.make(identity:req.identity,bindings:req.bindings) : BCDPackAuthoring.preset(identity: req.identity, title: entry.title, genre: genre, mode: mode))
+        let preset = (try? BCDSulfurPack.make(identity:req.identity)) ?? (try? BCDDreadPack.make(identity:req.identity)) ?? (try? BCDChroniclesPack.make(identity:req.identity,bindings:req.bindings)) ?? (BCDQueensDomainPack.matches(req.identity) ? BCDQueensDomainPack.make(identity:req.identity) : BCDNoitaPack.matches(req.identity) ? BCDNoitaPack.make(identity:req.identity,bindings:req.bindings) : BCDPackAuthoring.preset(identity: req.identity, title: entry.title, genre: genre, mode: mode))
         do {
             try preset.validate(for: req.identity)
             let key = identityKey(entry)
@@ -229,7 +230,7 @@ import UniformTypeIdentifiers
         let wolf = entry.title.localizedCaseInsensitiveContains("Chronicles of the Wolf")
         let dread = entry.title.localizedCaseInsensitiveContains("Dread Delusion")
         let genre = authoringChoice(entry, key: "genre"), mode = authoringChoice(entry, key: "mode")
-        return Request(identity: identity, title: entry.title, bindings: bindings, requirements: ["phone":"iPhone 16 Pro Max landscape safe area", "pad":"iPad landscape independent reach", "hud":"BLACK thin outlines; reserve continuous swipe rectangle first", "ownership":"touch-down until release", "genre":genre == "auto" ? (wolf ? "side-scroller" : (dread ? "first-person" : "identify from game/bindings")) : genre, "packVersion":"3", "inputMode":mode, "mode":mode != "auto" ? mode : wolf && !bindings.isEmpty ? "keyboardMouse using actual named key bindings in config; numeric controller mapping unresolved. Direction hold buttons low left, frequent attack/jump right, occasional actions peripheral/radial. No LS, RS or fireAim outputs." : "prefer controller; unresolved meanings labelled by actual output"])
+        return Request(identity: identity, title: entry.title, bindings: bindings, requirements: ["phone":"iPhone 16 Pro Max landscape safe area", "pad":"iPad landscape independent reach", "hud":"BLACK thin outlines; reserve continuous swipe rectangle first", "ownership":"touch-down until release", "genre":genre == "auto" ? (wolf ? "side-scroller" : (dread ? "first-person" : "identify from game/bindings")) : genre, "packVersion":"3", "inputMode":mode, "mode":mode != "auto" ? mode : "prefer verified native controller bindings; only camera swipe uses mouse. Do not infer numeric controller action mappings from saved config. Preserve non-latching crouch and existing personal controls."])
     }
     func prepare(_ entry: LibraryEntry, regenerate: Bool = false) {
         guard entry.desktop != true else { return }
@@ -249,9 +250,9 @@ import UniformTypeIdentifiers
         return try? BCDControlPack.decode(d, for: identity)
     }
     func activate(_ entry: LibraryEntry?) {
-        guard let entry else { BCDTablePad.shared.cancel();skaldUtilitiesVerified=false;BCDTableKeys.shared.releaseAll();inscryptionMode=BCDInscryptionMode();inscryptionExplore=false;tableSurface=""; sessionID = nil; pack = nil; base = nil; personalKey = nil; gameKey = nil; selectedControl = ""; undoHistory.removeAll(); return }
+        guard let entry else { BCDTablePad.shared.cancel();skaldUtilitiesVerified=false;spireUtilitiesVerified=false;BCDTableKeys.shared.releaseAll();inscryptionMode=BCDInscryptionMode();inscryptionExplore=false;tableSurface=""; sessionID = nil; pack = nil; base = nil; personalKey = nil; gameKey = nil; selectedControl = ""; undoHistory.removeAll(); return }
         let sameSession = sessionID == entry.id
-        if !sameSession { BCDTablePad.shared.cancel();skaldUtilitiesVerified=false; cursorMode = .gameplay;tableInspectOnly=false;tableCancelSequence=0;inscryptionMode=BCDInscryptionMode();inscryptionExplore=false;BCDTableKeys.shared.releaseAll() }
+        if !sameSession { BCDTablePad.shared.cancel();skaldUtilitiesVerified=false;spireUtilitiesVerified=false; cursorMode = .gameplay;tableInspectOnly=false;tableCancelSequence=0;inscryptionMode=BCDInscryptionMode();inscryptionExplore=false;BCDTableKeys.shared.releaseAll() }
         if !sameSession { selectedControl = "" }
         if sessionID == entry.id && !LibraryModel.shared.blocksGameplayTouch { return }
         // Changing a running HID session into XInput requires a new guest enumeration.
@@ -269,12 +270,12 @@ import UniformTypeIdentifiers
             let selected=UserDefaults.standard.string(forKey:"TouchPackPointer."+identityKey(entry)) ?? ""
             tableSurface = selected == tableKind(entry) ? selected : ""
         }
-        if !sameSession,tableSurface == "skald" {
-            let session=entry.id,url=LibraryEntry.hostURL(ofWindowsPath:entry.launchWindowsPath)
+        if !sameSession,["skald","spire2"].contains(tableSurface) {
+            let session=entry.id,url=LibraryEntry.hostURL(ofWindowsPath:entry.launchWindowsPath),kind=tableSurface
             Task { [weak self] in
-                let verified=await Task.detached(priority:.utility) { BCDSkaldUtilityVerifier.verify(url) }.value
+                let verified=await Task.detached(priority:.utility) { kind == "skald" ? BCDSkaldUtilityVerifier.verify(url):BCDSpireUtilityVerifier.verify(url) }.value
                 guard let self,self.sessionID == session else{return}
-                self.skaldUtilitiesVerified=verified
+                if kind == "skald" {self.skaldUtilitiesVerified=verified} else {self.spireUtilitiesVerified=verified}
             }
         }
         let localSelected = sessionUsesLocal
@@ -284,7 +285,7 @@ import UniformTypeIdentifiers
             candidate.identity = req.identity // A player-selected template follows this installation; generated caches never bypass identity matching.
             if (try? candidate.validate(for: req.identity, placement: .personal)) != nil { local = candidate }
         }
-        let candidate = local ?? (BCDNoitaPack.matches(req.identity) ? BCDNoitaPack.make(identity:req.identity,bindings:req.bindings) : (cached(key, identity: req.identity) ?? (try? BCDDreadPack.make(identity:req.identity))))
+        let candidate = local ?? (BCDNoitaPack.matches(req.identity) ? BCDNoitaPack.make(identity:req.identity,bindings:req.bindings) : (cached(key, identity: req.identity) ?? (try? BCDDreadPack.make(identity:req.identity)) ?? (try? BCDChroniclesPack.make(identity:req.identity,bindings:req.bindings))))
         if sameSession, let current = pack, let candidate, current.inputMode != candidate.inputMode {
             status = "Prepared input mode saved · next launch"; return
         }
