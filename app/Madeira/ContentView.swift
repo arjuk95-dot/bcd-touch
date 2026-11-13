@@ -123,7 +123,7 @@ final class MetalHostView: UIView {
     static func suppressing(touchpad: Bool, desktop: Bool) -> Bool {
         // A pack handles direct touches itself, including relative mouse packs.
         // Legacy mouse fallback must never also consume those fingers.
-        if LibraryModel.shared.current != nil, BCDPackStore.shared.enabled, BCDPackStore.shared.pack != nil { return true }
+        if LibraryModel.shared.current != nil, BCDPackStore.shared.enabled, BCDPackStore.shared.hasSurface { return true }
         switch override ?? mode {
         case .on: return false
         case .off: return true
@@ -2992,7 +2992,7 @@ final class ControlsWindow: UIWindow {
         if sessionModel.desktopHome || (BCDDuoFeatures.active && sessionModel.current == nil) { return nil }
         let m = TouchControlsModel.shared
         let library = LibraryModel.shared
-        let packActive = library.current != nil && BCDPackStore.shared.enabled && BCDPackStore.shared.pack != nil
+        let packActive = library.current != nil && BCDPackStore.shared.enabled && BCDPackStore.shared.hasSurface
         // This window sits above BCD's main window. Its full-screen pack must
         // yield to the main window's alerts, not cover their dismiss buttons.
         if packActive, BCDPackFocus.blockingPresentation(outside: self) { return nil }
@@ -3023,7 +3023,7 @@ final class ControlsWindow: UIWindow {
             }
             // The pack assigns roles across the full surface at touch-down.
             // Stock-control geometry cannot decide which of its touches exist.
-            if BCDPackStore.shared.enabled, BCDPackStore.shared.pack != nil {
+            if BCDPackStore.shared.enabled, BCDPackStore.shared.hasSurface {
                 if HardwareInput.isPointerEvent(event) { return nil }
                 return super.hitTest(point, with: event)
             }
@@ -3090,10 +3090,19 @@ struct TouchControlsOverlay: View {
             let landscape = geo.size.width > geo.size.height || session
             ZStack(alignment: .top) {
                 if landscape && !library.desktopHome && (!BCDDuoFeatures.active || session) {
-                    if packStore.pack != nil && packStore.enabled && session {
+                    if packStore.hasSurface && packStore.enabled && session {
                         if !library.blocksGameplayTouch && !packFocus.blockedByPresentation {
-                            BCDPackLayer()
-                            if !packStore.editing && packStore.pack?.cursorControls == nil {
+                            if !packStore.tableSurface.isEmpty {
+                                BCDTableSurface(accepting:packFocus.gameFocused,rightClickCancelsDrag:packStore.tableSurface == "spire2",inspectOnly:packStore.tableInspectOnly,cancelSequence:packStore.tableCancelSequence)
+                                    .id(packStore.tableSurface+String(packStore.inscryptionExplore))
+                                    .onAppear {BCDGyroLive.shared.refresh()}
+                                    .onDisappear {BCDGyroLive.shared.refresh()}
+                                if packStore.tableSurface == "inscryption" && packStore.inscryptionExplore {
+                                    BCDInscryptionExploreControls(accepting:packFocus.gameFocused && !library.blocksGameplayTouch)
+                                }
+                                BCDTableUtilityRail().frame(maxWidth:.infinity,maxHeight:.infinity,alignment:.trailing).padding(.trailing,geo.safeAreaInsets.trailing+12)
+                            } else { BCDPackLayer() }
+                            if packStore.tableSurface.isEmpty && !packStore.editing && packStore.pack?.cursorControls == nil {
                                 BCDPackTools().padding(.top, 8).padding(.leading, geo.safeAreaInsets.leading + 12).frame(maxWidth: .infinity, alignment: .leading)
                             }
                         }
@@ -3144,8 +3153,8 @@ struct TouchControlsOverlay: View {
     }
 
     private func configureGamepad(landscape: Bool) {
-        packFocus.setMonitoring(packStore.pack != nil && packStore.enabled && library.current != nil)
-        let ids = landscape && m.visible && !(packStore.pack != nil && packStore.enabled)
+        packFocus.setMonitoring(packStore.hasSurface && packStore.enabled && library.current != nil)
+        let ids = landscape && m.visible && !(packStore.hasSurface && packStore.enabled)
             ? m.controls.filter { $0.action.padName.map(TouchPadAction.supported) ?? false }.map(\.id) : []
         // Menus and the control editor keep the pad connected but take no input (#204);
         // a touch that misses the controls is no mouse only while they do (#150).

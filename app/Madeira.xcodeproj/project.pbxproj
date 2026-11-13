@@ -8,6 +8,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+        BCDAAA000000000000000A07 /* BCDSulfurInstalledVerifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCDAAA000000000000000B07; };
+        BCDAAA000000000000000A06 /* BCDTenebrisOwnerCompatibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCDAAA000000000000000B06; };
+        BCDAAA000000000000000A05 /* BCDDreadPack.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCDAAA000000000000000B05; };
+        BCDAAA000000000000000A04 /* BCDSulfurPack.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCDAAA000000000000000B04; };
+        BCDAAA000000000000000A03 /* BCDTableSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCDAAA000000000000000B03; };
+        BCDAAA000000000000000A02 /* BCDQueensGesturePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCDAAA000000000000000B02; };
+        BCDAAA000000000000000A01 /* BCDQueensDomainPack.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCDAAA000000000000000B01; };
         BCD000000000000000000A08 /* BCDCursorPackSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD000000000000000000B08; };
         BCD000000000000000000A07 /* BCDNoitaPack.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD000000000000000000B07; };
         BCD000000000000000000A06 /* BCDCursorPack.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD000000000000000000B06; };
@@ -473,6 +480,13 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+        BCDAAA000000000000000B07 /* BCDSulfurInstalledVerifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDSulfurInstalledVerifier.swift; sourceTree = "<group>"; };
+        BCDAAA000000000000000B06 /* BCDTenebrisOwnerCompatibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDTenebrisOwnerCompatibility.swift; sourceTree = "<group>"; };
+        BCDAAA000000000000000B05 /* BCDDreadPack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDDreadPack.swift; sourceTree = "<group>"; };
+        BCDAAA000000000000000B04 /* BCDSulfurPack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDSulfurPack.swift; sourceTree = "<group>"; };
+        BCDAAA000000000000000B03 /* BCDTableSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDTableSurface.swift; sourceTree = "<group>"; };
+        BCDAAA000000000000000B02 /* BCDQueensGesturePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDQueensGesturePolicy.swift; sourceTree = "<group>"; };
+        BCDAAA000000000000000B01 /* BCDQueensDomainPack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDQueensDomainPack.swift; sourceTree = "<group>"; };
         BCD000000000000000000B08 /* BCDCursorPackSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDCursorPackSettings.swift; sourceTree = "<group>"; };
         BCD000000000000000000B07 /* BCDNoitaPack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDNoitaPack.swift; sourceTree = "<group>"; };
         BCD000000000000000000B06 /* BCDCursorPack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCDCursorPack.swift; sourceTree = "<group>"; };
@@ -1219,6 +1233,13 @@
 				A2000243 /* GamepadInput.swift */,
 				BCD000000000000000000B05 /* BCDControlPackAuthoring.swift */,
                 BCD000000000000000000B08 /* BCDCursorPackSettings.swift */,
+                BCDAAA000000000000000B01 /* BCDQueensDomainPack.swift */,
+                BCDAAA000000000000000B02 /* BCDQueensGesturePolicy.swift */,
+                BCDAAA000000000000000B03 /* BCDTableSurface.swift */,
+                BCDAAA000000000000000B04 /* BCDSulfurPack.swift */,
+                BCDAAA000000000000000B05 /* BCDDreadPack.swift */,
+                BCDAAA000000000000000B06 /* BCDTenebrisOwnerCompatibility.swift */,
+                BCDAAA000000000000000B07 /* BCDSulfurInstalledVerifier.swift */,
                 BCD000000000000000000B07 /* BCDNoitaPack.swift */,
                 BCD000000000000000000B06 /* BCDCursorPack.swift */,
                 BCD000000000000000000B03 /* BCDControlPackSurface.swift */,
@@ -1869,6 +1890,13 @@
 				A1000243 /* GamepadInput.swift in Sources */,
 				BCD000000000000000000A05 /* BCDControlPackAuthoring.swift in Sources */,
                 BCD000000000000000000A08 /* BCDCursorPackSettings.swift in Sources */,
+                BCDAAA000000000000000A01 /* BCDQueensDomainPack.swift in Sources */,
+                BCDAAA000000000000000A02 /* BCDQueensGesturePolicy.swift in Sources */,
+                BCDAAA000000000000000A03 /* BCDTableSurface.swift in Sources */,
+                BCDAAA000000000000000A04 /* BCDSulfurPack.swift in Sources */,
+                BCDAAA000000000000000A05 /* BCDDreadPack.swift in Sources */,
+                BCDAAA000000000000000A06 /* BCDTenebrisOwnerCompatibility.swift in Sources */,
+                BCDAAA000000000000000A07 /* BCDSulfurInstalledVerifier.swift in Sources */,
                 BCD000000000000000000A07 /* BCDNoitaPack.swift in Sources */,
                 BCD000000000000000000A06 /* BCDCursorPack.swift in Sources */,
                 BCD000000000000000000A03 /* BCDControlPackSurface.swift in Sources */,

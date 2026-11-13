@@ -24,7 +24,10 @@ with tempfile.TemporaryDirectory(prefix='touch-preview-') as tmp:
     window=tmp/'Window.swift';window.write_text('import UIKit\nfinal class ControlsWindow: UIWindow {'+routing.split('final class ControlsWindow: UIWindow {',1)[1].split('\nenum TouchControlsHost',1)[0])
     gate=tmp/'Gate.swift';gate.write_text('import UIKit\n@MainActor enum TouchMouseGate {'+routing.split('@MainActor enum TouchMouseGate {',1)[1].split('\n}\n',1)[0]+'\n}')
     sources=[ROOT/'app/Madeira/BCDMouseJoystick.swift',ROOT/'app/Madeira/BCDControlPack.swift',ROOT/'app/Madeira/BCDControlPackAuthoring.swift',ROOT/'app/Madeira/BCDCursorPack.swift',ROOT/'app/Madeira/BCDNoitaPack.swift',state,window,gate,ROOT/'app/Madeira/BCDControlPackLive.swift',ROOT/'app/Madeira/BCDCursorPackSettings.swift',ROOT/'app/Madeira/BCDControlPackSurface.swift',ROOT/'tests/host/touch_pack_ui_stubs.swift',ROOT/'tests/host/touch_pack_preview.swift',ROOT/'tests/host/touch_noita_preview.swift']
-    subprocess.run(['xcrun','swiftc','-target',os.uname().machine+'-apple-ios18.0-simulator','-sdk',sdk,'-parse-as-library',*map(str,sources),'-o',str(app/'TouchPreview')],check=True)
+    sources += [ROOT/'app/Madeira'/n for n in ['BCDQueensDomainPack.swift','BCDQueensGesturePolicy.swift','BCDSulfurPack.swift','BCDSulfurInstalledVerifier.swift','BCDDreadPack.swift','BCDTenebrisOwnerCompatibility.swift','BCDTableSurface.swift']]
+    bridge=tmp/'ProfilePolicies.h'
+    bridge.write_text('\n'.join('#include "'+str(ROOT/'app/Madeira'/n)+'"' for n in ['BCDTableTouchPolicy.h','BCDSulfurSprintPolicy.h','BCDInscryptionPolicy.h']))
+    subprocess.run(['xcrun','swiftc','-import-objc-header',str(bridge),'-target' ,os.uname().machine+'-apple-ios18.0-simulator','-sdk',sdk,'-parse-as-library',*map(str,sources),'-o',str(app/'TouchPreview')],check=True)
     info=dict(CFBundleIdentifier='com.arjunkl.bcdtouch.preview',CFBundleExecutable='TouchPreview',CFBundleName='Touch Preview',CFBundlePackageType='APPL',CFBundleVersion='1',CFBundleShortVersionString='1',MinimumOSVersion='18.0',LSRequiresIPhoneOS=True,UIDeviceFamily=[1,2],UIRequiresFullScreen=True,UISupportedInterfaceOrientations=['UIInterfaceOrientationLandscapeLeft','UIInterfaceOrientationLandscapeRight'])
     (app/'Info.plist').write_bytes(plistlib.dumps(info))
     pilots=list((ROOT/'packs/pilots').glob('*.json'))

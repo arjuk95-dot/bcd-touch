@@ -48,7 +48,7 @@ import UIKit
         if entry != nil { BCDPlayersLive.shared.reload() }   // the players' rumble reaches PadOutput.m once a session starts
         let library = LibraryModel.shared
         let title = entry?.title ?? ""
-        let usingPack = BCDPackStore.shared.pack != nil && BCDPackStore.shared.enabled
+        let usingPack = BCDPackStore.shared.hasSurface && BCDPackStore.shared.enabled
         let pack = BCDPackStore.shared.pack
         GamepadInput.packControllerSession = usingPack && pack?.inputMode == "controller"
         GamepadInput.shared.configurePack(enabled: GamepadInput.packControllerSession, accepting: !library.blocksGameplayTouch, calibration: pack?.aim ?? BCDMouseJoystick.Calibration())

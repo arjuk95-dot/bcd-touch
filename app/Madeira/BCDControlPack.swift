@@ -78,14 +78,14 @@ struct BCDControlPack: Codable, Equatable {
     func validate(for expected: Identity? = nil, placement: Placement = .generated) throws {
         func require(_ ok: Bool, _ reason: String) throws { if !ok { throw Invalid.reason(reason) } }
         func text(_ s: String) -> Bool { !s.isEmpty && s.utf8.count <= 256 && !s.unicodeScalars.contains { $0.value < 32 } }
-        try require([1, 2, 3, 4, 5].contains(version), "Unsupported pack version")
+        try require([1, 2, 3, 4, 5, 6].contains(version), "Unsupported pack version")
         try require(text(id) && text(title), "Missing name")
         try require(expected == nil || identity == expected, "Game/build/bindings mismatch")
         for s in [identity.executable, identity.storeID, identity.edition, identity.build, identity.bindingDigest] { try require(text(s), "Incomplete identity") }
         try require(["controller", "keyboardMouse"].contains(inputMode), "Unknown input mode")
         try require(lookMode == nil || (version >= 3 && ["none", "mouseJoystick", "relativeMouse"].contains(lookMode!)), "Unknown or unsupported look mode")
         try require(lookMode != "mouseJoystick" || inputMode == "controller", "Mouse Joystick requires controller mode")
-        try require(lookMode != "relativeMouse" || inputMode == "keyboardMouse", "Relative mouse requires keyboard/mouse mode")
+        try require(lookMode != "relativeMouse" || inputMode == "keyboardMouse" || (version >= 6 && inputMode == "controller"), "Relative mouse requires keyboard/mouse mode")
         try require(!contexts.isEmpty && contexts.count <= 8 && Set(contexts).count == contexts.count && contexts.allSatisfy(text), "Invalid contexts")
         try require(!actions.isEmpty && actions.count <= 64 && Set(actions.map(\.id)).count == actions.count, "Duplicate/too many actions")
         try require(evidence.count <= 128 && !evidence.isEmpty && Set(evidence.map(\.id)).count == evidence.count, "Invalid evidence")
@@ -148,7 +148,7 @@ struct BCDControlPack: Codable, Equatable {
                     try require(layout.controls.contains { $0.role == "button" && $0.action == g.whenToggled }, "Surface tap needs a visible toggle button")
                 }
             } else {
-                try require(["swipeUp", "swipeDown", "swipeLeft", "swipeRight"].contains(g.kind) && g.whenToggled == nil && g.cancelOn == nil, "Unknown or unsupported gesture")
+                try require((["swipeUp", "swipeDown", "swipeLeft", "swipeRight"].contains(g.kind) || (version >= 6 && ["twoFingerTap", "twoFingerDoubleTap"].contains(g.kind))) && g.whenToggled == nil && g.cancelOn == nil, "Unknown or unsupported gesture")
             }
         }
         for layout in [phone, pad] {

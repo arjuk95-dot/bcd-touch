@@ -2,6 +2,14 @@ import Foundation
 
 @main struct TouchPackChecks {
     static func main() throws {
+        checkQueensGesturePolicy()
+        try checkSulfurControllerModel()
+        try checkSulfurInstalledVerifier()
+        try checkDreadTenebrisHelpers(root:URL(fileURLWithPath:FileManager.default.currentDirectoryPath))
+        let queen=BCDQueensDomainPack.make(identity:.init(executable:"QueensDomain.exe",storeID:"local",edition:"test",build:"test",bindingDigest:"test"))
+        try queen.validate()
+        assert(queen.inputMode == "controller" && queen.lookMode == "relativeMouse")
+        assert(!queen.actions.contains{$0.id == "journal"})
         try checkTouchAuthoring()
         try checkCursorPacks()
         var records: [[String:Double]] = []

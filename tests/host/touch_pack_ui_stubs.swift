@@ -6,6 +6,7 @@ struct LibraryEntry {
     var id = UUID(); var title = "Fixture"; var desktop: Bool?; var steamAppID: Int?
     var launchRelativePath = "fixture.exe"; var relativePath = "fixture.exe"; var steamMetadataInstall: String?; var controllerBinds: [String:String]?
     static let hostDrive = URL(fileURLWithPath:"/tmp/fixture-drive")
+    var launchWindowsPath:String { "C:\\"+launchRelativePath }
     static func hostURL(ofWindowsPath:String) -> URL? { hostDrive.appendingPathComponent("fixture.exe") }
 }
 @MainActor final class LibraryModel: ObservableObject {
@@ -44,7 +45,7 @@ struct LibraryEntry {
         if phase==1 && lookOwner==owner {lookMoves += 1}
     }
 }
-@MainActor final class MetalBackedView:UIView { static weak var keyboardTarget:UIView? }
+@MainActor final class MetalBackedView:UIView { static weak var keyboardTarget:MetalBackedView?; func mapPoint(_ p:CGPoint)->(Int32,Int32){(Int32(p.x),Int32(p.y))} }
 @MainActor final class HardwareInput {
     static let shared = HardwareInput()
     func postRelative(_ x:Int32,_ y:Int32) {}
@@ -85,3 +86,7 @@ enum MadeiraConfig { static func gameValue(_ name:String)->String? { nil };stati
 enum BCDDuoFeatures { static let active = false }
 @MainActor final class FoldTabletop { static let shared = FoldTabletop(); var bottom: CGRect? }
 @MainActor enum GamepadEventClaim { static func install(on window: UIWindow) {} }
+
+@MainActor final class BCDGyroLive { static let shared=BCDGyroLive(); func refresh() {} }
+// Cursor rendering boundary only; input evidence uses winios_pointer above.
+@MainActor func winios_cursor_move(_ x:Int32,_ y:Int32) {}

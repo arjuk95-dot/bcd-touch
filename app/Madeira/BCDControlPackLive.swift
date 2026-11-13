@@ -25,6 +25,47 @@ import UniformTypeIdentifiers
         var retryAfter = Date.distantPast
     }
     struct Worker: Codable { var url: String; var token: String }
+    private var sulfurProof = BCDSulfurInstalledVerifier.Proof.unverified
+    private var sulfurChoice = BCDSulfurSprintChoice()
+    var sulfurSprintAllowed: Bool {
+        guard let pack else {return false}
+        return sulfurChoice.allowed(active:enabled,verifiedBuild:sulfurProof.buildVerified,inventory:context == "inventory",identity:pack.identity,sprintAction:pack.actions.first{$0.id == "sprint"})
+    }
+    func setSulfurSprint(_ choice:String) {
+        guard let gameKey else{return}
+        UserDefaults.standard.set(choice,forKey:"TouchPackSulfurNativeSprint."+gameKey)
+        sulfurChoice.begin(saved:choice,verifiedShippedDefault:sulfurProof.defaultVerified)
+    }
+    // Narrow keyboard exception explicitly approved after this PC build's
+    // disabled controller manager/maps were verified. No XInput imitation.
+    private var inscryptionMode=BCDInscryptionMode()
+    @Published var inscryptionExplore=false
+    func switchInscryptionMode() {
+        guard tableSurface == "inscryption",enabled,!LibraryModel.shared.blocksGameplayTouch,
+              BCDPackFocus.shared.refresh(),BCDTableInputActivity.contacts == 0 else {return}
+        let request=BCDInscryptionSwitch(&inscryptionMode,1)
+        if request == BCD_INSCRYPTION_REQUEST_STEP_BACK {BCDTableKeys.shared.pulse(83)}
+        inscryptionExplore=inscryptionMode.explore != 0
+        tableInspectOnly=false
+        BCDTableKeys.shared.releaseHeldControls()
+    }
+    func resyncInscryption(explore:Bool) {
+        guard BCDTableInputActivity.contacts == 0 else{return}
+        BCDInscryptionResync(&inscryptionMode,explore ? 1:0)
+        inscryptionExplore=explore;tableInspectOnly=false
+        BCDTableKeys.shared.releaseAll()
+    }
+    @Published var tableInspectOnly=false
+    @Published var tableCancelSequence=0
+    @Published var tableSurface = ""
+    var hasSurface: Bool { pack != nil || !tableSurface.isEmpty }
+    func tableKind(_ entry: LibraryEntry) -> String {
+        let name=entry.launchRelativePath.lowercased()
+        if name.contains("skald") { return "skald" }
+        if name.contains("slaythespire2") || name.contains("slay the spire 2") { return "spire2" }
+        if name.contains("inscryption") { return "inscryption" }
+        return ""
+    }
     @Published var pack: BCDControlPack?
     @Published var status = "Stock controls"
     @Published var debug = false
@@ -76,7 +117,7 @@ import UniformTypeIdentifiers
     }
     func setLaunchPreference(_ entry: LibraryEntry, generated: Bool) {
         UserDefaults.standard.set(generated,forKey:preferenceKey(entry))
-        if generated { UserDefaults.standard.set(false, forKey: "TouchPackLocal." + identityKey(entry)) }
+        if generated { UserDefaults.standard.set(false, forKey: "TouchPackLocal." + identityKey(entry)); UserDefaults.standard.removeObject(forKey:"TouchPackPointer."+identityKey(entry)) }
         status="Input mode saved · next launch"
     }
     func preferStockNextLaunch() {
@@ -93,7 +134,7 @@ import UniformTypeIdentifiers
     func moveBlockReason(_ entry: LibraryEntry) -> String? {
         let executable = entry.launchRelativePath.lowercased()
         let key = identityKey(entry)
-        let preferenceKeys = ["TouchPackGenerated." + key, "TouchPackLocal." + key,
+        let preferenceKeys = ["TouchPackPointer." + key, "TouchPackGenerated." + key, "TouchPackLocal." + key,
                               "TouchPack.genre." + executable, "TouchPack.mode." + executable]
         if preferenceKeys.contains(where: { UserDefaults.standard.object(forKey: $0) != nil }) {
             return BCDPackMoveSafety.reason
@@ -120,12 +161,19 @@ import UniformTypeIdentifiers
         status = "Preparation preference saved"
     }
     func usePreset(_ entry: LibraryEntry) {
+        let kind=tableKind(entry)
+        if !kind.isEmpty {
+            UserDefaults.standard.set(kind,forKey:"TouchPackPointer."+identityKey(entry))
+            UserDefaults.standard.set(true,forKey:preferenceKey(entry))
+            status="Direct touch pointer prepared · next launch; existing presets retained"
+            return
+        }
         let req = request(entry)
         let proposed = req.requirements["genre"] ?? "first-person"
         let genre = BCDPackCatalog.genres.contains { $0.0 == proposed } ? proposed : "third-person"
         let choice = authoringChoice(entry, key: "mode")
         let mode = choice == "keyboardMouse" || (choice == "auto" && req.requirements["mode"]?.hasPrefix("keyboardMouse") == true) ? "keyboardMouse" : "controller"
-        let preset = BCDNoitaPack.matches(req.identity) ? BCDNoitaPack.make(identity:req.identity,bindings:req.bindings) : BCDPackAuthoring.preset(identity: req.identity, title: entry.title, genre: genre, mode: mode)
+        let preset = (try? BCDSulfurPack.make(identity:req.identity)) ?? (BCDQueensDomainPack.matches(req.identity) ? BCDQueensDomainPack.make(identity:req.identity) : BCDNoitaPack.matches(req.identity) ? BCDNoitaPack.make(identity:req.identity,bindings:req.bindings) : BCDPackAuthoring.preset(identity: req.identity, title: entry.title, genre: genre, mode: mode))
         do {
             try preset.validate(for: req.identity)
             let key = identityKey(entry)
@@ -199,9 +247,9 @@ import UniformTypeIdentifiers
         return try? BCDControlPack.decode(d, for: identity)
     }
     func activate(_ entry: LibraryEntry?) {
-        guard let entry else { sessionID = nil; pack = nil; base = nil; personalKey = nil; gameKey = nil; selectedControl = ""; undoHistory.removeAll(); return }
+        guard let entry else { BCDTableKeys.shared.releaseAll();inscryptionMode=BCDInscryptionMode();inscryptionExplore=false;tableSurface=""; sessionID = nil; pack = nil; base = nil; personalKey = nil; gameKey = nil; selectedControl = ""; undoHistory.removeAll(); return }
         let sameSession = sessionID == entry.id
-        if !sameSession { cursorMode = .gameplay }
+        if !sameSession { cursorMode = .gameplay;tableInspectOnly=false;tableCancelSequence=0;inscryptionMode=BCDInscryptionMode();inscryptionExplore=false;BCDTableKeys.shared.releaseAll() }
         if !sameSession { selectedControl = "" }
         if sessionID == entry.id && !LibraryModel.shared.blocksGameplayTouch { return }
         // Changing a running HID session into XInput requires a new guest enumeration.
@@ -215,6 +263,10 @@ import UniformTypeIdentifiers
         let req = request(entry), key = Self.hash(Self.encoded(req.identity)); selectedKey = key
         gameKey = Self.hash(Self.encoded([req.identity.executable, req.identity.storeID, req.identity.edition]))
         if !sameSession { sessionUsesLocal = UserDefaults.standard.bool(forKey: "TouchPackLocal." + gameKey!) }
+        if !sameSession {
+            let selected=UserDefaults.standard.string(forKey:"TouchPackPointer."+identityKey(entry)) ?? ""
+            tableSurface = selected == tableKind(entry) ? selected : ""
+        }
         let localSelected = sessionUsesLocal
         var local: BCDControlPack?
         if localSelected && sameSession { local = base }
@@ -222,19 +274,32 @@ import UniformTypeIdentifiers
             candidate.identity = req.identity // A player-selected template follows this installation; generated caches never bypass identity matching.
             if (try? candidate.validate(for: req.identity, placement: .personal)) != nil { local = candidate }
         }
-        let candidate = local ?? (BCDNoitaPack.matches(req.identity) ? BCDNoitaPack.make(identity:req.identity,bindings:req.bindings) : cached(key, identity: req.identity))
+        let candidate = local ?? (BCDNoitaPack.matches(req.identity) ? BCDNoitaPack.make(identity:req.identity,bindings:req.bindings) : (cached(key, identity: req.identity) ?? (try? BCDDreadPack.make(identity:req.identity))))
         if sameSession, let current = pack, let candidate, current.inputMode != candidate.inputMode {
             status = "Prepared input mode saved · next launch"; return
         }
         sessionID = entry.id
-        base = candidate; pack = base
+        if !sameSession {
+            sulfurProof = .unverified; sulfurChoice.end()
+            if BCDSulfurPack.matches(req.identity) {
+                let session=entry.id,url=LibraryEntry.hostURL(ofWindowsPath:entry.launchWindowsPath)
+                Task.detached(priority:.utility) { [weak self] in
+                    let proof=BCDSulfurInstalledVerifier.verify(executableURL:url)
+                    await MainActor.run { guard let self,self.sessionID == session,let gameKey=self.gameKey else{return}
+                        self.sulfurProof=proof
+                        self.sulfurChoice.begin(saved:UserDefaults.standard.object(forKey:"TouchPackSulfurNativeSprint."+gameKey),verifiedShippedDefault:proof.defaultVerified)
+                    }
+                }
+            }
+        }
+        base = candidate; pack = tableSurface.isEmpty ? base : nil
         // The built-in cursor pack and its prepared/local form are the same
         // profile. Switching that launch preference must retain its edits.
         if let candidate,candidate.cursorControls != nil { personalKey=gameKey!+"."+candidate.id }
         else { personalKey = local.map { gameKey! + "." + $0.id } ?? gameKey }
         undoHistory.removeAll()
         var editFailure: String?
-        if let b = base, let personal = overrides[personalKey!] {
+        if tableSurface.isEmpty, let b = base, let personal = overrides[personalKey!] {
             do { pack = try BCDPackAuthoring.merge(base: b, personal: personal.pack, baseline: personal.baseline) }
             catch { editFailure = "Personal edits need review · validated base active: \(error)" }
         }
@@ -242,6 +307,7 @@ import UniformTypeIdentifiers
             if !p.contexts.contains(context) { context = p.contexts[0] }
             status = p.cursorControls != nil ? "Cursor pack · expected bindings need confirmation · playtest required" : "Validated · playtest required"
         }
+        else if !tableSurface.isEmpty { status="Direct touch pointer · context controls pending verification" }
         else { status = "Stock fallback · pack pending"; prepare(entry) }
         if let editFailure { status = editFailure }
         for k in jobs.keys where jobs[k]?.state != "validated" { resume(k) }
@@ -344,6 +410,7 @@ struct BCDPackLayer: View {
                 }
             }.onAppear { configure() }
                 .onChange(of: p) { _, _ in configure() }
+                .onChange(of: store.context) { _, _ in configure(); BCDGyroLive.shared.refresh() }
                 .onChange(of: store.editing) { _, editing in if !editing { store.placingControls = false }; configure() }
                 .onChange(of: library.blocksGameplayTouch) { _, _ in configure() }
                 .onChange(of: focus.gameFocused) { _, _ in configure() }
@@ -684,6 +751,13 @@ struct BCDPackTools: View {
             Toggle("Show hit regions", isOn: $store.debug)
             if let p = store.pack {
                 ForEach(p.contexts, id: \.self) { c in Button("Context: " + c) { store.context = c } }
+            }
+            if store.pack?.id.hasPrefix("sulfur") == true {
+                Menu("Forward-edge sprint compatibility") {
+                    Button("Game uses Hold or Toggle: enable gesture") {store.setSulfurSprint(BCDSulfurSprintChoice.nativeL3)}
+                    Button("Game uses Always or remapped L3: disable gesture") {store.setSulfurSprint(BCDSulfurSprintChoice.disabled)}
+                    Text("This changes the touch gesture only, not the game settings.")
+                }
             }
             Button("Reset layout and aim") { store.reset() }
             Button("Use stock input profile next launch") { store.preferStockNextLaunch() }

@@ -108,16 +108,56 @@ final class BCDPackView: UIView {
         var start: CGPoint
         var last: CGPoint
         var time: Double
+        var began: Double = 0
+        var queenTravel: CGFloat = 0
         var selection: Int?
         var radialCenter: CGPoint?
         var toggleWasOn = false
         var slideArmed = false
         var slideFired = false
         var didDrag = false
+        var sulfurSprint = BCDSulfurSprintState()
         var surfaceTap: BCDPackSurfaceTap? = nil
     }
     private var pack: BCDControlPack?
     private var context = "onFoot"
+    private var queen = BCDQueensGesturePolicy()
+    private var queenFinger: AnyHashable?
+    private let queenOwner = UUID()
+    private var queenTimer: Timer?
+    private var utilityTouches: [AnyHashable:(CGPoint,Double)] = [:]
+    private var utilityInvalid = false
+    private var utilityEnded = 0
+    private var isQueen: Bool { pack?.id == "queens-domain-v6" }
+    private func queenEvents(_ events:[BCDQueensGesturePolicy.Event]) {
+        for e in events {
+            switch e {
+            case .attackDown: if let a=action("attack") {send(a,owner:queenOwner)}
+            case .attackUp: release(queenOwner)
+            case .equipment: if let a=action("equipment") {pulse(a)}
+            case .journal: if let a=action("journal") {pulse(a)}
+            }
+        }
+    }
+    private func finishQueen(_ id:AnyHashable,point:CGPoint,time:Double,cancelled:Bool) {
+        if utilityTouches[id] != nil {
+            utilityEnded += 1
+            if cancelled {utilityInvalid=true}
+            if let (start,t)=utilityTouches[id],!point.x.isFinite || !point.y.isFinite || !time.isFinite || time<t || hypot(point.x-start.x,point.y-start.y)>12 || time-t>0.3 {utilityInvalid=true}
+            if utilityEnded == utilityTouches.count {
+                if !utilityInvalid {queenEvents(queen.twoFingerTap(time:time))} else {queen.cancelPendingUtility()}
+                utilityTouches.removeAll();utilityEnded=0;utilityInvalid=false
+            }
+        } else if queenFinger == id {
+            if cancelled {queenEvents(queen.cancelAttack())}
+            else {
+                let events=queen.end(at:point,time:time)
+                // Tap pulse must persist across engine input delivery frames.
+                if events == [.attackDown,.attackUp],let a=action("attack") {pulse(a)} else {queenEvents(events)}
+            }
+            queenFinger=nil
+        }
+    }
     private var debug = false, editing = false
     private var fingers: [AnyHashable: Finger] = [:]
     private var keyHolds: [UUID: [Int32]] = [:]
@@ -140,13 +180,33 @@ final class BCDPackView: UIView {
         NotificationCenter.default.addObserver(self, selector: #selector(rotated), name: UIDevice.orientationDidChangeNotification, object: nil)
     }
     required init?(coder: NSCoder) { fatalError() }
-    deinit { cursorTimer?.invalidate();tapTimer?.invalidate();NotificationCenter.default.removeObserver(self) }
+    deinit { queenTimer?.invalidate();cursorTimer?.invalidate();tapTimer?.invalidate();NotificationCenter.default.removeObserver(self) }
     @objc private func interrupted() { clear() }
     @objc private func rotated() { if cursorEngine != nil || pack?.gestures.contains(where: { $0.kind == "tap" }) == true { clear() } }
     func configure(_ p: BCDControlPack, context: String, debug: Bool, editing: Bool) {
         let changed = pack != p || self.context != context || self.editing != editing
         if changed { clear();cursorEngine = nil;cursorTimer?.invalidate();cursorTimer=nil }
-        pack = p; self.context = context; self.debug = debug; self.editing = editing; setNeedsDisplay()
+        pack = p; self.context = context;
+        if (p.id != "queens-domain-v6" && !p.id.hasPrefix("sulfur")) || editing {queenTimer?.invalidate();queenTimer=nil}
+        if (p.id == "queens-domain-v6" || p.id.hasPrefix("sulfur")) && !editing && queenTimer == nil {
+            queen.journalEnabled=p.actions.contains{$0.id == "journal"}
+            let timer=Timer(timeInterval:0.02,repeats:true){[weak self] _ in
+                MainActor.assumeIsolated {guard let self else{return}
+                    if LibraryModel.shared.blocksGameplayTouch || !BCDPackFocus.shared.refresh(){self.clear();return}
+                    self.queenEvents(self.queen.advance(time:ProcessInfo.processInfo.systemUptime))
+                    if self.pack?.id.hasPrefix("sulfur") == true {
+                        for key in Array(self.fingers.keys) {
+                            guard var f=self.fingers[key],f.role == "move" else{continue}
+                            let r=max(CGFloat(1),self.unit * CGFloat(f.control?.radius ?? 0.14))
+                            let emit=BCDSulfurSprintUpdate(&f.sulfurSprint,Double((f.last.x-f.start.x)/r),Double((f.last.y-f.start.y)/r),ProcessInfo.processInfo.systemUptime,BCDPackStore.shared.sulfurSprintAllowed ? 1:0)
+                            self.fingers[key]=f
+                            if emit != 0,let a=self.action("sprint") {self.pulse(a)}
+                        }
+                    }
+                }
+            };RunLoop.main.add(timer,forMode:.common);queenTimer=timer
+        }
+         self.debug = debug; self.editing = editing; setNeedsDisplay()
         if p.cursorControls != nil && p.contexts.contains(context) && !editing && cursorEngine == nil {
             cursorEngine = BCDCursorPack(pack:p,pad:pad)
             if context == "pointer" { cursorEngine?.switchMode(.pointer) }
@@ -190,6 +250,8 @@ final class BCDPackView: UIView {
     private func action(_ id: String) -> BCDControlPack.Action? { pack?.actions.first { $0.id == id && $0.contexts.contains(context) } }
     private var radialActions: [BCDControlPack.Action] { (pack?.radial ?? []).compactMap { action($0) } }
     private func visible(_ c: BCDControlPack.Control) -> Bool {
+        if let pack, !editing, BCDTenebrisOwnerCompatibility.hiddenAttack(c,in:pack) {return false}
+        if isQueen && c.action == "attack" && c.role == "gesture" { return false }
         if c.role == "radial" { return !radialActions.isEmpty }
         if c.role == "gesture" { return pack?.gestures.contains { action($0.action) != nil } == true }
         return action(c.action) != nil
@@ -239,6 +301,7 @@ final class BCDPackView: UIView {
     }
     var radialLabelFrames: [CGRect] { fingers.values.filter { $0.role == "radial" }.flatMap { radialLabels($0).map { $0.frame } } }
     func clear() {
+        queenEvents(queen.cancel());queenFinger=nil;utilityTouches.removeAll();utilityEnded=0;utilityInvalid=false
         cursorEngine?.cancel(resetMode:false);flushCursor()
         cancelSurfaceTaps()
         epoch = UUID()
@@ -327,7 +390,7 @@ final class BCDPackView: UIView {
     private func hitsSlideTarget(_ c: BCDControlPack.Control, at point: CGPoint) -> Bool {
         guard let target = c.slideToAction else { return false }
         return layout?.controls.contains { candidate in
-            candidate.action == target && candidate.role == "button" && visible(candidate) &&
+            candidate.action == target && candidate.role == "button" && (visible(candidate) || (pack.map { BCDTenebrisOwnerCompatibility.hiddenAttack(candidate,in:$0) } ?? false)) &&
                 hypot(point.x - center(candidate).x, point.y - center(candidate).y) <= candidate.hitRadius * unit
         } == true
     }
@@ -371,6 +434,11 @@ final class BCDPackView: UIView {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
             guard let self, self.epoch == generation else { return }
             self.release(owner); self.pulses.remove(owner); self.pulseActions[owner] = nil; self.setNeedsDisplay()
+            // Local layout context follows our explicit button, not guessed game state.
+            if self.pack?.id.hasPrefix("sulfur") == true {
+                let target = a.id == "inventory" ? "inventory" : (a.id == "inventory-close" ? "onFoot" : "")
+                if !target.isEmpty,self.pack?.contexts.contains(target) == true {BCDPackStore.shared.context=target}
+            }
         }
     }
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -393,13 +461,17 @@ final class BCDPackView: UIView {
             control = move
             role = fingers.values.contains(where: { $0.role == "move" }) ? "ignore" : "move"
         }
-        if !editing, role == "look", pack.lookMode == "none" { role = "ignore" }
+        if !editing, role == "look", pack.lookMode == "none" || (pack.id.hasPrefix("sulfur") && context == "inventory") { role = "ignore" }
         if !editing, role == "button", let c = control, action(c.action)?.behavior == "toggle" { role = "toggle" }
-        var finger = Finger(role: role, control: control, start: point, last: point, time: time)
+        var finger = Finger(role: role, control: control, start: point, last: point, time: time, began: time)
         if !editing, ["look","ignore","move"].contains(role), (control == nil || control?.role == "move"),
            bounds.contains(point), let g=pack.gestures.first(where: { $0.kind == "tap" }),
            let source=g.whenToggled, action(g.action) != nil, let owner=toggles[source] {
             finger.surfaceTap=BCDPackSurfaceTap(action:g.action,gate:source,gateOwner:owner,start:point,began:time)
+        }
+        if !editing,control == nil,["look","ignore"].contains(role),point.x >= bounds.midX,
+           BCDTenebrisOwnerCompatibility.matches(pack),context == "onFoot",let owner=toggles["raw-lt"] {
+            finger.surfaceTap=BCDPackSurfaceTap(action:"raw-rt",gate:"raw-lt",gateOwner:owner,start:point,began:time)
         }
         if role == "toggle", let c = control, let binding = action(c.action) {
             finger.toggleWasOn = toggles[binding.id] != nil
@@ -407,7 +479,7 @@ final class BCDPackView: UIView {
             setToggle(binding, enabled: true)
         }
         if role == "radial" { finger.radialCenter = radialCenter(at: point) }
-        if role == "look" || role == "fireAim" {
+        if (role == "look" || role == "fireAim") && pack.lookMode != "relativeMouse" {
             GamepadInput.shared.packLook(owner: finger.owner, phase: 0, time: time, receivedAt: receivedAt)
         }
         if role == "move" { GamepadInput.shared.packTouch(owner: finger.owner, value: TouchPadAction.sample("LS")) }
@@ -415,8 +487,40 @@ final class BCDPackView: UIView {
             if binding.behavior == "tap" { pulse(binding) }
             else if binding.behavior == "hold" { send(binding, owner: finger.owner) }
         }
+        if role == "move",pack.id.hasPrefix("sulfur") {
+            _=BCDSulfurSprintBegin(&finger.sulfurSprint,time,BCDPackStore.shared.sulfurSprintAllowed ? 1:0)
+        }
         fingers[identity] = finger
+        if isQueen && !editing {
+            if role == "look" && point.x >= bounds.midX && utilityTouches.isEmpty {
+                if let prior=queenFinger,let other=fingers[prior],fingers.count == 2 {
+                    let eligible=time >= other.began && time-other.began <= 0.12 && other.queenTravel < 12
+                    if eligible && queen.canClaimChord(time:time) && queen.claimChord(time:time) {
+                        queenFinger=nil
+                        utilityTouches=[prior:(other.start,other.began),identity:(point,time)]
+                        utilityEnded=0;utilityInvalid=false
+                    } else {queen.cancelPendingUtility()}
+                    // A committed charge stays with its original owner. Never
+                    // convert it into a menu chord merely because another finger arrives.
+                } else if queenFinger == nil {
+                    queenFinger=identity
+                    queenEvents(queen.begin(at:point,time:time,possibleChord:fingers.count == 1))
+                } else {queen.cancelPendingUtility()}
+            } else {
+                queen.cancelPendingUtility();utilityInvalid=true
+                if role != "move" && (role == "radial" || !queen.hasCommittedAttack) {queenEvents(queen.cancelAttack());queenFinger=nil}
+            }
+        }
         setNeedsDisplay()
+    }
+    private func observeQueenMotion(_ identity:AnyHashable,at point:CGPoint) {
+        guard isQueen else{return}
+        guard point.x.isFinite,point.y.isFinite else {utilityInvalid=true;queen.cancelPendingUtility();queenEvents(queen.cancelAttack());return}
+        if var f=fingers[identity] {
+            f.queenTravel=max(f.queenTravel,hypot(point.x-f.start.x,point.y-f.start.y));fingers[identity]=f
+        }
+        if queenFinger == identity {queenEvents(queen.move(to:point))}
+        if let (start,_)=utilityTouches[identity],hypot(point.x-start.x,point.y-start.y)>12 {utilityInvalid=true;queen.cancelPendingUtility()}
     }
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         let delivery = ProcessInfo.processInfo.systemUptime
@@ -429,6 +533,7 @@ final class BCDPackView: UIView {
             // coalesced path so a rapid out-and-back drag never becomes an attack.
             for past in event?.coalescedTouches(for:t) ?? [] {
                 fingers[ObjectIdentifier(t)]?.surfaceTap?.moved(to:past.location(in:self))
+                observeQueenMotion(ObjectIdentifier(t),at:past.location(in:self))
             }
             moveTouch(ObjectIdentifier(t), to: sample.location(in: self), time: sample.timestamp, receivedAt: delivery)
         }
@@ -439,8 +544,10 @@ final class BCDPackView: UIView {
         if let engine=cursorEngine { cursorGeometry();engine.move(identity,to:point,time:receivedAt ?? time);flushCursor(redraw:true);return }
         guard var finger = fingers[identity], time > finger.time else { return }
         finger.surfaceTap?.moved(to:point)
+        observeQueenMotion(identity,at:point)
+        finger.queenTravel=max(finger.queenTravel,hypot(point.x-finger.start.x,point.y-finger.start.y))
         if finger.role == "look" || finger.role == "fireAim" {
-            if pack?.inputMode == "controller" {
+            if pack?.inputMode == "controller" && pack?.lookMode != "relativeMouse" {
                 GamepadInput.shared.packLook(owner: finger.owner, phase: 1, dx: Double(point.x - finger.last.x), dy: Double(point.y - finger.last.y), time: time, receivedAt: receivedAt)
             } else if let calibration = pack?.aim {
                 HardwareInput.shared.postRelative(Int32(max(-30000, min(30000, Double(point.x - finger.last.x) * calibration.sensitivity * 2))),
@@ -468,7 +575,15 @@ final class BCDPackView: UIView {
         finger.last = point; finger.time = time; fingers[identity] = finger
         setNeedsDisplay()
     }
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) { finish(touches, cancelled: false) }
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        for touch in touches {
+            for sample in event?.coalescedTouches(for:touch) ?? [] {
+                fingers[ObjectIdentifier(touch)]?.surfaceTap?.moved(to:sample.location(in:self))
+                observeQueenMotion(ObjectIdentifier(touch),at:sample.location(in:self))
+            }
+        }
+        finish(touches, cancelled: false)
+    }
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) { finish(touches, cancelled: true) }
     private func finish(_ touches: Set<UITouch>, cancelled: Bool) {
         for t in touches {
@@ -480,6 +595,7 @@ final class BCDPackView: UIView {
                 if LibraryModel.shared.blocksGameplayTouch || !BCDPackFocus.shared.refresh() { clear();return }
                 engine.end(identity,at:point,time:ProcessInfo.processInfo.systemUptime,cancelled:cancelled);flushCursor(redraw:true);return
             }
+            if isQueen {finishQueen(identity,point:point,time:time ?? ProcessInfo.processInfo.systemUptime,cancelled:cancelled)}
             guard var f = fingers.removeValue(forKey: identity) else { return }
             release(f.owner)
             defer { setNeedsDisplay() }
@@ -489,7 +605,7 @@ final class BCDPackView: UIView {
             }
             guard !LibraryModel.shared.blocksGameplayTouch, BCDPackFocus.shared.refresh(), let pack else { clear(); return }
             if let tap=f.surfaceTap, tap.recognizes(end:point,time:time ?? ProcessInfo.processInfo.systemUptime,gateOwner:toggles[tap.gate]) {
-                queueSurfaceTap(tap)
+                if !BCDTenebrisOwnerCompatibility.matches(pack) || max(tap.travel,hypot(point.x-tap.start.x,point.y-tap.start.y)) <= 8 {queueSurfaceTap(tap)}
             }
             if f.role == "toggle", let c = f.control, let a = action(c.action) {
                 if hypot(point.x-f.start.x,point.y-f.start.y) >= 8 { f.didDrag = true }

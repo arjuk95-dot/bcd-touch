@@ -94,7 +94,9 @@ final class BCDGyroLive: @unchecked Sendable {
         let wanted = entry.map { BCDGyroStore.settings($0.windowsPath) } ?? BCDGyroSettings()
         if observers.isEmpty { appActive = UIApplication.shared.applicationState == .active }
         let playing = library.current != nil && !library.desktopHome && !library.launching && !library.menu && appActive
-        let on = wanted.isOn && playing && entry != nil
+        let store=BCDPackStore.shared
+        let pointerSurface = store.enabled && (!store.tableSurface.isEmpty || (store.pack?.id.hasPrefix("sulfur") == true && store.context == "inventory"))
+        let on = wanted.isOn && playing && entry != nil && !pointerSurface
         let wasStick = Self.stickActive
         lock.lock()
         let changed = settings != wanted

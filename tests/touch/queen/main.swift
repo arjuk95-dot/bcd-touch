@@ -1,0 +1,41 @@
+// swiftc app/Madeira/BCDQueensGesturePolicy.swift tests/touch/queen/main.swift -o /tmp/queen-policy && /tmp/queen-policy
+import Foundation
+func check(_ ok: Bool, _ message: String) { precondition(ok,message) }
+func utility(_ p:inout BCDQueensGesturePolicy,time:Double)->[BCDQueensGesturePolicy.Event] {
+    _=p.begin(at:.zero,time:time-0.02,possibleChord:true)
+    precondition(p.claimChord(time:time-0.01))
+    return p.twoFingerTap(time:time)
+}
+var p=BCDQueensGesturePolicy()
+check(p.begin(at:.zero,time:0).isEmpty,"begin must not attack")
+check(p.end(at:.zero,time:0.1) == [.attackDown,.attackUp],"tap edge pair")
+_ = p.begin(at:.zero,time:1)
+check(p.advance(time:1.3) == [.attackDown],"stationary charge")
+check(p.advance(time:1.4).isEmpty,"no repeat press")
+check(p.move(to:.init(x:40,y:10)).isEmpty,"aim during held charge must not release attack")
+check(p.end(at:.zero,time:1.6) == [.attackUp],"release charge")
+_ = p.begin(at:.zero,time:2)
+check(p.move(to:.init(x:20,y:0)).isEmpty,"swipe no attack")
+check(p.end(at:.zero,time:2.1).isEmpty,"out-and-back remains swipe")
+_ = p.begin(at:.zero,time:3)
+_ = p.advance(time:3.3)
+check(p.cancel() == [.attackUp],"cancel releases held RT")
+check(p.end(at:.zero,time:3.4).isEmpty,"cancel cannot produce tap")
+check(utility(&p,time:4).isEmpty,"defer equipment for double tap")
+check(p.advance(time:4.31) == [.equipment],"single equipment")
+p.journalEnabled=true
+_ = utility(&p,time:5)
+check(utility(&p,time:5.2) == [.journal],"double journal only")
+check(p.advance(time:6).isEmpty,"double must not also equipment")
+_ = utility(&p,time:7)
+_ = p.cancel()
+check(p.advance(time:8).isEmpty,"focus loss cancels pending utility")
+_ = p.begin(at:.zero,time:9)
+check(p.move(to:.init(x:Double.nan,y:0)).isEmpty,"invalid movement cancels")
+check(p.end(at:.zero,time:9.1).isEmpty,"invalid move no attack")
+_ = p.begin(at:.zero,time:10)
+check(p.end(at:.zero,time:9).isEmpty,"backward clock no tap")
+p.journalEnabled=false
+_ = utility(&p,time:11)
+check(utility(&p,time:11.2) == [.equipment],"unresolved journal never fires")
+print("Queen gesture policy assertions passed")
