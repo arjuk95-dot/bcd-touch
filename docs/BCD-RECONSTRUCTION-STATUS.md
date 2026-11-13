@@ -30,3 +30,10 @@ Swift6.2 portable model/factory/authoring/cursor/ownership suite passed at f55dc
 Queen delayed-utility and committed-charge arbitration and table final/coalesced-motion/chord ownership bugs found in audit were corrected with executable policy regressions. Table policy tests now cover missed timer holds, final-only displacement, horizontal/out-and-back secondary movement, replacement/extra contacts, duration and invalid coordinates.
 
 Inscryption first Explore policy now requests a semantic step-back action only when its binding is verified; the old unintegrated hardcoded S key was removed. Actual Rewired mapping/enablement investigation is ongoing. Hybrid relative mouse contacts no longer acquire controller RS aim ownership.
+
+## Authorized native validation checkpoint
+The owner explicitly approved public source/test publication and capped Apple validation. Snapshot f752aaf8 was published as1055bfb4 with exact matching tree ff06dd09ec77b39fa8c70c87b0969a2a3685d829. Native validation is running, not yet passed; no IPA or device result exists. Portable production model tests passed again at f752aaf8.
+
+Inscryption exact PC startup map is disabled and controller defaults empty, with no game-side activation found. The owner approved its narrow keyboard exception. One Explore button pulses verified S once and switches local layout; subsequent presses are layout-only. Long-press menu resynchronizes layout without game input. Explore uses verified W/S steps, A/D turn, Z interact; pointer inspection and two-finger right click remain. Game progress/state may refuse stepping back; local mode is not guest-state detection.
+
+STS2 and SKALD both have native controller paths; remaining utilities must use verified native mappings. Chronicles is Clickteam Fusion, and its action-to-controller mapping is not yet decoded; no guessed enum is enabled.

@@ -44,6 +44,7 @@ jobs:
   workflow_dispatch: {}
   push:
     branches-ignore:
+    - wo-bcd-profiles-native-001
     - wo-bcd-v653-test-first-004
     paths:
     - app/**

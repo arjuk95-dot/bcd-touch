@@ -116,7 +116,7 @@ final class BCDTableView: UIView {
             if abs(delta)>18 {policy.moved=1;lastScrollY=p.y;winios_pointer(0,0,0x800,UInt32(bitPattern:delta>0 ? -120:120))}
         } else if touch === primary {
             let action=BCDTableMove(&policy,Double(p.x),Double(p.y));position(p)
-            if allowBeginDrag && action & BCD_TABLE_DOWN != 0 && allowDrag {winios_pointer(0,0,2,0);leftDown=true}
+            if allowBeginDrag && action & Int32(BCD_TABLE_DOWN) != 0 && allowDrag {winios_pointer(0,0,2,0);leftDown=true}
         }
     }
     override func touchesMoved(_ touches:Set<UITouch>,with event:UIEvent?) {
@@ -137,8 +137,8 @@ final class BCDTableView: UIView {
             let end=p.location(in:self)
             let action=BCDTableEndAt(&policy,Double(end.x),Double(end.y),p.timestamp,chordInvalid ? 1:0)
             if leftDown {winios_pointer(0,0,4,0);leftDown=false}
-            if action & BCD_TABLE_CLICK != 0 {click(false)}
-            pendingSecondary = !inspectOnly && action & BCD_TABLE_SECONDARY != 0
+            if action & Int32(BCD_TABLE_CLICK) != 0 {click(false)}
+            pendingSecondary = !inspectOnly && action & Int32(BCD_TABLE_SECONDARY) != 0
             primary=nil;tick?.invalidate();tick=nil
         }
         if let s=second,touches.contains(s) {
