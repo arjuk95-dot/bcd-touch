@@ -149,11 +149,11 @@ jobs:
           '
         key: llvm-15.0.7-ios-v2
         fail-on-cache-miss: true
-    - name: Compile changed production touch code and UIKit interaction fixtures
-      run: 'python3 tools/touch-packs/check-swift.py
-
-        python3 tools/touch-packs/simulator-preview.py'
-      timeout-minutes: 20
+    - name: Verify artifact-backed identical production touch and UIKit evidence
+      run: python3 tools/ci/verify-approved-native-evidence.py
+      env:
+        GH_TOKEN: ${{ github.token }}
+      timeout-minutes: 5
     - name: Check control presets
       run: python3 tests/host/check-control-presets.py
     - name: Check preview build cache correctness
@@ -473,6 +473,12 @@ jobs:
       run: "xcodebuild -version\nif xcrun -sdk macosx metal --version 2>&1 | head -3; then\n  echo \"::notice::metal\
         \ compiler already present\"\nelse\n  echo \"metal missing -- attempting download\"\n  xcodebuild -downloadComponent\
         \ MetalToolchain \\\n    || echo \"::warning::-downloadComponent unsupported on this Xcode\"\nfi\n"
+    - name: Restore exact public-atomic shader used by the working donor
+      run: |
+        # The donor's patch-chain test applied this to the checkout as a side effect.
+        # Make that preparation explicit rather than rerun the unrelated test.
+        python3 tools/patch-dxmt-metal-atomics.py
+        test "$(shasum -a 256 dxmt/src/airconv/shaders/air_tessellation.metal | awk '{print $1}')" = aa7b3e264bf91cd885b5981805878cadb3b1f9f587a5131940ae9ee669a0fbca
     - name: Use public Metal atomics when the compiler needs them (Xcode 27)
       run: 'python3 tools/patch-dxmt-metal-atomics.py --if-needed
 
@@ -634,6 +640,8 @@ jobs:
       run: python3 tests/host/check-gpu-pause-inactive.py
     - name: Patch winemetal pause while inactive
       run: python3 tools/patch-winemetal-pause-inactive.py
+    - name: Check exact donor converter input manifest before compilation
+      run: python3 tools/ci/check-donor-converter-inputs.py
     - name: Build dxmt-ios
       shell: bash
       run: 'set -o pipefail
