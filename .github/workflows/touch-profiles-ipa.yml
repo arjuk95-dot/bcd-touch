@@ -159,22 +159,42 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: wine/build-native
-        key: wine-native-v1-${{ steps.winerev.outputs.sha }}
+        key: wine-native-tools-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.winerev.outputs.sha }}
     - name: 'Build native wine (for host-side tools: widl/wrc/wmc)'
       if: steps.winenative.outputs.cache-hit != 'true'
-      run: "cd wine\nmkdir -p build-native\ncd build-native\n# LOCAL (x86_64 Mac): an x86_64 host's configure defaults to\
-        \ a 32-bit Wine,\n# which macOS cannot build (\"gcc -m32 works... no\"); arm64 hosts are 64-bit.\nW64=\"\"; [ \"$(uname\
-        \ -m)\" = x86_64 ] && W64=--enable-win64\n../configure $W64 > \"$GITHUB_WORKSPACE/wine-native-configure.log\" 2>&1\
-        \ || true\n# Only the host tools and the generated headers are used from this\n# tree. A full host build also compiles\
-        \ the iOS-only unix sources\n# for macOS, and one failure there used to stop make before widl.\nN=$(sysctl -n hw.ncpu)\n\
-        { make -j\"$N\" __tools__ && make -j\"$N\" include; } > \"$GITHUB_WORKSPACE/wine-native-make.log\" 2>&1 \\\n  || make\
-        \ -k -j\"$N\" >> \"$GITHUB_WORKSPACE/wine-native-make.log\" 2>&1 || true\n"
+      run: 'set -euo pipefail
+    
+        cd wine
+    
+        mkdir -p build-native
+    
+        cd build-native
+    
+        W64=""; [ "$(uname -m)" = x86_64 ] && W64=--enable-win64
+    
+        ../configure $W64 2>&1 | tee "$GITHUB_WORKSPACE/wine-native-configure.log"
+    
+        # Pinned makedep.c generates __tooldeps__ from tools/*/all only.
+    
+        # include/all generates the header bank. Never fall back to the full host Wine build.
+    
+        N=$(sysctl -n hw.ncpu)
+    
+        make -j"$N" __tooldeps__ include/all 2>&1 | tee "$GITHUB_WORKSPACE/wine-native-make.log"
+    
+        for tool in widl wrc wmc winebuild; do test -x "tools/$tool/$tool"; done
+    
+        test -f include/dwrite.h
+    
+        '
+      timeout-minutes: 15
+      shell: bash
     - name: Save native wine tools
       if: steps.winenative.outputs.cache-hit != 'true' && hashFiles('wine/build-native/tools/widl/widl') != ''
       uses: actions/cache/save@v4
       with:
         path: wine/build-native
-        key: wine-native-v1-${{ steps.winerev.outputs.sha }}
+        key: wine-native-tools-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.winerev.outputs.sha }}
     - name: Diagnose native wine tools build
       run: "echo \"-- looking for widl (proof the native tools built) --\"\nfind wine/build-native/tools -maxdepth 2 -name\
         \ \"widl*\" 2>&1 || echo \"not found\"\nif [ ! -x wine/build-native/tools/widl/widl ]; then\n  echo \"::error::native\
@@ -192,7 +212,7 @@ jobs:
         \ --without-sdl --without-udev --without-unwind \\\n  > \"$GITHUB_WORKSPACE/wine-configure.log\" 2>&1 || true\n"
     - name: Generate cross-tree headers and patch config.h for iOS SDK
       shell: bash
-      run: "make -C wine/build-macos include -j\"$(sysctl -n hw.ncpu)\" > \"$GITHUB_WORKSPACE/make-include.log\" 2>&1 || true\n\
+      run: "make -C wine/build-macos include/all -j\"$(sysctl -n hw.ncpu)\" > \"$GITHUB_WORKSPACE/make-include.log\" 2>&1 || true\n\
         cp -n wine/build-native/include/*.h wine/build-macos/include/ 2>/dev/null || true\nCFG=wine/build-macos/include/config.h\n\
         {\n  echo \"\"\n  echo \"/* iOS SDK fixups appended by CI */\"\n  echo \"#undef HAVE_GETATTRLIST\"\n  echo \"#ifndef\
         \ D_TAPE\"\n  echo \"#define D_TAPE 1\"\n  echo \"#endif\"\n  echo \"#ifndef D_DISK\"\n  echo \"#define D_DISK 2\"\
