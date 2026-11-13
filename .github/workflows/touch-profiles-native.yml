@@ -1,7 +1,4 @@
 name: Isolated approved profile native validation
-on:
-  push:
-    branches: [wo-bcd-profiles-native-001]
 concurrency:
   group: touch-profiles-native
   cancel-in-progress: false
@@ -12,18 +9,30 @@ jobs:
     runs-on: macos-15-intel
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - name: Select toolchain
-        run: |
-          if [ -d /Applications/Xcode_16.4.app ]; then sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer; fi
-          xcodebuild -version
-      - name: Production Swift and UIKit validation
-        run: python3 tools/touch-packs/check-swift.py
-      - name: Production renderer simulator fixtures
-        run: python3 tools/touch-packs/simulator-preview.py
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: approved-profile-native-evidence
-          path: touch-evidence
-          retention-days: 7
+    - uses: actions/checkout@v4
+    - name: Select toolchain
+      run: 'if [ -d /Applications/Xcode_16.4.app ]; then sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer;
+        fi
+
+        xcodebuild -version
+
+        '
+    - name: Production Swift and UIKit validation
+      run: python3 tools/touch-packs/check-swift.py
+    - name: Production renderer simulator fixtures
+      run: python3 tools/touch-packs/simulator-preview.py
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: approved-profile-native-evidence
+        path: touch-evidence
+        retention-days: 7
+'on':
+  push:
+    branches:
+    - wo-bcd-profiles-native-001
+    paths:
+    - app/**
+    - tests/**
+    - tools/touch-packs/**
+    - packs/**
