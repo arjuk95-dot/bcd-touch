@@ -56,3 +56,21 @@ enum BCDSulfurInstalledVerifier {
         return total == expectedSize && hash.finalize().map { String(format: "%02x", $0) }.joined() == sha256
     }
 }
+
+/// Conservative native utility gate, using this executable's adjacent Unity data.
+/// Exact bytes identify reviewed defaults, not player remaps or guest UI state.
+enum BCDSkaldUtilityVerifier {
+    static func verify(_ executable:URL?) -> Bool {
+        guard let executable,executable.lastPathComponent.lowercased().contains("skald"),
+              executable.pathExtension.lowercased() == "exe",
+              (try? executable.resourceValues(forKeys:[.isRegularFileKey]).isRegularFile) == true else{return false}
+        let root=executable.deletingLastPathComponent().resolvingSymlinksInPath()
+        let data=root.appendingPathComponent(executable.deletingPathExtension().lastPathComponent+"_Data")
+        let specs=[("Managed/Assembly-CSharp.dll","a9929c9e7e7f06829692ae7c23df2c147d64ea050bdf18649adbd44e1fbcd075"),("globalgamemanagers","faca117d2bcfacc1ea980de701253fff20b8c7fb93e01b7033a1f3820697f6a8")]
+        return specs.allSatisfy { path,hash in
+            let file=data.appendingPathComponent(path)
+            guard let size=try? file.resourceValues(forKeys:[.fileSizeKey]).fileSize else{return false}
+            return BCDSulfurInstalledVerifier.matches(file:file,within:root,expectedSize:size,sha256:hash)
+        }
+    }
+}

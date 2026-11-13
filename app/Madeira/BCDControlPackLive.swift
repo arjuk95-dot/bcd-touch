@@ -58,6 +58,8 @@ import UniformTypeIdentifiers
     @Published var tableInspectOnly=false
     @Published var tableCancelSequence=0
     @Published var tableSurface = ""
+    var usesController:Bool {pack?.inputMode == "controller" || tableSurface == "skald"}
+    @Published var skaldUtilitiesVerified=false
     var hasSurface: Bool { pack != nil || !tableSurface.isEmpty }
     func tableKind(_ entry: LibraryEntry) -> String {
         let name=entry.launchRelativePath.lowercased()
@@ -247,9 +249,9 @@ import UniformTypeIdentifiers
         return try? BCDControlPack.decode(d, for: identity)
     }
     func activate(_ entry: LibraryEntry?) {
-        guard let entry else { BCDTableKeys.shared.releaseAll();inscryptionMode=BCDInscryptionMode();inscryptionExplore=false;tableSurface=""; sessionID = nil; pack = nil; base = nil; personalKey = nil; gameKey = nil; selectedControl = ""; undoHistory.removeAll(); return }
+        guard let entry else { BCDTablePad.shared.cancel();skaldUtilitiesVerified=false;BCDTableKeys.shared.releaseAll();inscryptionMode=BCDInscryptionMode();inscryptionExplore=false;tableSurface=""; sessionID = nil; pack = nil; base = nil; personalKey = nil; gameKey = nil; selectedControl = ""; undoHistory.removeAll(); return }
         let sameSession = sessionID == entry.id
-        if !sameSession { cursorMode = .gameplay;tableInspectOnly=false;tableCancelSequence=0;inscryptionMode=BCDInscryptionMode();inscryptionExplore=false;BCDTableKeys.shared.releaseAll() }
+        if !sameSession { BCDTablePad.shared.cancel();skaldUtilitiesVerified=false; cursorMode = .gameplay;tableInspectOnly=false;tableCancelSequence=0;inscryptionMode=BCDInscryptionMode();inscryptionExplore=false;BCDTableKeys.shared.releaseAll() }
         if !sameSession { selectedControl = "" }
         if sessionID == entry.id && !LibraryModel.shared.blocksGameplayTouch { return }
         // Changing a running HID session into XInput requires a new guest enumeration.
@@ -266,6 +268,14 @@ import UniformTypeIdentifiers
         if !sameSession {
             let selected=UserDefaults.standard.string(forKey:"TouchPackPointer."+identityKey(entry)) ?? ""
             tableSurface = selected == tableKind(entry) ? selected : ""
+        }
+        if !sameSession,tableSurface == "skald" {
+            let session=entry.id,url=LibraryEntry.hostURL(ofWindowsPath:entry.launchWindowsPath)
+            Task { [weak self] in
+                let verified=await Task.detached(priority:.utility) { BCDSkaldUtilityVerifier.verify(url) }.value
+                guard let self,self.sessionID == session else{return}
+                self.skaldUtilitiesVerified=verified
+            }
         }
         let localSelected = sessionUsesLocal
         var local: BCDControlPack?

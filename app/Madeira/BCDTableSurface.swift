@@ -170,6 +170,11 @@ struct BCDTableUtilityRail: View {
             Button {store.tableInspectOnly.toggle()} label: {
                 Label(store.tableInspectOnly ? "Inspect on":"Inspect",systemImage:"magnifyingglass")
             }.tint(store.tableInspectOnly ? .orange:.white)
+            if store.tableSurface == "skald" && store.skaldUtilitiesVerified {
+                Button {BCDTablePad.shared.pulse(BCDTableSelect)} label: {Label("Interact",systemImage:"hand.tap")}
+                Button {BCDTablePad.shared.pulse(BCDTableCancel)} label: {Label("Back",systemImage:"arrow.uturn.backward")}
+                Button {BCDTablePad.shared.pulse(BCDTableJournal)} label: {Label("Journal",systemImage:"book")}
+            }
             if store.tableSurface == "spire2" {
                 Button {store.tableCancelSequence += 1} label: {Label("Cancel",systemImage:"xmark")}
             }
@@ -262,4 +267,30 @@ struct BCDInscryptionExploreControls:View {
             key(90,"hand.tap","Interact",size:72).padding(.trailing,120).padding(.bottom,130)
         }.frame(maxWidth:.infinity,maxHeight:.infinity,alignment:.bottom)
     }
+}
+
+@MainActor final class BCDTablePad:NSObject {
+    static let shared=BCDTablePad()
+    private var owners=Set<UUID>()
+    override init() {
+        super.init()
+        NotificationCenter.default.addObserver(self,selector:#selector(cancel),name:UIApplication.willResignActiveNotification,object:nil)
+        NotificationCenter.default.addObserver(self,selector:#selector(cancel),name:BCDPackFocus.didLoseFocus,object:nil)
+    }
+    func pulse(_ utility:BCDTableNativeUtility) {
+        let store=BCDPackStore.shared
+        guard store.enabled,store.tableSurface == "skald",store.skaldUtilitiesVerified,
+              !LibraryModel.shared.blocksGameplayTouch,BCDTableInputActivity.contacts == 0,
+              UIApplication.shared.applicationState == .active,BCDPackFocus.shared.refresh() else{return}
+        let mask=BCDTableNativeButton(BCDTableSkald,utility,"a9929c9e7e7f06829692ae7c23df2c147d64ea050bdf18649adbd44e1fbcd075","faca117d2bcfacc1ea980de701253fff20b8c7fb93e01b7033a1f3820697f6a8",0)
+        guard mask != 0 else{return}
+        let owner=UUID();owners.insert(owner)
+        GamepadInput.shared.configurePack(enabled:true,accepting:true,calibration:BCDMouseJoystick.Calibration())
+        var sample=GamepadSample();sample.buttons=mask
+        GamepadInput.shared.packTouch(owner:owner,value:sample)
+        DispatchQueue.main.asyncAfter(deadline:.now()+0.08) {[weak self] in
+            GamepadInput.shared.packTouch(owner:owner,value:nil);self?.owners.remove(owner)
+        }
+    }
+    @objc func cancel() {for owner in owners {GamepadInput.shared.packTouch(owner:owner,value:nil)};owners.removeAll()}
 }

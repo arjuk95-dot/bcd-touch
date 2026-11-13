@@ -50,7 +50,7 @@ import UIKit
         let title = entry?.title ?? ""
         let usingPack = BCDPackStore.shared.hasSurface && BCDPackStore.shared.enabled
         let pack = BCDPackStore.shared.pack
-        GamepadInput.packControllerSession = usingPack && pack?.inputMode == "controller"
+        GamepadInput.packControllerSession = usingPack && BCDPackStore.shared.usesController
         GamepadInput.shared.configurePack(enabled: GamepadInput.packControllerSession, accepting: !library.blocksGameplayTouch, calibration: pack?.aim ?? BCDMouseJoystick.Calibration())
         BCDTouchExtras.configure(aim: usingPack ? BCDAimSettings() : profile.aim, gestures: usingPack ? BCDGestureSettings() : profile.gestures, pencil: usingPack ? BCDPencilSettings() : profile.pencil, title: title)
         BCDRadialHost.shared.configure(profile.radial, running: !usingPack && entry != nil && !library.launching, title: title)

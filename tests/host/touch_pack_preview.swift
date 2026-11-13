@@ -160,7 +160,15 @@ import UIKit
         let offline=BCDPackStore.Worker(url:"https://127.0.0.1:9",token:"simulator-loopback-fixture-only")
         try BCDPackStore.encoded(offline).write(to:store.folder.appendingPathComponent("worker.json"),options:.atomic)
         entry.id=UUID();store.activate(entry);store.prepare(entry);store.prepare(entry)
-        assert(store.pack==nil, "Invalid cache became active")
+        if BCDDreadPack.matches(req.identity) {
+            let fallback=try BCDDreadPack.make(identity:req.identity)
+            assert(store.pack?.id == fallback.id && store.pack?.version == fallback.version,
+                   "Invalid cache displaced the built-in Dread fallback")
+            try store.pack!.validate(for:req.identity,placement:.personal)
+            assert(store.pack?.version != invalid.version, "Invalid cache became active")
+        } else {
+            assert(store.pack==nil, "Invalid cache became active")
+        }
         for _ in 0..<100 {
             if store.status.hasPrefix("Stock/cached fallback") { break }
             try await Task.sleep(nanoseconds:100_000_000)

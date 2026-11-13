@@ -31,6 +31,6 @@ with tempfile.TemporaryDirectory(prefix='bcd-touch-check-') as tmp:
             content.split('final class ControlsWindow: UIWindow {',1)[1].split('\nstruct TouchControlsOverlay:',1)[0]+
             '\nstruct TouchControlsOverlay:View { nonisolated init() {}\nvar body:some View { EmptyView() } }\n')
         bridge=tmp/'ProfilePolicies.h'
-        bridge.write_text('\n'.join('#include "'+str(ROOT/'app/Madeira'/n)+'"' for n in ['BCDTableTouchPolicy.h','BCDSulfurSprintPolicy.h','BCDInscryptionPolicy.h']))
+        bridge.write_text('\n'.join('#include "'+str(ROOT/'app/Madeira'/n)+'"' for n in ['BCDTableTouchPolicy.h','BCDSulfurSprintPolicy.h','BCDInscryptionPolicy.h','BCDTableNativeUtilities.h']))
         subprocess.run(['xcrun','swiftc','-import-objc-header',str(bridge),'-typecheck' ,'-parse-as-library','-target',f'{arch}-apple-ios18.0-simulator','-sdk',sdk,*map(str,core),str(ROOT/'app/Madeira/BCDControlPackLive.swift'),str(ROOT/'app/Madeira/BCDCursorPackSettings.swift'),str(ROOT/'app/Madeira/BCDControlPackSurface.swift'),str(ROOT/'app/Madeira/BCDTableSurface.swift'),str(ROOT/'tests/host/touch_pack_ui_stubs.swift'),str(hooks),str(routing)],check=True)
         print('PASS: production pack views, window routing and legacy attachment typechecked against iOS SDK (engine/view boundaries stubbed)')
