@@ -1,3 +1,4 @@
+# Build655 retry: separate generic cache fixtures from approved-default routing.
 name: BCD touch app-only update with retained v653 native runtime
 'on':
   push:

@@ -59,6 +59,7 @@ with tempfile.TemporaryDirectory(prefix='touch-preview-') as tmp:
         for p in sorted(reports.glob('TouchPreview*.ips'),key=lambda p:p.stat().st_mtime)[-2:]:
             if p.stat().st_size<=2*1024*1024:shutil.copyfile(p,out/p.name)
     assert (container/'client-phase-1.txt').exists(),'Production Swift store client fixture did not finish'
+    assert (container/'approved-default-store-routing.txt').read_text().startswith('PASS:'),'Approved-default production store regression did not finish'
     subprocess.run(['xcrun','simctl','launch','--terminate-running-process',uid,'com.arjunkl.bcdtouch.preview'],env=dict(os.environ,SIMCTL_CHILD_PACK_FIXTURES='1',SIMCTL_CHILD_PACK_CLIENT_RESUME='1'),check=True,timeout=120)
     for _ in range(30):
         if (container/'client-phase-2.txt').exists():break

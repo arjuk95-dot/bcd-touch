@@ -70,8 +70,12 @@ import UIKit
         }
     }
     @MainActor private func checkStoreClient() async throws {
-        let original=try BCDControlPack.decode(Data(contentsOf:Bundle.main.url(forResource:"controller-store-regression",withExtension:"json")!))
-        var entry=LibraryEntry();entry.title="Dread Delusion";entry.steamAppID=1574240
+        var original=try BCDControlPack.decode(Data(contentsOf:Bundle.main.url(forResource:"controller-store-regression",withExtension:"json")!))
+        // This scenario exercises the generic worker/cache contract, not a reviewed
+        // game default. Keep the controller geometry but give it an unrelated identity.
+        original.id="generic-store-controller-fixture";original.title="Generic store fixture"
+        original.identity.executable="fixture-store/generic-controller.exe";original.identity.storeID="local"
+        var entry=LibraryEntry();entry.title=original.title
         entry.launchRelativePath=original.identity.executable;entry.relativePath=original.identity.executable
         let store=BCDPackStore.shared, folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
         let req=store.request(entry)
@@ -94,9 +98,24 @@ import UIKit
             assert(store.pack?.title==original.title+" fixture regeneration", "Wrong cached pack after restart")
             store.setLaunchPreference(entry,generated:true);store.applyLaunchPreference(entry)
             assert(store.enabled)
+            // A separately selected local preset must survive process restart AND
+            // stock/generated mode toggles; those toggles no longer deselect it.
+            var manualEntry=LibraryEntry();manualEntry.title="Unknown title fixture";manualEntry.launchRelativePath="unknown-title.exe";manualEntry.relativePath="unknown-title.exe"
+            store.activate(nil);store.applyLaunchPreference(manualEntry);assert(!store.enabled)
+            store.activate(manualEntry)
+            assert(store.pack?.inputMode=="keyboardMouse" && store.pack?.actions[0].label=="Personal accelerator","Selected local preset/edit lost after process restart")
+            store.setLaunchPreference(manualEntry,generated:true);store.applyLaunchPreference(manualEntry)
+            store.activate(nil);store.activate(manualEntry)
+            assert(store.enabled && store.pack?.actions[0].label=="Personal accelerator","Generated mode deselected the persisted personal preset")
+            var queen=LibraryEntry();queen.title="Approved Queen fixture";queen.launchRelativePath="fixture-approved/QueensDomain.exe";queen.relativePath=queen.launchRelativePath
+            store.activate(nil);store.applyLaunchPreference(queen);assert(!store.enabled)
+            store.prepare(queen);store.applyLaunchPreference(queen);store.activate(queen)
+            assert(!store.enabled && store.pack?.id=="queens-domain-v6","Approved default preparation changed persisted stock choice")
             try Data("PASS: fresh simulator app process restored generated cache, personal override and per-game stock input preference; reselecting generated controls succeeds. Engine boundaries stubbed, no installed game".utf8).write(to:folder.appendingPathComponent("client-phase-2.txt"),options:.atomic)
             return
         }
+        try checkApprovedStoreDefaults(original)
+        store.activate(nil);store.applyLaunchPreference(entry)
         try BCDPackStore.encoded(original).write(to:cached,options:.atomic)
         store.prepare(entry);store.prepare(entry)
         assert(store.status=="Validated cached pack")
@@ -131,10 +150,9 @@ import UIKit
         assert(store.pack?.title==regenerated.title && store.pack?.phone.controls[index].x==movedX)
         assert(store.pack?.actions.contains { $0.label=="Player action fixture" && $0.output=="RB" } == true,"Binding edit lost on regeneration")
         assert(store.pack?.phone.controls.last == moved.phone.controls.last, "Personal overlap/order lost on regeneration")
-        store.setAuthoringChoice(entry,key:"mode",value:"keyboardMouse");store.usePreset(entry)
-        store.activate(entry)
-        assert(store.pack?.inputMode=="controller","Selecting next-launch preset changed the current guest session")
-        store.setLaunchPreference(entry,generated:true);store.setAuthoringChoice(entry,key:"mode",value:"auto")
+        // Generic regenerated cache must not change the running guest's input mode.
+        // Explicit local preset selection is exercised independently below.
+        store.setLaunchPreference(entry,generated:true)
         var incompatible=BCDPackAuthoring.preset(identity:req.identity,title:"Mode change fixture",genre:"strategy",mode:"keyboardMouse")
         incompatible.title="Prepared different input mode"
         try BCDPackStore.encoded(incompatible).write(to:cached,options:.atomic)
@@ -142,8 +160,13 @@ import UIKit
         assert(store.pack?.inputMode=="controller","Cached regeneration changed the running input mode")
         try BCDPackStore.encoded(regenerated).write(to:cached,options:.atomic)
         var unknown=LibraryEntry();unknown.title="Unknown title fixture";unknown.launchRelativePath="unknown-title.exe";unknown.relativePath="unknown-title.exe"
+        var initialUnknown=original;initialUnknown.identity=store.request(unknown).identity
+        let unknownCache=store.folder.appendingPathComponent(BCDPackStore.hash(BCDPackStore.encoded(initialUnknown.identity))+".json")
+        try BCDPackStore.encoded(initialUnknown).write(to:unknownCache,options:.atomic)
+        store.activate(unknown);assert(store.pack?.inputMode=="controller")
         store.setAuthoringChoice(unknown,key:"genre",value:"racing");store.setAuthoringChoice(unknown,key:"mode",value:"keyboardMouse")
-        store.usePreset(unknown)
+        store.usePreset(unknown);store.activate(unknown)
+        assert(store.pack?.inputMode=="controller","Selecting next-launch preset changed the current guest session")
         store.activate(entry)
         assert(store.pack?.inputMode=="controller","Next-launch preset changed the active session")
         store.activate(unknown)
@@ -151,6 +174,10 @@ import UIKit
         var manual=store.pack!;manual.actions[0].label="Personal accelerator";assert(store.saveEdits(manual))
         store.activate(entry);store.activate(unknown)
         assert(store.pack?.actions[0].label=="Personal accelerator","Manual preset edits lost on reactivation")
+        store.setLaunchPreference(unknown,generated:false);store.setLaunchPreference(unknown,generated:true)
+        store.activate(nil);store.applyLaunchPreference(unknown);store.activate(unknown)
+        assert(store.enabled && store.pack?.actions[0].label=="Personal accelerator","Mode toggle deselected a saved local layout")
+        store.setLaunchPreference(unknown,generated:false) // Fresh-process local selection regression.
         store.activate(entry)
         assert(store.pack?.actions.contains { $0.label=="Player action fixture" } == true,"Preset overwrote researched edits")
         store.setLaunchPreference(entry,generated:false) // Restore the preference expected by the fresh-process phase.
@@ -160,15 +187,12 @@ import UIKit
         let offline=BCDPackStore.Worker(url:"https://127.0.0.1:9",token:"simulator-loopback-fixture-only")
         try BCDPackStore.encoded(offline).write(to:store.folder.appendingPathComponent("worker.json"),options:.atomic)
         entry.id=UUID();store.activate(entry);store.prepare(entry);store.prepare(entry)
-        if BCDDreadPack.matches(req.identity) {
-            let fallback=try BCDDreadPack.make(identity:req.identity)
-            assert(store.pack?.id == fallback.id && store.pack?.version == fallback.version,
-                   "Invalid cache displaced the built-in Dread fallback")
-            try store.pack!.validate(for:req.identity,placement:.personal)
-            assert(store.pack?.version != invalid.version, "Invalid cache became active")
-        } else {
-            assert(store.pack==nil, "Invalid cache became active")
-        }
+        // A malformed regeneration must never become active. Actual saved edits
+        // intentionally preserve their last valid baseline instead of going nil.
+        assert(store.pack?.version != invalid.version, "Invalid cache became active")
+        assert(store.pack?.phone.controls[index].x==movedX && store.pack?.actions.contains { $0.label=="Player action fixture" && $0.output=="RB" } == true,
+               "Invalid generated cache displaced the valid personal baseline")
+        try store.pack!.validate(for:req.identity,placement:.personal)
         for _ in 0..<100 {
             if store.status.hasPrefix("Stock/cached fallback") { break }
             try await Task.sleep(nanoseconds:100_000_000)
@@ -180,6 +204,57 @@ import UIKit
         try BCDPackStore.encoded(jobs).write(to:store.folder.appendingPathComponent("jobs.json"),options:.atomic)
         try BCDPackStore.encoded(regenerated).write(to:cached,options:.atomic)
         try Data("PASS: production Swift store cached/duplicate preparation, invalid cache rejection, real loopback connection failure fallback, and moved override after simulated cache regeneration. Simulator fixture; no real install-completion event or guest.".utf8).write(to:folder.appendingPathComponent("client-phase-1.txt"),options:.atomic)
+    }
+    @MainActor private func checkApprovedStoreDefaults(_ template:BCDControlPack) throws {
+        let store=BCDPackStore.shared,folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
+        let oldEnabled=store.enabled
+        defer {store.activate(nil);store.enabled=oldEnabled}
+        let config=LibraryEntry.hostDrive.appendingPathComponent(BCDChroniclesPack.configPath)
+        try FileManager.default.createDirectory(at:config.deletingLastPathComponent(),withIntermediateDirectories:true)
+        try Data("[varcom]\nM=32\nN=0\nO=5\nP=1\nQ=2\nR=3\nT=6\nU=7\n".utf8).write(to:config)
+        // Exercise the real store, not merely the pure resolver. Opaque paths with
+        // known Steam IDs cover Dock; no installed game or optional utility proof is claimed.
+        let cases:[(String,Int?,String,String)]=[
+            ("fixture-approved/QueensDomain.exe",nil,"queens-domain-v6",""),
+            ("fixture-approved/Sulfur.exe",nil,"sulfur-minimal-controller-v6",""),
+            ("fixture-approved/Opaque Dread",1574240,"dread-delusion-controller",""),
+            ("fixture-approved/Opaque Wolf",2371890,"chronicles-reviewed-controller-v6",""),
+            ("fixture-approved/TenebrisSomnia.exe",nil,"tenebris-owner-mockup-v3",""),
+            ("fixture-approved/Opaque Skald",1069160,"","skald"),
+            ("fixture-approved/Opaque Spire",2868840,"","spire2"),
+            ("fixture-approved/Opaque Cards",1092790,"","inscryption")]
+        for (path,steamID,packID,table) in cases {
+            var entry=LibraryEntry();entry.title="Approved default fixture";entry.steamAppID=steamID
+            entry.relativePath=path;entry.launchRelativePath=path
+            let identity=store.request(entry).identity
+            let cache=store.folder.appendingPathComponent(BCDPackStore.hash(BCDPackStore.encoded(identity))+".json")
+            var stale=template;stale.id="stale-default-fixture";stale.identity=identity
+            let bytes=BCDPackStore.encoded(stale);try bytes.write(to:cache,options:.atomic)
+            store.setLaunchPreference(entry,generated:true)
+            let key=BCDPackStore.hash(BCDPackStore.encoded([identity.executable,identity.storeID,identity.edition]))
+            UserDefaults.standard.removeObject(forKey:"TouchPackPointer."+key) // Simulate build654/missing upgrade flag.
+            store.activate(nil);store.applyLaunchPreference(entry);store.prepare(entry);store.activate(entry)
+            assert(store.enabled && store.hasSurface && store.usesController == (table != "inscryption"),"Approved input route absent")
+            assert(store.tableSurface==table && (table.isEmpty ? store.pack?.id==packID:store.pack==nil),"Stale cache displaced approved launch default: \(path)")
+            let retainedCache=try Data(contentsOf:cache)
+            assert(retainedCache==bytes,"Default selection overwrote old cache")
+            if packID=="queens-domain-v6" {
+                store.setLaunchPreference(entry,generated:false);store.prepare(entry);store.applyLaunchPreference(entry)
+                assert(!store.enabled,"Preparation changed explicit stock preference")
+            }
+        }
+        // Invalid cache without personal edits still resolves to the reviewed Dread base.
+        var dread=LibraryEntry();dread.title="Dread invalid cache fixture";dread.steamAppID=1574240
+        dread.launchRelativePath="fixture-approved/invalid/Dread Delusion.exe";dread.relativePath=dread.launchRelativePath
+        let identity=store.request(dread).identity
+        var invalid=template;invalid.identity=identity;invalid.version=999
+        try BCDPackStore.encoded(invalid).write(to:store.folder.appendingPathComponent(BCDPackStore.hash(BCDPackStore.encoded(identity))+".json"))
+        store.activate(nil);store.applyLaunchPreference(dread);store.activate(dread)
+        assert(store.pack?.id=="dread-delusion-controller" && store.pack?.version==6,"Malformed cache displaced reviewed Dread fallback")
+        var noita=LibraryEntry();noita.title="Noita";noita.steamAppID=881100;noita.launchRelativePath="fixture-approved/noita.exe";noita.relativePath=noita.launchRelativePath
+        store.setLaunchPreference(noita,generated:false);store.prepare(noita);store.applyLaunchPreference(noita)
+        assert(!store.enabled,"Noita background preparation reset explicit stock choice")
+        try Data("PASS: actual store selects all eight approved defaults over stale caches, reconstructs missing table flag, honors Dock IDs and stock choices, retains cache bytes and rejects malformed Dread cache. Engine boundaries stubbed; no guest.".utf8).write(to:folder.appendingPathComponent("approved-default-store-routing.txt"),options:.atomic)
     }
     @MainActor private func checkWindowRouting(_ p:BCDControlPack) throws {
         let scene=UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first!
