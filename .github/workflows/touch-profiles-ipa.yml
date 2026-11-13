@@ -249,7 +249,7 @@ jobs:
       run: for a in libavformat.a libavcodec.a libswresample.a libavutil.a; do test -s "toolchains/ffmpeg-ios/lib/$a";
         cp "toolchains/ffmpeg-ios/lib/$a" app/Madeira/; done
     - name: Verify FEX iOS archives
-      if: always()
+      if: success()
       shell: bash
       run: "set +e\nOK=1\nfor a in FEXCore/Source/libFEXCore.a FEXCore/Source/libFEXCore_Base.a \\\n         FEXCore/Source/libJemallocLibs.a\
         \ External/cephes/libcephes_128bit.a \\\n         External/fmt/libfmt.a External/SoftFloat-3e/libsoftfloat_3e.a\
@@ -262,7 +262,7 @@ jobs:
         \ -c \"import sys; print('%0A'.join(sys.stdin.read().splitlines()))\")\"\n    else\n      echo \"::error::$L.log\
         \ MISSING\"\n    fi\n  done\n  exit 1\nfi\necho \"::notice::all 7 FEX archives present\"\n"
     - name: Verify LLVM iOS build
-      if: always()
+      if: success()
       shell: bash
       run: "set +e\nshopt -s nullglob\nLIBS=(toolchains/llvm-ios-build/lib/*.a)\nN=${#LIBS[@]}\necho \"llvm-ios-build\
         \ static libs: $N\"\necho \"::notice::llvm-ios-build has $N static libs\"\necho \"-- toolchains tree --\"\

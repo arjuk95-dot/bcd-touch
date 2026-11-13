@@ -37,7 +37,7 @@ def make_zip(path, entries):
 
 class DonorTests(unittest.TestCase):
     def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory(); self.base = Path(self.tmp.name)
+        self.tmp = tempfile.TemporaryDirectory(); self.base = Path(self.tmp.name).resolve()  # macOS /var aliases /private/var; keep fixture root canonical
         self.pins = dict(repository='arjuk95-dot/bcd-touch', run_id=43227989116,
                          source='3' * 40, artifact_id=13955942602,
                          ipa_member='build-out/BCD-Touch-Lab-unsigned.ipa',
