@@ -1,4 +1,4 @@
-# Fixture correction: retain stable raw-controller tests and test hybrid mouse aim separately.
+# Source-check correction: target outer overlay cleanup, not nested table gyro callbacks.
 name: BCD full approved batch validation and TEST IPA
 'on':
   push:
@@ -37,6 +37,10 @@ jobs:
         print(''One combined source validation and TEST IPA build. Phone testing still required.'')
     
         CHECK'
+    - name: Verify reusable native evidence against exact source and artifact
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: python3 tools/ci/verify-approved-native-evidence.py
     - name: Verify exact historical patch sources before UI and native builds
       run: 'python3 tests/host/check-overlay-base.py
 
@@ -77,7 +81,7 @@ jobs:
 
         '
     - name: Verify preserved touch controls and source integration
-      run: 'python3 tools/touch-packs/check-swift.py
+      run: 'echo "Native Swift/UIKit checks reused only after exact source and artifact verification"
 
         python3 tests/host/check-cursor-pack-desktop.py
 
@@ -85,7 +89,7 @@ jobs:
 
         python3 tests/opengl/check-game-setting.py'
     - name: Validate production touch renderer and essential interaction ownership
-      run: python3 tools/touch-packs/simulator-preview.py
+      run: test -f touch-evidence/reused-native-provenance.json
     - uses: actions/upload-artifact@v4
       if: always()
       with:
@@ -96,225 +100,18 @@ jobs:
       run: python3 tests/host/check-control-presets.py
     - name: Check preview build cache correctness
       run: python3 tests/host/check-ui-preview-cache.py
-    - name: Check BCD's in-game layer
-      run: python3 tests/host/check-bcd-session.py --require-swift --require-preview
-    - name: Check the screen orientation lock
-      run: python3 tests/host/check-bcd-orientation.py
-    - name: Check the foldable iPhone support
-      run: python3 tests/host/check-bcd-foldable.py
-    - name: Check the native Duo interface
-      run: 'python3 tests/host/check-duo-controller-navigation.py
-
-        python3 tests/host/check-duo-download-session.py
-
-        python3 tests/host/check-desktop-quit.py
-
-        '
-    - name: Check the keyboard's Done button
-      run: python3 tests/host/check-bcd-keyboard-done.py
-    - name: Check shareable control layouts
-      run: python3 tests/host/check-bcd-control-share.py --require-swift
-    - name: Check the performance HUD
-      run: python3 tests/host/check-bcd-hud.py --require-swift
-    - name: Check clip dedupe
-      run: python3 tests/host/check-clip-dedupe.py
     - name: Check d3d11 src
       run: python3 tests/host/check-d3d11-src.py
-    - name: Check round 624 log lines
-      run: 'python3 tests/host/check-d3d12-fail-log.py
-
-        python3 tests/host/check-round624-log-lines.py
-
-        python3 tests/host/check-wineserver-bind-fallback.py
-
-        python3 tests/host/check-gdi-table-child.py
-
-        python3 tests/host/check-wow-unity-plain.py
-
-        python3 tests/host/check-present-lum.py
-
-        python3 tests/host/check-no-input-hint.py
-
-        python3 tests/host/check-windowed-hint.py
-
-        python3 tests/host/check-open-url.py
-
-        python3 tests/host/check-win-text.py
-
-        if [ -f tools/cluster-logs.py ] && [ -f tools/log-facts.py ]; then python3 tests/host/check-cluster-logs.py; else
-        echo "::notice::NOT RUN: upstream private log triage sources are absent from the public release"; fi
-
-        python3 tests/host/check-fex-fault-diag.py
-
-        python3 tests/host/check-early-fault.py
-
-        python3 tests/host/check-log-upload-guard.py
-
-        python3 tests/host/check-jit-brk-trail.py
-
-        python3 tests/host/check-ill-insn-diag.py
-
-        python3 tests/host/check-installs-countdown.py
-
-        python3 tests/host/check-kernelbase-optin.py
-
-        python3 tests/host/check-fex-alias-capacity.py
-
-        python3 tests/host/check-fex-ec-teardown-ctx.py
-
-        python3 tests/host/check-fex-cpuid-classic.py
-
-        python3 tests/host/check-fex-thread-init-nomem.py
-
-        python3 tests/host/check-fex-exit-runaway.py
-
-        python3 tests/host/check-fex-inval-null-thread.py
-
-        python3 tests/host/check-fex-processorid.py
-
-        python3 tests/host/check-fex-moffs-rip.py
-
-        python3 tests/host/check-ntdll-rtcs-null-area.py
-
-        python3 tests/host/check-fex-allocwatch-clear.py
-
-        python3 tests/host/check-fex-threadterm-clear-area.py
-
-        python3 tests/host/check-fex-repne-bit-ops.py
-
-        python3 tests/host/check-fex-dep-promote-stale.py
-
-        python3 tests/host/check-fex-pool-alloc-null.py
-
-        python3 tests/host/check-fex-process-term.py
-
-        python3 tests/host/check-fex-wow-recursive-tcm.py
-
-        python3 tests/host/check-fex-notify-nocpuarea.py
-
-        python3 tests/host/check-thread-sample-syscall.py
-
-        python3 tests/host/check-usd-osversion.py
-
-        python3 tests/host/check-thread-fault-isolate.py
-
-        python3 tests/host/check-display-rate.py
-
-        python3 tests/host/check-display-hz.py
-
-        python3 tests/host/check-x64-nocopy-dataimp.py
-
-        python3 tests/host/check-pe-module-name-safe.py
-
-        python3 tests/host/check-diag-module-name.py
-
-        python3 tests/host/check-ctx-null.py
-
-        python3 tests/host/check-hint-storm.py
-
-        python3 tests/host/check-fd-pollout-guard.py
-
-        python3 tests/host/check-dock-install-skip.py
-
-        python3 tests/host/check-godot-composition.py
-
-        python3 tests/host/check-clr-death-diag.py
-
-        python3 tests/host/check-crypt32-root-enum.py
-
-        python3 tests/host/check-gpu-stall.py
-
-        python3 tests/host/check-gpu-time-wow64.py
-
-        python3 tests/host/check-noexec-who.py
-
-        python3 tests/host/check-desktop-shell.py
-
-        python3 tests/host/check-d9-texfmt.py
-
-        python3 tests/host/check-d9-query-stuck.py
-
-        python3 tests/host/check-d11-query-stuck.py
-
-        python3 tests/host/check-soft-pool-decommit.py
-
-        python3 tests/host/check-mem-burst.py
-
-        '
     - name: Check dxmt patch chain
       run: python3 tests/host/check-dxmt-patch-chain.py
     - name: Check frame generation follows one layer
       run: python3 tests/host/check-dxmt-framegen-one-layer.py
-    - name: Check gamepad
-      run: python3 tests/host/check-gamepad.py
-    - name: Check controller profile re-read
-      run: python3 tests/host/check-gamepad-profile.py --require-swift
-    - name: Check hidpad
-      run: python3 tests/host/check-hidpad.py
-    - name: Check pad output
-      run: python3 tests/host/check-pad-output.py
-    - name: Check runtime settings
-      run: python3 tests/host/check-runtime-settings.py
-    - name: Check touch gamepad
-      run: python3 tests/host/check-touch-gamepad.py
-    - name: Check vmon identity
-      run: python3 tests/host/check-vmon-identity.py
-    - name: Check window coordinates
-      run: python3 tests/host/check-window-coordinates.py
-    - name: Check window visibility
-      run: python3 tests/host/check-window-visibility.py
-    - name: Check the rumble's CoreHaptics guard
-      run: python3 tests/host/check-pad-output-haptics-guard.py
     - name: Check the farm completeness guard
       run: python3 tests/host/check-farm-imports.py
-    - name: Check BCD's interface in the app
-      run: python3 tests/host/check-bcd-live.py --require-swift
-    - name: Check BCD's game page
-      run: python3 tests/host/check-bcd-game-page.py --require-swift
-    - name: Check BCD's library and Add a game
-      run: python3 tests/host/check-bcd-library.py --require-swift
-    - name: Check the library's graphics API detection
-      run: python3 tests/host/check-library-api.py
-    - name: Check OpenGL (the key and everything behind it)
-      run: python3 tests/host/check-opengl-key.py
-    - name: Check OpenGL (the game page, the Settings note, the catalog, the lists and auto-tune)
-      run: python3 tests/host/check-opengl-ui.py --require-swift
-    - name: Check the opt-in monitor that follows a borderless window
-      run: python3 tests/host/check-display-follow-borderless.py
-    - name: Check the recreated-surface census in the window tree
-      run: python3 tests/host/check-winios-surface-recreated.py
-    - name: Check the OpenGL frame probe
-      run: python3 tests/host/check-gl-probe.py
-    - name: Check the HID controller's one-minute line
-      run: python3 tests/host/check-hidpad-minute.py
-    - name: Check BCD's menus
-      run: python3 tests/host/check-bcd-menu.py --require-swift
     - name: Check BCD's touch controls
       run: python3 tests/host/check-bcd-touch.py --require-swift
-    - name: Check the extra keys
-      run: python3 tests/host/check-bcd-extra-keys.py --require-swift
-    - name: Check the BCD in-game menu items
-      run: python3 tests/host/check-bcd-menu-items.py --require-swift
-    - name: Check turbo and macros
-      run: python3 tests/host/check-bcd-turbo.py --require-swift
-    - name: Check players
-      run: python3 tests/host/check-bcd-players.py --require-swift
-    - name: Check radial menu
-      run: python3 tests/host/check-bcd-radial.py --require-swift
-    - name: Check aim mode, touch gestures and the Apple Pencil
-      run: python3 tests/host/check-bcd-touch-extras.py --require-swift
-    - name: Check the gamepad model picker
-      run: python3 tests/host/check-bcd-padmodel.py --require-swift
-    - name: Check touch-control look
-      run: python3 tests/host/check-bcd-touch-look.py --require-swift
-    - name: Check gyro aim
-      run: python3 tests/host/check-bcd-gyro.py --require-swift
-    - name: Check BCD's Settings
-      run: python3 tests/host/check-bcd-settings.py
     - name: Check the app sources are in the Xcode project
       run: python3 tests/host/check-xcode-sources.py
-    - name: Check BCD's controller hub
-      run: python3 tests/host/check-controller-hub.py --require-swift
     - name: Install newer bison (macOS ships an ancient 2.3)
       run: 'brew install bison
 

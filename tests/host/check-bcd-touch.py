@@ -151,7 +151,8 @@ for kept in ("controls(geo.size, session: session)", ".opacity(m.editing ? 1.0 :
     check(kept in body, f"the overlay still does what it did: {kept}")
 # WO-BCD-TOUCH-001: the fork also stops its pack focus monitor here. Check the
 # original release calls within the lifecycle closure instead of its exact line.
-disappeared = block(body, ".onDisappear")
+# The final modifier belongs to the overlay; nested table surfaces also refresh gyro on disappearance.
+disappeared = block(body[body.rfind(".onDisappear"):], ".onDisappear")
 check("GamepadInput.shared.configureTouch(controls: [])" in disappeared
       and "TouchMouseGate.padOverlay = false" in disappeared
       and "packFocus.setMonitoring(false)" in disappeared,
