@@ -682,19 +682,6 @@ jobs:
     - name: Retain exact native link inputs for subsequent app-only updates
       run: 'python3 tools/touch-packs/reuse-v653-donor.py link-inputs --repo "$GITHUB_WORKSPACE" --output build-out/native-link-inputs.json
 
-        python3 - <<''CHECK''
-
-        import json,subprocess
-
-        m=json.load(open(''build-out/native-link-inputs.json''))
-
-        for path in m[''archives'']: subprocess.run([''xcrun'',''lipo'',''-verify_arch'',''arm64'',path],check=True)
-
-        m[''architecture_verified'']=True
-
-        open(''build-out/native-link-inputs.json'',''w'').write(json.dumps(m,indent=2)+''\n'')
-
-        CHECK
 
         mkdir -p build-out/link-inputs
 
@@ -705,6 +692,21 @@ jobs:
         xcodebuild -version > build-out/toolchain.txt
 
         git submodule status --recursive > build-out/source-pins.txt
+
+
+        python3 - <<''CHECK''
+
+        import json,subprocess
+
+        m=json.load(open(''build-out/native-link-inputs.json''))
+
+        for path in m[''archives'']: subprocess.run([''xcrun'',''lipo'',path,''-verify_arch'',''arm64''],check=True)
+
+        m[''architecture_verified'']=True
+
+        open(''build-out/native-link-inputs.json'',''w'').write(json.dumps(m,indent=2)+''\n'')
+
+        CHECK
 
         '
     - uses: actions/upload-artifact@v4
@@ -720,6 +722,7 @@ jobs:
 
           build-out/source-pins.txt'
         retention-days: 14
+      if: always() && hashFiles('build-out/FEX-ios-link-inputs.tar.gz') != ''
     - name: Stamp version 0.1.${{ steps.bn.outputs.n }}
       shell: bash
       run: "/usr/libexec/PlistBuddy \\\n  -c \"Set :CFBundleShortVersionString 0.1.${{ steps.bn.outputs.n }}\" \\\
