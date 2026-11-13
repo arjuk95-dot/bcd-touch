@@ -417,7 +417,10 @@ final class BCDPackView: UIView {
     }
     private func send(_ a: BCDControlPack.Action, owner: UUID) {
         guard let p = pack else { return }
-        if a.behavior != "toggle", a.output == "Menu" || p.gestures.contains(where: { $0.kind == "tap" && ($0.cancelOn ?? []).contains(a.id) }) { clearToggles() }
+        // The preserved V3 owner pack predates gesture.cancelOn. Its Inventory
+        // utility must release Aim and pending right-surface attacks too.
+        let legacyInventory = BCDTenebrisOwnerCompatibility.matches(p) && a.id == "raw-b"
+        if a.behavior != "toggle", a.output == "Menu" || legacyInventory || p.gestures.contains(where: { $0.kind == "tap" && ($0.cancelOn ?? []).contains(a.id) }) { clearToggles() }
         if p.inputMode == "controller" { GamepadInput.shared.packTouch(owner: owner, value: TouchPadAction.sample(a.output)); return }
         if let keys = BCDPackCatalog.keyCodes(a.output) {
             let held = Set(keyHolds.values.flatMap { $0 }); keyHolds[owner] = keys

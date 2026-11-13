@@ -1,0 +1,16 @@
+{
+  "repository": "arjuk95-dot/bcd-touch",
+  "run_id": 43227989116,
+  "source": "37815c32296179231362a2aa645eba54827f0f2f",
+  "artifact_id": 13955942602,
+  "artifact_sha256": "76d08cd7331319657162f15ec4fc6fd41abdd299687b7d3d230d540d18f50d0f",
+  "ipa_member": "build-out/BCD-Touch-Lab-unsigned.ipa",
+  "ipa_sha256": "424577ddeeb387fcdd08f3ca709339bf07c903aaa1a6debfe98940c75a181657",
+  "catalog_member": "build-out/ConfigCatalog.generated.swift",
+  "bundle_id": "com.arjunkl.bcdtouch",
+  "version": "0.1.653",
+  "build": "653",
+  "app_path": "Payload/Madeira.app",
+  "catalog_sha256": "f1bf2b5211e74b05d2f54dbdf4e8311eeb78b2083f92ab4e148c24119b8127ad",
+  "payload_manifest_sha256": "e1f7df09d46ec03a47a1f83db5fb2f72e59fe88cee4341a97c0db611c60e36a1"
+}
