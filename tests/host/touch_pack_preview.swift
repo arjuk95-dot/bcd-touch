@@ -219,7 +219,7 @@ import UIKit
         let oldCurrent=library.current,oldEnabled=store.enabled,oldTarget=MetalBackedView.keyboardTarget
         let gameWindow=UIWindow(windowScene:scene);gameWindow.frame=scene.coordinateSpace.bounds;gameWindow.windowLevel = .normal+50
         let gameRoot=UIViewController();gameRoot.view=UIView(frame:gameWindow.bounds)
-        let gameView=UIView(frame:gameRoot.view.bounds);gameRoot.view.addSubview(gameView)
+        let gameView=MetalBackedView(frame:gameRoot.view.bounds);gameRoot.view.addSubview(gameView)
         gameWindow.rootViewController=gameRoot;gameWindow.isHidden=false;MetalBackedView.keyboardTarget=gameView
         let overlay=ControlsWindow(windowScene:scene);overlay.frame=scene.coordinateSpace.bounds;overlay.windowLevel = .normal+101
         let root=UIViewController();root.view=UIView(frame:overlay.bounds)
