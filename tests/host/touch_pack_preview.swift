@@ -70,7 +70,7 @@ import UIKit
         }
     }
     @MainActor private func checkStoreClient() async throws {
-        let original=try BCDControlPack.decode(Data(contentsOf:Bundle.main.url(forResource:"dread-delusion",withExtension:"json")!))
+        let original=try BCDControlPack.decode(Data(contentsOf:Bundle.main.url(forResource:"controller-store-regression",withExtension:"json")!))
         var entry=LibraryEntry();entry.title="Dread Delusion";entry.steamAppID=1574240
         entry.launchRelativePath=original.identity.executable;entry.relativePath=original.identity.executable
         let store=BCDPackStore.shared, folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
@@ -245,6 +245,25 @@ import UIKit
             focus.setMonitoring(false)
         }
         assert(focus.refresh())
+        // Keep the stable raw-controller ownership regression below; independently
+        // exercise the current approved hybrid pack, where mouse is the camera path.
+        let hybrid=try BCDControlPack.decode(Data(contentsOf:Bundle.main.url(forResource:"dread-delusion",withExtension:"json")!))
+        assert(hybrid.lookMode == "relativeMouse")
+        surface.configure(hybrid,context:hybrid.contexts[0],debug:true,editing:false)
+        let hybridFire=hybrid.phone.controls.first { $0.action == "attack" }!
+        let hybridSafe=surface.bounds.inset(by:surface.safeAreaInsets)
+        let hybridLook=CGPoint(x:hybridSafe.minX+hybrid.phone.aimRect.x*hybridSafe.width+hybrid.phone.aimRect.width*hybridSafe.width/2,y:hybridSafe.minY+hybrid.phone.aimRect.y*hybridSafe.height+hybrid.phone.aimRect.height*hybridSafe.height/2)
+        let relativeBefore=PackBoundarySpy.relativeMoves
+        let ht=ProcessInfo.processInfo.systemUptime
+        surface.beginTouch("hybrid-fire",at:surface.controlCenter(hybridFire),time:ht)
+        surface.beginTouch("hybrid-look",at:hybridLook,time:ht)
+        surface.moveTouch("hybrid-look",to:CGPoint(x:hybridLook.x+20,y:hybridLook.y+5),time:ht+0.02)
+        assert(pad.sample.rt == 255 && PackBoundarySpy.relativeMoves > relativeBefore && pad.lookOwner == nil,"Hybrid swipe failed while native fire was held")
+        surface.endTouch("hybrid-look",at:hybridLook,cancelled:false)
+        assert(pad.sample.rt == 255,"Mouse look release cancelled native fire")
+        surface.endTouch("hybrid-fire",at:surface.controlCenter(hybridFire),cancelled:false)
+        assert(pad.sample.rt == 0,"Native fire failed to release")
+        surface.clear();surface.configure(p,context:p.contexts[0],debug:true,editing:false)
         let safe=surface.bounds.inset(by:surface.safeAreaInsets)
         func point(_ c:BCDControlPack.Control)->CGPoint {CGPoint(x:safe.minX+c.x*safe.width,y:safe.minY+c.y*safe.height)}
         let zone=surface.movementStartRegion

@@ -31,6 +31,7 @@ with tempfile.TemporaryDirectory(prefix='touch-preview-') as tmp:
     info=dict(CFBundleIdentifier='com.arjunkl.bcdtouch.preview',CFBundleExecutable='TouchPreview',CFBundleName='Touch Preview',CFBundlePackageType='APPL',CFBundleVersion='1',CFBundleShortVersionString='1',MinimumOSVersion='18.0',LSRequiresIPhoneOS=True,UIDeviceFamily=[1,2],UIRequiresFullScreen=True,UISupportedInterfaceOrientations=['UIInterfaceOrientationLandscapeLeft','UIInterfaceOrientationLandscapeRight'])
     (app/'Info.plist').write_bytes(plistlib.dumps(info))
     pilots=list((ROOT/'packs/pilots').glob('*.json'))
+    shutil.copyfile(ROOT/'tests/fixtures/controller-store-regression.json',app/'controller-store-regression.json')
     for p in pilots:shutil.copyfile(p,app/p.name)
     for p in (ROOT/'packs/personal').glob('*.json'):shutil.copyfile(p,app/p.name)
     shutil.copyfile(pilots[0],app/'pack.json')

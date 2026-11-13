@@ -48,7 +48,7 @@ struct LibraryEntry {
 @MainActor final class MetalBackedView:UIView { static weak var keyboardTarget:MetalBackedView?; func mapPoint(_ p:CGPoint)->(Int32,Int32){(Int32(p.x),Int32(p.y))} }
 @MainActor final class HardwareInput {
     static let shared = HardwareInput()
-    func postRelative(_ x:Int32,_ y:Int32) {}
+    func postRelative(_ x:Int32,_ y:Int32) { if x != 0 || y != 0 { PackBoundarySpy.relativeMoves += 1 } }
     func postCursorPackRelative(_ x:Int32,_ y:Int32) { winios_pointer(x,y,1,0) }
     func setCursorPackActive(_ active:Bool) {}
     func setCursorPackFocused(_ focused:Bool) {}
@@ -73,7 +73,7 @@ enum MadeiraConfig { static func gameValue(_ name:String)->String? { nil };stati
 @MainActor final class LogStore { static let shared=LogStore();func log(_ message:String) {} }
 @MainActor final class BCDInputLive { static let shared = BCDInputLive(); func refresh() {} }
 @MainActor enum PackBoundarySpy {
-    static var keyboardEvents=0;static var mouseEvents=0
+    static var keyboardEvents=0;static var mouseEvents=0;static var relativeMoves=0
     static var keys:[(Int32,Int32)]=[];static var mouse:[(UInt32,UInt32)]=[]
 }
 @MainActor func winios_post_key(_ key:Int32,_ down:Int32) { PackBoundarySpy.keyboardEvents += 1; PackBoundarySpy.keys.append((key,down)) }

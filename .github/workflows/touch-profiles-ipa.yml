@@ -1,3 +1,4 @@
+# Fixture correction: retain stable raw-controller tests and test hybrid mouse aim separately.
 name: BCD full approved batch validation and TEST IPA
 'on':
   push:
