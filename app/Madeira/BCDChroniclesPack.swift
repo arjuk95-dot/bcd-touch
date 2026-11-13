@@ -6,6 +6,9 @@ import Foundation
 enum BCDChroniclesPack {
     static let configPath = "users/mobile/AppData/Roaming/Chronicles of the Wolf/config"
     static func matches(_ identity: BCDControlPack.Identity) -> Bool {
+        let store=identity.storeID.lowercased()
+        // Verified installed request: Steam2371890. Dock identity may be its folder.
+        if store.hasPrefix("steam:") {return store == "steam:2371890"}
         let path = identity.executable.replacingOccurrences(of:"\\",with:"/").lowercased()
         return path.split(separator:"/").last == "cotw.exe"
     }

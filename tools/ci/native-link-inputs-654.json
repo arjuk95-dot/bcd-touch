@@ -1,0 +1,124 @@
+{
+  "archives": {
+    "FEX/build-ios/External/SoftFloat-3e/libsoftfloat_3e.a": {
+      "bytes": 77424,
+      "sha256": "1165a0cff37f6642f783227caea87cde0ee202c4b369ebbcc04919501d705f79"
+    },
+    "FEX/build-ios/External/cephes/libcephes_128bit.a": {
+      "bytes": 24016,
+      "sha256": "6dc1e7206332477d9b43fc709ca006391e30df0c893d33314a418d64205e7545"
+    },
+    "FEX/build-ios/External/fmt/libfmt.a": {
+      "bytes": 188576,
+      "sha256": "fe202913e6f3753353b4b011c2f37464b4407ecb2ee29de6a57866abe17c5ece"
+    },
+    "FEX/build-ios/External/xxhash/cmake_unofficial/libxxhash.a": {
+      "bytes": 41840,
+      "sha256": "6c02a4a75d02a62dec7ae1b829a7217f4142b84eef54f1474e85d4d6dc5401cc"
+    },
+    "FEX/build-ios/FEXCore/Source/libFEXCore.a": {
+      "bytes": 4075680,
+      "sha256": "ede6ba6c62638f4af691d71dca8f7c830d8ee1c7ad0f4281adf5462d89734a2f"
+    },
+    "FEX/build-ios/FEXCore/Source/libFEXCore_Base.a": {
+      "bytes": 134232,
+      "sha256": "f44a11f88b31ce6f4ddb279454a52bd8e835f9876c3ae764873653cdb66ec35f"
+    },
+    "FEX/build-ios/FEXCore/Source/libJemallocLibs.a": {
+      "bytes": 2320,
+      "sha256": "82e5ce22f782b09896cbeafb8860071dac6ae378100b92ece28bbe49b9da969a"
+    },
+    "app/Madeira/libavcodec.a": {
+      "bytes": 2176696,
+      "sha256": "f18f01d91d600f482a6858356dfc79d5e13ef85430d1b5ff8565f1f28d37d345"
+    },
+    "app/Madeira/libavformat.a": {
+      "bytes": 643008,
+      "sha256": "6bed692bc87062eee3f1784d440d209300f58d6880b869cc64c0eb33dbe90e39"
+    },
+    "app/Madeira/libavutil.a": {
+      "bytes": 908936,
+      "sha256": "bd4f2e248ebf57844e04a70afeaccf6fb75b5046f3492286deef9f71824e0cf1"
+    },
+    "app/Madeira/libdxmt_combined.a": {
+      "bytes": 88124808,
+      "sha256": "b55598a02758bf760e41e81761c4d7ed7d52f3b55507ea56b3d8a66c236b4909"
+    },
+    "app/Madeira/libgmp.a": {
+      "bytes": 910184,
+      "sha256": "f18cb8a43bc3c3d325ace81226805f93d95340ced2ddb31ce0fdae23c16d1d65"
+    },
+    "app/Madeira/libgnutls.a": {
+      "bytes": 4420488,
+      "sha256": "1d514008193616c017131714e74b585d8e09753c3681875a128db93cd2abaf7b"
+    },
+    "app/Madeira/libhogweed.a": {
+      "bytes": 1142280,
+      "sha256": "4d9fcff6ce96b6feb72d39602b5f499fb052cfba911993fb70d3be8bc0fdfca1"
+    },
+    "app/Madeira/libmadeira_rppairing.a": {
+      "bytes": 7073952,
+      "sha256": "2f3266895741bd459c9305a90cf1f0488d216f7955ea4c0004b43204945c6d5b"
+    },
+    "app/Madeira/libnettle.a": {
+      "bytes": 1586904,
+      "sha256": "6608d26cf9317940e90932f621536450c62218ac3c108aa0de003a1c3a9b9964"
+    },
+    "app/Madeira/libntdll_unix.a": {
+      "bytes": 6648352,
+      "sha256": "8d451db19e4039182e3aa65d667970c0b2f0cbe24b831b4790f194ec4fa3614b"
+    },
+    "app/Madeira/libswresample.a": {
+      "bytes": 123200,
+      "sha256": "9bc7a0ae185e8a4a7feac63cbe0251f59d21a70c51122afcf2b101a67e87b06a"
+    },
+    "app/Madeira/libwin32u_unix.a": {
+      "bytes": 3958984,
+      "sha256": "8e59736eea900b7bdbee9ee8589aee8f7591a06bb64ed6d222e65db0ff18b4b8"
+    },
+    "app/Madeira/libwineserver.a": {
+      "bytes": 1379280,
+      "sha256": "36d080e679ec457726be7e555f0480c68164a4c878c7015820bdd5b4d6b8c792"
+    }
+  },
+  "artifact": 14055382553,
+  "converter_identity": "74ba675a4c281a8b",
+  "head": "2833ed85d945bb6623611200b558057f36f60f20",
+  "headers": {
+    "FEX/build-ios/External/range-v3/include/range/v3/version.hpp": {
+      "bytes": 586,
+      "sha256": "6846cba1dd49f7d50bdf369eae14d448451b6dd10f7196b4d677a9b6bbef5c3f"
+    },
+    "FEX/build-ios/generated/git_version.h": {
+      "bytes": 290,
+      "sha256": "0eb8e36de3a04b464695c8d58ab729170327b6ad0a929eee1f5afd04c4cf2203"
+    },
+    "FEX/build-ios/include/FEXCore/Config/ConfigOptions.inl": {
+      "bytes": 7304,
+      "sha256": "2dbfb64ebbd4c52d5840dec3b687b14c2ed7de61d48ae42c4d566d81262adbd4"
+    },
+    "FEX/build-ios/include/FEXCore/Config/ConfigValues.inl": {
+      "bytes": 5022,
+      "sha256": "1e4c89fcc549320e4f998f1fa9f98137aba0af86032e860754530e8b62b37eac"
+    },
+    "FEX/build-ios/include/FEXCore/IR/IRDefines.inc": {
+      "bytes": 885975,
+      "sha256": "a66df4d21a2fe932d8abc6cec8e28e13821ffb5d5a6b1d58eb805ffd31996a75"
+    },
+    "FEX/build-ios/include/FEXCore/IR/IRDefines_Dispatch.inc": {
+      "bytes": 18637,
+      "sha256": "5dd6e1e84c19907fc9c7956a2ad54d2a604b6b51c5c0567556cae94e561cb9ef"
+    }
+  },
+  "job": 131982686963,
+  "run": 43453839217,
+  "sha256": "8f35e438c0814a3bfe4775089db2a7d6a84858aa161c9aea0d4c667f42d8e4ea",
+  "source_pins_sha256": "481eeb1d16767e3aeb53d0cd71329048b97a5368496ef6fc38952d57f7a37c4b",
+  "submodules": {
+    "FEX": "049a1b162e55c7b7328f7a86b53e0fbda05ddd22",
+    "dxmt": "bbbb3aa539150601912b672126a566531074053f",
+    "madeira-dock": "72558e416a390f3669457930f09a389e54f49556",
+    "wine": "52a6004e68e818c5b09918215e973726e282425f"
+  },
+  "toolchain": "Xcode 26.3\nBuild version 17C529\n"
+}

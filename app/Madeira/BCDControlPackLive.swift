@@ -7,6 +7,87 @@ import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 
+// BEGIN APPROVED DEFAULT ROUTING (pure; exercised by launch-routing fixtures)
+enum BCDApprovedDefaultRouting {
+    static func tableKind(_ identity:BCDControlPack.Identity) -> String {
+        // Stable store IDs identify Dock installs even when their folder is renamed.
+        // SKALD: store.steampowered.com/app/1069160; the other IDs are retained install metadata.
+        let store=identity.storeID.lowercased()
+        if store.hasPrefix("steam:") {
+            return ["steam:1069160":"skald","steam:2868840":"spire2","steam:1092790":"inscryption"][store] ?? ""
+        }
+        let name=identity.executable.lowercased()
+        if name.contains("skald") {return "skald"}
+        if name.contains("slaythespire2") || name.contains("slay the spire 2") {return "spire2"}
+        if name.contains("inscryption") {return "inscryption"}
+        return ""
+    }
+    /// Verification path only. NEVER replace the identity used by cache/edit/preferences.
+    /// Dock keeps an install folder in relativePath; steamProgram is relative to it.
+    /// Probe only recorded metadata and a small allowlist of observed game basenames.
+    static func installedExecutable(relativePath:String,launchRelativePath:String,steamProgram:String?,steamAppID:Int?,drive:URL) -> URL? {
+        func relative(_ value:String) -> String? {
+            let value=value.replacingOccurrences(of:"\\",with:"/")
+            let parts=value.split(separator:"/",omittingEmptySubsequences:false)
+            guard !value.isEmpty,!value.contains(":"),!value.contains("\0"),!value.contains("\n"),!value.contains("\r"),
+                  parts.allSatisfy({ !$0.isEmpty && $0 != "." && $0 != ".." }) else {return nil}
+            return value
+        }
+        guard let stored=relative(relativePath) else{return nil}
+        let drive=drive.resolvingSymlinksInPath().standardizedFileURL
+        let selected=drive.appendingPathComponent(stored)
+        let install=(selected.pathExtension.lowercased() == "exe" ? selected.deletingLastPathComponent():selected).resolvingSymlinksInPath().standardizedFileURL
+        guard install.path == drive.path || install.path.hasPrefix(drive.path+"/") else{return nil}
+        func regular(_ candidate:URL) -> URL? {
+            let candidate=candidate.resolvingSymlinksInPath().standardizedFileURL
+            guard candidate.path.hasPrefix(install.path+"/"),candidate.pathExtension.lowercased() == "exe",
+                  (try? candidate.resourceValues(forKeys:[.isRegularFileKey]).isRegularFile) == true else{return nil}
+            return candidate
+        }
+        if let launch=relative(launchRelativePath),let exe=regular(drive.appendingPathComponent(launch)) {return exe}
+        if steamAppID != nil,let program=steamProgram.flatMap(relative),let exe=regular(install.appendingPathComponent(program)) {return exe}
+        let folder=install.lastPathComponent.lowercased()
+        let basename:String?
+        switch steamAppID {
+        case 2124120:basename="Sulfur.exe"
+        case 1069160:basename="SKALD Against the Black Priory.exe"
+        case 2868840:basename="SlayTheSpire2.exe"
+        case 2371890:basename="Cotw.exe"
+        case 1092790:basename="Inscryption.exe"
+        case nil:
+            if folder == "sulfur" {basename="Sulfur.exe"}
+            else if folder == "skald against the black priory" {basename="SKALD Against the Black Priory.exe"}
+            else if folder == "sts2" || folder == "slay the spire 2" {basename="SlayTheSpire2.exe"}
+            else {basename=nil}
+        default:basename=nil
+        }
+        return basename.flatMap {regular(install.appendingPathComponent($0))}
+    }
+    static func defaultPack(_ identity:BCDControlPack.Identity,bindings:[String:String],cached:BCDControlPack?) -> BCDControlPack? {
+        if BCDQueensDomainPack.matches(identity) {return BCDQueensDomainPack.make(identity:identity,bindings:bindings)}
+        if BCDSulfurPack.matches(identity) {return try? BCDSulfurPack.make(identity:identity)}
+        if BCDDreadPack.matches(identity) {return try? BCDDreadPack.make(identity:identity)}
+        if BCDChroniclesPack.matches(identity) {return try? BCDChroniclesPack.make(identity:identity,bindings:bindings)}
+        if BCDTenebrisDefaultPack.matches(identity) {
+            // Existing owner V3/V5 layouts can contain personal positions and bindings.
+            if let cached,cached.id == "tenebris-owner-mockup-v3" {return cached}
+            return BCDTenebrisDefaultPack.make(identity:identity)
+        }
+        return nil
+    }
+    static func choose(_ identity:BCDControlPack.Identity,bindings:[String:String],local:BCDControlPack?,cached:BCDControlPack?,customized:Bool) -> (pack:BCDControlPack?,table:String) {
+        // An explicitly selected local layout or actual saved edits outrank migration.
+        if let local {return (local,"")}
+        if customized,let cached {return (cached,"")}
+        let table=tableKind(identity)
+        if !table.isEmpty {return (nil,table)}
+        if let approved=defaultPack(identity,bindings:bindings,cached:cached) {return (approved,"")}
+        if BCDChroniclesPack.matches(identity) {return (nil,"")} // missing config must not resurrect stale guessed bindings
+        return (cached,"")
+    }
+}
+// END APPROVED DEFAULT ROUTING
+
 @MainActor final class BCDPackStore: ObservableObject {
     static let shared = BCDPackStore()
     var cursorMode: BCDCursorPack.Mode = .gameplay
@@ -63,11 +144,7 @@ import UniformTypeIdentifiers
     @Published var spireUtilitiesVerified=false
     var hasSurface: Bool { pack != nil || !tableSurface.isEmpty }
     func tableKind(_ entry: LibraryEntry) -> String {
-        let name=entry.launchRelativePath.lowercased()
-        if name.contains("skald") { return "skald" }
-        if name.contains("slaythespire2") || name.contains("slay the spire 2") { return "spire2" }
-        if name.contains("inscryption") { return "inscryption" }
-        return ""
+        BCDApprovedDefaultRouting.tableKind(request(entry).identity)
     }
     @Published var pack: BCDControlPack?
     @Published var status = "Stock controls"
@@ -120,7 +197,9 @@ import UniformTypeIdentifiers
     }
     func setLaunchPreference(_ entry: LibraryEntry, generated: Bool) {
         UserDefaults.standard.set(generated,forKey:preferenceKey(entry))
-        if generated { UserDefaults.standard.set(false, forKey: "TouchPackLocal." + identityKey(entry)); UserDefaults.standard.removeObject(forKey:"TouchPackPointer."+identityKey(entry)) }
+        // Generated mode enables the reviewed layer, but must not deselect an explicitly
+        // selected personal/local layout. Choosing the built-in preset is separate.
+        if generated { UserDefaults.standard.set(tableKind(entry),forKey:"TouchPackPointer."+identityKey(entry)) }
         status="Input mode saved · next launch"
     }
     func preferStockNextLaunch() {
@@ -167,6 +246,7 @@ import UniformTypeIdentifiers
         let kind=tableKind(entry)
         if !kind.isEmpty {
             UserDefaults.standard.set(kind,forKey:"TouchPackPointer."+identityKey(entry))
+            UserDefaults.standard.set(false,forKey:"TouchPackLocal."+identityKey(entry))
             UserDefaults.standard.set(true,forKey:preferenceKey(entry))
             status="Direct touch pointer prepared · next launch; existing presets retained"
             return
@@ -176,7 +256,7 @@ import UniformTypeIdentifiers
         let genre = BCDPackCatalog.genres.contains { $0.0 == proposed } ? proposed : "third-person"
         let choice = authoringChoice(entry, key: "mode")
         let mode = choice == "keyboardMouse" || (choice == "auto" && req.requirements["mode"]?.hasPrefix("keyboardMouse") == true) ? "keyboardMouse" : "controller"
-        let preset = (try? BCDSulfurPack.make(identity:req.identity)) ?? (try? BCDDreadPack.make(identity:req.identity)) ?? (try? BCDChroniclesPack.make(identity:req.identity,bindings:req.bindings)) ?? (BCDQueensDomainPack.matches(req.identity) ? BCDQueensDomainPack.make(identity:req.identity) : BCDNoitaPack.matches(req.identity) ? BCDNoitaPack.make(identity:req.identity,bindings:req.bindings) : BCDPackAuthoring.preset(identity: req.identity, title: entry.title, genre: genre, mode: mode))
+        let preset = BCDApprovedDefaultRouting.defaultPack(req.identity,bindings:req.bindings,cached:nil) ?? (BCDNoitaPack.matches(req.identity) ? BCDNoitaPack.make(identity:req.identity,bindings:req.bindings) : BCDPackAuthoring.preset(identity:req.identity,title:entry.title,genre:genre,mode:mode))
         do {
             try preset.validate(for: req.identity)
             let key = identityKey(entry)
@@ -192,6 +272,7 @@ import UniformTypeIdentifiers
     func summary(_ entry: LibraryEntry) -> String {
         let req = request(entry), key = Self.hash(Self.encoded(req.identity))
         if UserDefaults.standard.bool(forKey: "TouchPackLocal." + identityKey(entry)) { return "Personal preset selected · edit in game" }
+        if !tableKind(entry).isEmpty || BCDApprovedDefaultRouting.defaultPack(req.identity,bindings:req.bindings,cached:nil) != nil {return "Approved controls included · generated mode uses latest defaults"}
         if let p = cached(key, identity: req.identity) { return "Validated · \(p.actions.count) actions · physical test required" }
         if let job = jobs[key] { return "Preparation \(job.state) · stock controls remain available" }
         return "Prepare researched controls or start from an offline preset"
@@ -208,7 +289,7 @@ import UniformTypeIdentifiers
             bindings.merge(BCDNoitaPack.inputMetadata(drive:LibraryEntry.hostDrive)) { first,_ in first }
         }
         // Known input file only. Never forward full registry hives, saves, Steam accounts or credentials.
-        if entry.title.localizedCaseInsensitiveContains("Chronicles of the Wolf") {
+        if entry.steamAppID == 2371890 || entry.title.localizedCaseInsensitiveContains("Chronicles of the Wolf") {
             let path = "users/mobile/AppData/Roaming/Chronicles of the Wolf/config"
             if let text = Self.bindingText(LibraryEntry.hostDrive.appendingPathComponent(path)) { bindings[path] = text }
         }
@@ -227,14 +308,21 @@ import UniformTypeIdentifiers
         if let remaps = entry.controllerBinds { bindings["bcd-player-remaps"] = String(data: Self.encoded(remaps), encoding: .utf8) }
         let identity = BCDControlPack.Identity(executable: entry.launchRelativePath.lowercased(), storeID: entry.steamAppID.map { "steam:\($0)" } ?? "local",
             edition: "installed", build: entry.steamMetadataInstall ?? "unreported", bindingDigest: Self.hash(Self.encoded(bindings)))
-        let wolf = entry.title.localizedCaseInsensitiveContains("Chronicles of the Wolf")
+        let wolf = entry.steamAppID == 2371890 || entry.title.localizedCaseInsensitiveContains("Chronicles of the Wolf")
         let dread = entry.title.localizedCaseInsensitiveContains("Dread Delusion")
         let genre = authoringChoice(entry, key: "genre"), mode = authoringChoice(entry, key: "mode")
         return Request(identity: identity, title: entry.title, bindings: bindings, requirements: ["phone":"iPhone 16 Pro Max landscape safe area", "pad":"iPad landscape independent reach", "hud":"BLACK thin outlines; reserve continuous swipe rectangle first", "ownership":"touch-down until release", "genre":genre == "auto" ? (wolf ? "side-scroller" : (dread ? "first-person" : "identify from game/bindings")) : genre, "packVersion":"3", "inputMode":mode, "mode":mode != "auto" ? mode : "prefer verified native controller bindings; only camera swipe uses mouse. Do not infer numeric controller action mappings from saved config. Preserve non-latching crouch and existing personal controls."])
     }
     func prepare(_ entry: LibraryEntry, regenerate: Bool = false) {
         guard entry.desktop != true else { return }
-        if BCDNoitaPack.matches(request(entry).identity) { usePreset(entry);return }
+        if BCDNoitaPack.matches(request(entry).identity) { status="Noita cursor controls built in · existing launch choice preserved";return }
+        let approvedRequest=request(entry)
+        if BCDChroniclesPack.matches(approvedRequest.identity), (try? BCDChroniclesPack.make(identity:approvedRequest.identity,bindings:approvedRequest.bindings)) == nil {
+            status="Chronicles controls need the installed game's valid controller config";return
+        }
+        if !BCDApprovedDefaultRouting.tableKind(approvedRequest.identity).isEmpty || BCDApprovedDefaultRouting.defaultPack(approvedRequest.identity,bindings:approvedRequest.bindings,cached:nil) != nil {
+            status="Approved controls built in · ready next launch";return
+        }
         var req = request(entry)
         let key = Self.hash(Self.encoded(req.identity))
         if !regenerate, cached(key, identity: req.identity) != nil { status = "Validated cached pack"; return }
@@ -248,6 +336,10 @@ import UniformTypeIdentifiers
     private func cached(_ key: String, identity: BCDControlPack.Identity) -> BCDControlPack? {
         guard let d = try? Data(contentsOf: folder.appendingPathComponent(key + ".json")) else { return nil }
         return try? BCDControlPack.decode(d, for: identity)
+    }
+    private func installedExecutable(_ entry:LibraryEntry) -> URL? {
+        BCDApprovedDefaultRouting.installedExecutable(relativePath:entry.relativePath,launchRelativePath:entry.launchRelativePath,
+            steamProgram:entry.steamProgram,steamAppID:entry.steamAppID,drive:LibraryEntry.hostDrive)
     }
     func activate(_ entry: LibraryEntry?) {
         guard let entry else { BCDTablePad.shared.cancel();skaldUtilitiesVerified=false;spireUtilitiesVerified=false;BCDTableKeys.shared.releaseAll();inscryptionMode=BCDInscryptionMode();inscryptionExplore=false;tableSurface=""; sessionID = nil; pack = nil; base = nil; personalKey = nil; gameKey = nil; selectedControl = ""; undoHistory.removeAll(); return }
@@ -266,18 +358,6 @@ import UniformTypeIdentifiers
         let req = request(entry), key = Self.hash(Self.encoded(req.identity)); selectedKey = key
         gameKey = Self.hash(Self.encoded([req.identity.executable, req.identity.storeID, req.identity.edition]))
         if !sameSession { sessionUsesLocal = UserDefaults.standard.bool(forKey: "TouchPackLocal." + gameKey!) }
-        if !sameSession {
-            let selected=UserDefaults.standard.string(forKey:"TouchPackPointer."+identityKey(entry)) ?? ""
-            tableSurface = selected == tableKind(entry) ? selected : ""
-        }
-        if !sameSession,["skald","spire2"].contains(tableSurface) {
-            let session=entry.id,url=LibraryEntry.hostURL(ofWindowsPath:entry.launchWindowsPath),kind=tableSurface
-            Task { [weak self] in
-                let verified=await Task.detached(priority:.utility) { kind == "skald" ? BCDSkaldUtilityVerifier.verify(url):BCDSpireUtilityVerifier.verify(url) }.value
-                guard let self,self.sessionID == session else{return}
-                if kind == "skald" {self.skaldUtilitiesVerified=verified} else {self.spireUtilitiesVerified=verified}
-            }
-        }
         let localSelected = sessionUsesLocal
         var local: BCDControlPack?
         if localSelected && sameSession { local = base }
@@ -285,7 +365,33 @@ import UniformTypeIdentifiers
             candidate.identity = req.identity // A player-selected template follows this installation; generated caches never bypass identity matching.
             if (try? candidate.validate(for: req.identity, placement: .personal)) != nil { local = candidate }
         }
-        let candidate = local ?? (BCDNoitaPack.matches(req.identity) ? BCDNoitaPack.make(identity:req.identity,bindings:req.bindings) : (cached(key, identity: req.identity) ?? (try? BCDDreadPack.make(identity:req.identity)) ?? (try? BCDChroniclesPack.make(identity:req.identity,bindings:req.bindings))))
+        let cachedPack=cached(key,identity:req.identity)
+        let savedEdit=overrides[gameKey!]
+        let customized:Bool
+        if let savedEdit {
+            if var baseline=savedEdit.baseline {
+                baseline.identity=savedEdit.pack.identity
+                customized=Self.encoded(savedEdit.pack) != Self.encoded(baseline)
+            } else {customized=true}
+        } else {customized=false}
+        var preservedBase=cachedPack
+        if customized,preservedBase == nil,let savedEdit {
+            var previous=savedEdit.baseline ?? savedEdit.pack
+            previous.identity=req.identity
+            if (try? previous.validate(for:req.identity,placement:.personal)) != nil {preservedBase=previous}
+        }
+        let route=BCDApprovedDefaultRouting.choose(req.identity,bindings:req.bindings,local:local,cached:preservedBase,customized:customized)
+        if !sameSession {tableSurface=route.table}
+        let candidate = BCDNoitaPack.matches(req.identity) ? (local ?? BCDNoitaPack.make(identity:req.identity,bindings:req.bindings)) : route.pack
+        if !sameSession,["skald","spire2"].contains(tableSurface) {
+            let session=entry.id,url=installedExecutable(entry),kind=tableSurface
+            Task { [weak self] in
+                let verified=await Task.detached(priority:.utility) { kind == "skald" ? BCDSkaldUtilityVerifier.verify(url):BCDSpireUtilityVerifier.verify(url) }.value
+                guard let self,self.sessionID == session else{return}
+                if kind == "skald" {self.skaldUtilitiesVerified=verified} else {self.spireUtilitiesVerified=verified}
+            }
+        }
+
         if sameSession, let current = pack, let candidate, current.inputMode != candidate.inputMode {
             status = "Prepared input mode saved · next launch"; return
         }
@@ -293,7 +399,7 @@ import UniformTypeIdentifiers
         if !sameSession {
             sulfurProof = .unverified; sulfurChoice.end()
             if BCDSulfurPack.matches(req.identity) {
-                let session=entry.id,url=LibraryEntry.hostURL(ofWindowsPath:entry.launchWindowsPath)
+                let session=entry.id,url=installedExecutable(entry)
                 Task.detached(priority:.utility) { [weak self] in
                     let proof=BCDSulfurInstalledVerifier.verify(executableURL:url)
                     await MainActor.run { guard let self,self.sessionID == session,let gameKey=self.gameKey else{return}

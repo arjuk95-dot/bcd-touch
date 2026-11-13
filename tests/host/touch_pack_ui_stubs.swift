@@ -4,7 +4,7 @@ import Combine
 import UIKit
 struct LibraryEntry {
     var id = UUID(); var title = "Fixture"; var desktop: Bool?; var steamAppID: Int?
-    var launchRelativePath = "fixture.exe"; var relativePath = "fixture.exe"; var steamMetadataInstall: String?; var controllerBinds: [String:String]?
+    var launchRelativePath = "fixture.exe"; var relativePath = "fixture.exe"; var steamMetadataInstall: String?; var steamProgram: String?; var controllerBinds: [String:String]?
     static let hostDrive = URL(fileURLWithPath:"/tmp/fixture-drive")
     var launchWindowsPath:String { "C:\\"+launchRelativePath }
     static func hostURL(ofWindowsPath:String) -> URL? { hostDrive.appendingPathComponent("fixture.exe") }

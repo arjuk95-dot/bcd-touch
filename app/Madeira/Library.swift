@@ -1395,7 +1395,7 @@ final class LibraryModel: ObservableObject {
             GamepadInput.packKeyboardMouseSession = BCDPackStore.shared.enabled && BCDPackStore.shared.pack?.cursorControls != nil
             HardwareInput.shared.setCursorPackActive(GamepadInput.packKeyboardMouseSession)
             GamepadInput.shared.configurePack(enabled: GamepadInput.packControllerSession, accepting: false, calibration: BCDPackStore.shared.pack?.aim ?? BCDMouseJoystick.Calibration())
-            return BCDPackStore.shared.pack != nil
+            return BCDPackStore.shared.enabled && BCDPackStore.shared.hasSurface
         }
         // WO-BCD-TOUCH-001 launch actor bridge end
         wine_exit_status_reset()
