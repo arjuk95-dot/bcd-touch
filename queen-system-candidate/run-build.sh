@@ -77,15 +77,16 @@ import datetime,os,plistlib
 from pathlib import Path
 p=Path('app/Madeira/Info.plist');d=plistlib.loads(p.read_bytes());d.update(CFBundleVersion='667',CFBundleShortVersionString='0.1.667',MadeiraCommit=os.environ['GITHUB_SHA'],MadeiraRepo=os.environ['GITHUB_REPOSITORY'],MadeiraBuilt=datetime.datetime.now(datetime.timezone.utc).isoformat(),BCDDeviceValidationStatus='NOT_RUN',BCDFullValidationRunStatus='NOT_RUN');p.write_bytes(plistlib.dumps(d,fmt=plistlib.FMT_XML,sort_keys=False))
 PY
-xcodebuild -project app/Madeira.xcodeproj -scheme Madeira -sdk iphoneos -configuration Release CODE_SIGNING_ALLOWED=NO -showBuildSettings > build-out/release-build-settings.txt
+xcodebuild -project app/Madeira.xcodeproj -scheme Madeira -sdk iphoneos -configuration Release SWIFT_OPTIMIZATION_LEVEL=-O GCC_OPTIMIZATION_LEVEL=3 CODE_SIGNING_ALLOWED=NO -showBuildSettings > build-out/release-build-settings.txt
 python3 - <<'CHECK'
 from pathlib import Path
 s=Path('build-out/release-build-settings.txt').read_text()
+print('\n'.join(line for line in s.splitlines() if 'OPTIMIZATION_LEVEL =' in line))
 assert 'SWIFT_OPTIMIZATION_LEVEL = -Onone' not in s
 assert 'GCC_OPTIMIZATION_LEVEL = 0' not in s
 assert 'SWIFT_OPTIMIZATION_LEVEL = -O' in s
 CHECK
-xcodebuild -project app/Madeira.xcodeproj -scheme Madeira -sdk iphoneos -configuration Release CODE_SIGNING_ALLOWED=NO archive -archivePath build-out/Madeira.xcarchive > build-out/archive.log 2>&1 || { tail -150 build-out/archive.log; exit 1; }
+xcodebuild -project app/Madeira.xcodeproj -scheme Madeira -sdk iphoneos -configuration Release SWIFT_OPTIMIZATION_LEVEL=-O GCC_OPTIMIZATION_LEVEL=3 CODE_SIGNING_ALLOWED=NO archive -archivePath build-out/Madeira.xcarchive > build-out/archive.log 2>&1 || { tail -150 build-out/archive.log; exit 1; }
 python3 tools/touch-packs/reuse-v653-donor.py assemble --prepared build-out/donor --compiled-app build-out/Madeira.xcarchive/Products/Applications/Madeira.app --source "$GITHUB_SHA" --app-repository "$GITHUB_REPOSITORY" --output build-out/reused
 python3 tools/touch-packs/reuse-v653-donor.py verify --output build-out/reused
 python3 "$ORCH/package-candidate.py" "$ORCH"
