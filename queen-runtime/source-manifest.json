@@ -7,8 +7,8 @@
       "sha256": "4976317d1fd05f410c41df654828d1263ddc6b346301de117d84a647d8559cef"
     },
     "build-runtime.sh": {
-      "bytes": 3776,
-      "sha256": "07421e68a0fcc6670d2860b039bd124edb2365a6c49bdb53b820c081bbc0e6df"
+      "bytes": 3937,
+      "sha256": "6e79028d250c4e7ffa0876614661d39fabee70d8cc13fecaf20475cdba2edd7e"
     },
     "extract-native.py": {
       "bytes": 1151,

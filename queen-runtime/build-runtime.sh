@@ -3,6 +3,8 @@ set -euo pipefail
 ORCH="$GITHUB_WORKSPACE/queen-runtime"
 cd "$GITHUB_WORKSPACE/source"
 test "$(git rev-parse HEAD)" = e5b9da7de835b02c0ecd229ef3b921a061545e51
+# Retained native verification compares immutable source trees, not working files.
+git fetch --no-tags --depth 1 origin 2833ed85d945bb6623611200b558057f36f60f20
 git apply --check "$ORCH/app.patch"
 git apply "$ORCH/app.patch"
 git submodule update --init --recursive --depth 1 --jobs 4 FEX dxmt
