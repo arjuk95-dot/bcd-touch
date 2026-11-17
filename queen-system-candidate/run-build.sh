@@ -42,7 +42,12 @@ export MINGW="$PWD/toolchains/llvm-mingw-20260421-ucrt-macos-universal/bin"
 command -v cmake >/dev/null; command -v ninja >/dev/null
 # Native header prerequisites are rebuilt only from the retained Wine pin.
 export PATH="$(brew --prefix llvm)/bin:$(brew --prefix lld)/bin:$PATH"
-bash "$ORCH/queen667/prepare-wine-headers.sh"
+if ! bash "$ORCH/queen667/prepare-wine-headers.sh"; then
+  for log in wine-native-configure.log wine-native-make.log wine-configure.log; do
+    if [ -f "$log" ]; then echo "=== $log ==="; tail -80 "$log"; fi
+  done
+  exit 1
+fi
 python3 "$ORCH/queen667/build-floor-native.py" "$PWD"
 python3 "$ORCH/queen667/diagnostics/gate-copy.py" "$ORCH"
 python3 "$ORCH/build-target.py" "$ORCH"

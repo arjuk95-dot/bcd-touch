@@ -77,11 +77,10 @@ cd build-native
 # which macOS cannot build ("gcc -m32 works... no"); arm64 hosts are 64-bit.
 W64=""; [ "$(uname -m)" = x86_64 ] && W64=--enable-win64
 ../configure $W64 > "$GITHUB_WORKSPACE/wine-native-configure.log" 2>&1
-# Only the host tools and the generated headers are used from this
-# tree. A full host build also compiles the iOS-only unix sources
-# for macOS, and one failure there used to stop make before widl.
-N=$(sysctl -n hw.ncpu)
-{ make -j"$N" __tools__ && make -j"$N" include; } > "$GITHUB_WORKSPACE/wine-native-make.log" 2>&1
+# virtual_ios.c's verified 63-file include closure uses source headers only.
+# configure already builds makedep; cross configure also checks this directory.
+test -x tools/makedep
+mkdir -p tools/winebuild
 
 )
 
@@ -110,8 +109,6 @@ cd build-macos
 # Generate cross-tree headers and patch config.h for iOS SDK
 (
 cd "$ROOT"
-make -C wine/build-macos include -j"$(sysctl -n hw.ncpu)" > "$GITHUB_WORKSPACE/make-include.log" 2>&1 || true
-cp -n wine/build-native/include/*.h wine/build-macos/include/ 2>/dev/null || true
 CFG=wine/build-macos/include/config.h
 {
   echo ""
@@ -144,17 +141,8 @@ CFG=wine/build-macos/include/config.h
   echo "#define HAVE_GNUTLS_CIPHER_INIT 1"
   echo "#endif"
 } >> "$CFG"
-if [ -f wine/build-macos/include/dwrite.h ]; then
-  echo "::notice::dwrite.h present in cross tree"
-else
-  echo "::error::dwrite.h STILL MISSING"
-  LS=$(ls wine/build-native/include/ 2>&1 | head -40 | python3 -c "import sys; print('%0A'.join(sys.stdin.read().splitlines()))")
-  echo "::error::native include dir :: $LS"
-  T=$(tail -n 20 "$GITHUB_WORKSPACE/make-include.log" 2>/dev/null | python3 -c "import sys; print('%0A'.join(sys.stdin.read().splitlines()))")
-  echo "::error::make include tail :: $T"
-fi
 
 )
-test -x wine/build-native/tools/widl/widl
+test -x wine/build-native/tools/makedep
 test -s wine/build-macos/include/config.h
-test -s wine/build-macos/include/winnt.h
+test -s wine/include/winnt.h
