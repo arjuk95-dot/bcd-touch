@@ -11,7 +11,7 @@ concurrency:
 jobs:
   build:
     if: github.repository == 'arjuk95-dot/bcd-touch' && contains(github.event.head_commit.message, '[queen-system-667-public-build]')
-    runs-on: macos-15
+    runs-on: macos-15-intel
     timeout-minutes: 90
     env:
       GH_TOKEN: ${{ github.token }}

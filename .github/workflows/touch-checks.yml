@@ -4,6 +4,9 @@ jobs:
     runs-on: macos-15-intel
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        persist-credentials: false
     - name: Select the iOS 18 simulator SDK used by the preview checks
       run: 'if [ -d /Applications/Xcode_16.4.app ]; then sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer;
         fi
