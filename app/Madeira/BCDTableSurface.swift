@@ -21,12 +21,28 @@ struct BCDTableSurface: UIViewRepresentable {
 }
 final class BCDTableView: UIView {
     var accepting = false, rightClickCancelsDrag = false, allowDrag = true
+    var relative = false, secondaryOnHold = false
+    // Opt-in only for Inscryption's former arrow cluster. Outside contacts keep
+    // the ordinary pointer owner for their complete lifetime.
+    var directionalSwipeRegion:CGRect?
+    var directionalSwipe:((Int32)->Void)?
+    private struct SwipeContact {
+        let identity:AnyHashable
+        let start:CGPoint
+        let began:Double
+        var last:CGPoint
+        var travel:CGFloat=0
+        var invalid=false
+        var state=BCDInscryptionSwipeState()
+    }
+    private var swipeContact:SwipeContact?
+    var sensitivity = 1.0, verticalScale = 1.0
     var inspectOnly = false
     var cancelSequence = 0
-    private var cancelPending = false
+    private var cancelPending = false {didSet {BCDTableInputActivity.cancelPending=cancelPending}}
     func explicitCancel() {
         guard canSend else {cancelInput();return}
-        guard rightClickCancelsDrag else {return}
+        guard rightClickCancelsDrag,!cancelPending else {return}
         let id=epoch
         cancelPending=true;tick?.invalidate();tick=nil;primary=nil;second=nil;contacts.removeAll();pendingSecondary=false;chordInvalid=false;policy=BCDTableTouchState()
         // Keep Cancel observable for a delivery interval before releasing drag.
@@ -38,9 +54,11 @@ final class BCDTableView: UIView {
         }
     }
     private var policy = BCDTableTouchState()
-    private var primary: UITouch?
-    private var second: UITouch?
-    private var contacts=Set<ObjectIdentifier>() {didSet {BCDTableInputActivity.contacts=contacts.count}}
+    private var primary: AnyHashable?
+    private var second: AnyHashable?
+    private var contacts=Set<AnyHashable>() {didSet {BCDTableInputActivity.contacts=contacts.count}}
+    private var relativeState = BCDTableRelativeState()
+    private var previousSize = CGSize.zero
     private var secondStart=CGPoint.zero
     private var chordInvalid=false
     private var pendingSecondary=false
@@ -48,6 +66,10 @@ final class BCDTableView: UIView {
     private var lastScrollY: CGFloat = 0
     private var epoch = UUID()
     private var tick: Timer?
+    func invalidateDirectionalSwipe() {
+        guard var swipe=swipeContact else{return}
+        swipe.invalid=true;BCDInscryptionSwipeCancel(&swipe.state);swipeContact=swipe
+    }
     override init(frame: CGRect) {
         super.init(frame: frame); isMultipleTouchEnabled = true; backgroundColor = .clear
         NotificationCenter.default.addObserver(self, selector: #selector(cancelInput), name: UIApplication.willResignActiveNotification, object: nil)
@@ -55,9 +77,22 @@ final class BCDTableView: UIView {
     }
     required init?(coder: NSCoder) { fatalError() }
     deinit {tick?.invalidate();NotificationCenter.default.removeObserver(self)}
+    override func layoutSubviews() {super.layoutSubviews();if previousSize != bounds.size {cancelInput();previousSize=bounds.size}}
     private var canSend: Bool { accepting && UIApplication.shared.applicationState == .active && !LibraryModel.shared.blocksGameplayTouch && BCDPackFocus.shared.refresh() }
     private func position(_ p: CGPoint) {
-        guard p.x.isFinite,p.y.isFinite,let target = MetalBackedView.keyboardTarget else { return }
+        guard p.x.isFinite,p.y.isFinite else { return }
+        if relative {
+            guard bounds.width>0,bounds.height>0 else{return}
+            if relativeState.active == 0 {BCDTableRelativeBegin(&relativeState,Double(p.x),Double(p.y));return}
+            var width:Int32=0,height:Int32=0;winios_screen_size(&width,&height)
+            let scaleX=Double(max(1,width))/Double(bounds.width)*sensitivity
+            let scaleY=Double(max(1,height))/Double(bounds.height)*sensitivity*verticalScale
+            if BCDTableRelativeMove(&relativeState,Double(p.x),Double(p.y),scaleX,scaleY) != 0 {
+                HardwareInput.shared.postCursorPackRelative(relativeState.dx,relativeState.dy)
+            }
+            return
+        }
+        guard let target = MetalBackedView.keyboardTarget else{return}
         let (x,y) = target.mapPoint(convert(p, to: target))
         winios_pointer(x,y,0x8001,0); winios_cursor_move(x,y)
     }
@@ -78,77 +113,122 @@ final class BCDTableView: UIView {
         epoch=UUID();cancelPending=false;tick?.invalidate();tick=nil;cancelDrag()
         // Release even an in-flight tap pulse when context/focus disappears.
         winios_pointer(0,0,4|16,0)
-        primary=nil;second=nil;contacts.removeAll();pendingSecondary=false;chordInvalid=false;policy=BCDTableTouchState()
+        primary=nil;second=nil;swipeContact=nil;contacts.removeAll();pendingSecondary=false;chordInvalid=false;policy=BCDTableTouchState()
+        relativeState=BCDTableRelativeState()
     }
     override func touchesBegan(_ touches:Set<UITouch>,with event:UIEvent?) {
-        if cancelPending {return}
-        guard canSend else { cancelInput();return }
         for touch in touches.sorted(by:{$0.timestamp<$1.timestamp}) {
-            let wasEmpty=contacts.isEmpty
-            contacts.insert(ObjectIdentifier(touch))
-            if wasEmpty {
-                pendingSecondary=false;chordInvalid=false
-
-                primary=touch;let p=touch.location(in:self);position(p)
-                BCDTableBegin(&policy,Double(p.x),Double(p.y),touch.timestamp)
-                if inspectOnly {policy.inspect=1}
-                tick=Timer.scheduledTimer(withTimeInterval:0.03,repeats:true) { [weak self] _ in
-                    guard let self else{return};if !self.canSend {self.cancelInput();return}
-                    _=BCDTableTick(&self.policy,ProcessInfo.processInfo.systemUptime)
-                }
-            } else if second == nil && primary != nil && policy.multi == 0 {
-                second=touch;secondStart=touch.location(in:self);lastScrollY=secondStart.y
-                if touch.timestamp-policy.began > 0.12 {chordInvalid=true;policy.moved=1}
-                if BCDTableSecond(&policy) != 0 {
-                    policy.moved=1;chordInvalid=true
-                    if rightClickCancelsDrag {explicitCancel();return}
-                    // No cancellation claim for other games: retain the user's
-                    // existing drag until its owning finger actually releases.
-                }
-            } else { policy.moved=1;chordInvalid=true;pendingSecondary=false }
+            beginContact(ObjectIdentifier(touch),at:touch.location(in:self),time:touch.timestamp)
         }
     }
-    private func observe(_ touch:UITouch,point p:CGPoint,allowBeginDrag:Bool) {
-        if touch === second {
+    /// Also used by the editable pack surface; UIKit and synthetic delivery
+    /// fixtures exercise the same ownership and winios dispatch functions.
+    func beginContact(_ identity:AnyHashable,at p:CGPoint,time:Double) {
+        if cancelPending {return}
+        guard canSend,p.x.isFinite,p.y.isFinite,time.isFinite else {cancelInput();return}
+        guard !contacts.contains(identity) else{return}
+        let wasEmpty=contacts.isEmpty
+        contacts.insert(identity)
+        if wasEmpty,let region=directionalSwipeRegion,region.contains(p),directionalSwipe != nil {
+            var swipe=SwipeContact(identity:identity,start:p,began:time,last:p)
+            BCDInscryptionSwipeBegin(&swipe.state,Double(p.x),Double(p.y),time)
+            swipeContact=swipe
+            return
+        }
+        if let swipe=swipeContact {
+            // A second pointer contact restores the established two-finger
+            // click/scroll policy. Never turn a moved swipe into a card drag.
+            swipeContact=nil;beginPointer(swipe.identity,at:swipe.start,time:swipe.began)
+            if swipe.invalid || swipe.travel>8 {policy.moved=1}
+        }
+        if wasEmpty {
+            beginPointer(identity,at:p,time:time)
+        } else if second == nil && primary != nil && policy.multi == 0 {
+            second=identity;secondStart=p;lastScrollY=secondStart.y
+            if time-policy.began > 0.12 {chordInvalid=true;policy.moved=1}
+            if BCDTableSecond(&policy) != 0 {
+                policy.moved=1;chordInvalid=true
+                if rightClickCancelsDrag {explicitCancel();return}
+                // No cancellation claim for other games: retain the user's
+                // existing drag until its owning finger actually releases.
+            }
+        } else { policy.moved=1;chordInvalid=true;pendingSecondary=false }
+    }
+    private func beginPointer(_ identity:AnyHashable,at p:CGPoint,time:Double) {
+        pendingSecondary=false;chordInvalid=false
+        primary=identity;relativeState=BCDTableRelativeState();position(p)
+        BCDTableBegin(&policy,Double(p.x),Double(p.y),time)
+        if inspectOnly {policy.inspect=1}
+        let clock=Timer(timeInterval:0.03,repeats:true) { [weak self] _ in
+            guard let self else{return};if !self.canSend {self.cancelInput();return}
+            _=BCDTableTick(&self.policy,ProcessInfo.processInfo.systemUptime)
+        }
+        RunLoop.main.add(clock,forMode:.common);tick=clock
+    }
+    func moveContact(_ identity:AnyHashable,to p:CGPoint,allowBeginDrag:Bool=true) {
+        guard canSend,p.x.isFinite,p.y.isFinite else{cancelInput();return}
+        if var swipe=swipeContact,swipe.identity == identity {
+            swipe.last=p;swipe.travel=max(swipe.travel,hypot(p.x-swipe.start.x,p.y-swipe.start.y))
+            if directionalSwipeRegion?.contains(p) != true {swipe.invalid=true;BCDInscryptionSwipeCancel(&swipe.state)}
+            BCDInscryptionSwipeMove(&swipe.state,Double(p.x),Double(p.y));swipeContact=swipe;return
+        }
+        if identity == second {
             BCDTableSecondMove(&policy,Double(secondStart.x),Double(secondStart.y),Double(p.x),Double(p.y))
             if hypot(p.x-secondStart.x,p.y-secondStart.y)>10 {chordInvalid=true;pendingSecondary=false}
             let delta=p.y-lastScrollY
             if abs(delta)>18 {policy.moved=1;lastScrollY=p.y;winios_pointer(0,0,0x800,UInt32(bitPattern:delta>0 ? -120:120))}
-        } else if touch === primary {
-            let action=BCDTableMove(&policy,Double(p.x),Double(p.y));position(p)
+        } else if identity == primary {
+            let action=BCDTableHoldMove(&policy,Double(p.x),Double(p.y),secondaryOnHold ? 1:0);position(p)
             if allowBeginDrag && action & Int32(BCD_TABLE_DOWN) != 0 && allowDrag {winios_pointer(0,0,2,0);leftDown=true}
         }
     }
     override func touchesMoved(_ touches:Set<UITouch>,with event:UIEvent?) {
         guard canSend else {cancelInput();return}
         for touch in touches {
-            for sample in event?.coalescedTouches(for:touch) ?? [] {observe(touch,point:sample.location(in:self),allowBeginDrag:true)}
-            observe(touch,point:touch.location(in:self),allowBeginDrag:true)
+            for sample in event?.coalescedTouches(for:touch) ?? [] {moveContact(ObjectIdentifier(touch),to:sample.location(in:self))}
+            moveContact(ObjectIdentifier(touch),to:touch.location(in:self))
         }
     }
     override func touchesEnded(_ touches:Set<UITouch>,with event:UIEvent?) {
         guard canSend else {cancelInput();return}
         // Observe ALL final/coalesced coordinates before committing any click.
         for touch in touches {
-            for sample in event?.coalescedTouches(for:touch) ?? [] {observe(touch,point:sample.location(in:self),allowBeginDrag:false)}
-            observe(touch,point:touch.location(in:self),allowBeginDrag:false)
+            for sample in event?.coalescedTouches(for:touch) ?? [] {moveContact(ObjectIdentifier(touch),to:sample.location(in:self),allowBeginDrag:false)}
+            moveContact(ObjectIdentifier(touch),to:touch.location(in:self),allowBeginDrag:false)
         }
-        if let p=primary,touches.contains(p) {
-            let end=p.location(in:self)
-            let action=BCDTableEndAt(&policy,Double(end.x),Double(end.y),p.timestamp,chordInvalid ? 1:0)
+        for touch in touches {endContact(ObjectIdentifier(touch),at:touch.location(in:self),time:touch.timestamp)}
+    }
+    func endContact(_ identity:AnyHashable,at end:CGPoint,time:Double,cancelled:Bool=false) {
+        guard canSend,!cancelled else{cancelInput();return}
+        moveContact(identity,to:end,allowBeginDrag:false)
+        if var swipe=swipeContact,swipe.identity == identity {
+            swipeContact=nil
+            let decision=BCDInscryptionSwipeEnd(&swipe.state,Double(end.x),Double(end.y),time,swipe.invalid ? 1:0)
+            if decision == Int32(BCDInscryptionSwipePointer) {
+                // Replay only a stationary pointer gesture, with its real age so
+                // the existing tap/hold policy remains intact. No early click.
+                beginPointer(identity,at:swipe.start,time:swipe.began)
+                endContact(identity,at:end,time:time);return
+            }
+            contacts.remove(identity)
+            if decision != Int32(BCDInscryptionSwipeNone) {directionalSwipe?(decision)}
+            return
+        }
+        if identity == primary {
+            let action=BCDTableHoldEnd(&policy,Double(end.x),Double(end.y),time,chordInvalid ? 1:0,secondaryOnHold ? 1:0)
             if leftDown {winios_pointer(0,0,4,0);leftDown=false}
             if action & Int32(BCD_TABLE_CLICK) != 0 {click(false)}
             pendingSecondary = !inspectOnly && action & Int32(BCD_TABLE_SECONDARY) != 0
             primary=nil;tick?.invalidate();tick=nil
         }
-        if let s=second,touches.contains(s) {
-            if s.timestamp-policy.began>0.35 {chordInvalid=true;pendingSecondary=false}
+        if identity == second {
+            if time-policy.began>0.35 {chordInvalid=true;pendingSecondary=false}
             second=nil
         }
-        for touch in touches {contacts.remove(ObjectIdentifier(touch))}
+        contacts.remove(identity)
         if contacts.isEmpty {
             if pendingSecondary && !chordInvalid {click(true)}
-            pendingSecondary=false;second=nil
+            pendingSecondary=false;second=nil;relativeState=BCDTableRelativeState()
         }
     }
     override func touchesCancelled(_ touches:Set<UITouch>,with event:UIEvent?) {cancelInput()}
@@ -159,25 +239,10 @@ struct BCDTableUtilityRail: View {
     @ObservedObject private var store = BCDPackStore.shared
     var body: some View {
         VStack(spacing:14) {
-            if store.tableSurface == "inscryption" {
-                Button {store.switchInscryptionMode()} label: {
-                    Label(store.inscryptionExplore ? "Cards":"Explore",systemImage:store.inscryptionExplore ? "rectangle.on.rectangle":"figure.walk")
-                }.contextMenu {
-                    Button("Cards layout only") {store.resyncInscryption(explore:false)}
-                    Button("Explore layout only") {store.resyncInscryption(explore:true)}
-                }
-            }
-            Button {store.tableInspectOnly.toggle()} label: {
-                Label(store.tableInspectOnly ? "Inspect on":"Inspect",systemImage:"magnifyingglass")
-            }.tint(store.tableInspectOnly ? .orange:.white)
-            if store.tableSurface == "skald" && store.skaldUtilitiesVerified {
-                Button {BCDTablePad.shared.pulse(BCDTableSelect)} label: {Label("Interact",systemImage:"hand.tap")}
-                Button {BCDTablePad.shared.pulse(BCDTableCancel)} label: {Label("Back",systemImage:"arrow.uturn.backward")}
-                Button {BCDTablePad.shared.pulse(BCDTableJournal)} label: {Label("Journal",systemImage:"book")}
-            }
             if store.tableSurface == "spire2" {
                 Button {
-                    if store.spireUtilitiesVerified && BCDTableInputActivity.contacts == 0 {BCDTablePad.shared.pulse(BCDTableCancel)}
+                    if BCDTableInputActivity.cancelPending {return}
+                    if store.spireUtilitiesVerified && !BCDTableInputActivity.busy {BCDTablePad.shared.pulse(BCDTableCancel)}
                     else {store.tableCancelSequence += 1}
                 } label: {Label("Cancel",systemImage:"xmark")}
                 if store.spireUtilitiesVerified {Button {BCDTablePad.shared.pulse(BCDTableMap)} label: {Label("Map",systemImage:"map")}}
@@ -187,90 +252,11 @@ struct BCDTableUtilityRail: View {
     }
 }
 
-@MainActor enum BCDTableInputActivity { static var contacts=0 }
-
-/// Inscryption's separately approved PC keyboard route. Independent owner counts
-/// prevent a pulse release from releasing another held touch on the same key.
-@MainActor final class BCDTableKeys:NSObject {
-    static let shared=BCDTableKeys()
-    private var owners:[UUID:Int32]=[:]
-    private var pulses=Set<UUID>()
-    override init() {
-        super.init()
-        NotificationCenter.default.addObserver(self,selector:#selector(releaseAll),name:UIApplication.willResignActiveNotification,object:nil)
-        NotificationCenter.default.addObserver(self,selector:#selector(releaseAll),name:BCDPackFocus.didLoseFocus,object:nil)
-    }
-    private var accepting:Bool {
-        let store=BCDPackStore.shared
-        return store.enabled && store.tableSurface == "inscryption" && UIApplication.shared.applicationState == .active && !LibraryModel.shared.blocksGameplayTouch && BCDPackFocus.shared.refresh()
-    }
-    func press(_ key:Int32,owner:UUID) {
-        guard accepting,[65,68,83,87,90].contains(key),owners[owner] != key else{return}
-        release(owner)
-        let held=owners.values.contains(key);owners[owner]=key
-        if !held {winios_post_key(key,1)}
-    }
-    func release(_ owner:UUID) {
-        guard let key=owners.removeValue(forKey:owner) else{return}
-        if !owners.values.contains(key) {winios_post_key(key,0)}
-    }
-    func pulse(_ key:Int32) {
-        let owner=UUID();pulses.insert(owner);press(key,owner:owner)
-        DispatchQueue.main.asyncAfter(deadline:.now()+0.08) {[weak self] in
-            self?.release(owner);self?.pulses.remove(owner)
-        }
-    }
-    func releaseHeldControls() {for owner in Array(owners.keys) where !pulses.contains(owner) {release(owner)}}
-    @objc func releaseAll() {for owner in Array(owners.keys) {release(owner)};pulses.removeAll()}
-}
-
-private struct BCDInscryptionKey: UIViewRepresentable {
-    let key:Int32
-    let accepting:Bool
-    func makeUIView(context:Context)->BCDInscryptionKeyView {BCDInscryptionKeyView()}
-    func updateUIView(_ view:BCDInscryptionKeyView,context:Context) {view.configure(key:key,accepting:accepting)}
-    static func dismantleUIView(_ view:BCDInscryptionKeyView,coordinator:()) {view.release()}
-}
-private final class BCDInscryptionKeyView:UIView {
-    private var lastSize=CGSize.zero
-    override func layoutSubviews() {super.layoutSubviews();if lastSize != bounds.size {release();lastSize=bounds.size}}
-    private var key:Int32=0
-    private var accepting=false
-    private let owner=UUID()
-    private var touches=Set<ObjectIdentifier>()
-    override init(frame:CGRect) {super.init(frame:frame);isMultipleTouchEnabled=true;backgroundColor = .clear}
-    required init?(coder:NSCoder) {fatalError()}
-    func configure(key:Int32,accepting:Bool) {if self.key != key || !accepting {release()};self.key=key;self.accepting=accepting}
-    func release() {touches.removeAll();BCDTableKeys.shared.release(owner)}
-    override func didMoveToWindow() {super.didMoveToWindow();if window == nil {release()}}
-    override func touchesBegan(_ incoming:Set<UITouch>,with event:UIEvent?) {
-        guard accepting else{return}
-        for touch in incoming {touches.insert(ObjectIdentifier(touch))}
-        BCDTableKeys.shared.press(key,owner:owner)
-    }
-    override func touchesEnded(_ incoming:Set<UITouch>,with event:UIEvent?) {
-        for touch in incoming {touches.remove(ObjectIdentifier(touch))}
-        if touches.isEmpty {release()}
-    }
-    override func touchesCancelled(_ incoming:Set<UITouch>,with event:UIEvent?) {release()}
-}
-struct BCDInscryptionExploreControls:View {
-    var accepting:Bool
-    private func key(_ code:Int32,_ symbol:String,_ label:String,size:CGFloat=58)->some View {
-        Image(systemName:symbol).font(.title2).foregroundStyle(.white)
-            .frame(width:size,height:size).background(.black.opacity(0.3),in:Circle())
-            .overlay(BCDInscryptionKey(key:code,accepting:accepting)).accessibilityLabel(label)
-    }
-    var body:some View {
-        HStack {
-            VStack(spacing:8) {
-                key(87,"arrow.up","Step forward")
-                HStack(spacing:8) {key(65,"arrow.turn.up.left","Turn left");key(83,"arrow.down","Step back");key(68,"arrow.turn.up.right","Turn right")}
-            }.padding(.leading,20).padding(.bottom,24)
-            Spacer()
-            key(90,"hand.tap","Interact",size:72).padding(.trailing,120).padding(.bottom,130)
-        }.frame(maxWidth:.infinity,maxHeight:.infinity,alignment:.bottom)
-    }
+@MainActor enum BCDTableInputActivity {
+    static var contacts=0
+    static var cancelPending=false
+    // Cancellation owns the mouse through its ordered right-press/left-release interval.
+    static var busy:Bool {contacts != 0 || cancelPending}
 }
 
 @MainActor final class BCDTablePad:NSObject {
@@ -286,11 +272,13 @@ struct BCDInscryptionExploreControls:View {
         let skald=store.tableSurface == "skald"
         let verified=skald ? store.skaldUtilitiesVerified : (store.tableSurface == "spire2" && store.spireUtilitiesVerified)
         guard store.enabled,verified,
-              !LibraryModel.shared.blocksGameplayTouch,BCDTableInputActivity.contacts == 0,
+              !LibraryModel.shared.blocksGameplayTouch,!BCDTableInputActivity.busy,
               UIApplication.shared.applicationState == .active,BCDPackFocus.shared.refresh() else{return}
-        let mask=BCDTableNativeButton(skald ? BCDTableSkald:BCDTableSTS2,utility,
-            skald ? "a9929c9e7e7f06829692ae7c23df2c147d64ea050bdf18649adbd44e1fbcd075":"0861bfa1df347538d932f22d580e75420f08082792eb914e53b4882764acdbe9",
-            skald ? "faca117d2bcfacc1ea980de701253fff20b8c7fb93e01b7033a1f3820697f6a8":"88bc2e4f6a2627204b20a714cb8746a269c009e48255dcfc7a0eaef9503d2227",0)
+        // Public build: owner-approved removal of redundant literal-checksum
+        // lookup. Existing verified title/session/focus gates above remain.
+        let mask: UInt16 = skald
+            ? (utility == BCDTableSelect ? 0x1000 : utility == BCDTableCancel ? 0x2000 : utility == BCDTableJournal ? 0x0010 : 0)
+            : (utility == BCDTableCancel ? 0x2000 : utility == BCDTableMap ? 0x0020 : 0)
         guard mask != 0 else{return}
         let owner=UUID();owners.insert(owner)
         GamepadInput.shared.configurePack(enabled:true,accepting:true,calibration:BCDMouseJoystick.Calibration())

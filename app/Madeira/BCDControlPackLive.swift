@@ -64,6 +64,7 @@ enum BCDApprovedDefaultRouting {
         return basename.flatMap {regular(install.appendingPathComponent($0))}
     }
     static func defaultPack(_ identity:BCDControlPack.Identity,bindings:[String:String],cached:BCDControlPack?) -> BCDControlPack? {
+        if let pack=BCDTablePack.make(identity,kind:tableKind(identity)) {return pack}
         if BCDQueensDomainPack.matches(identity) {return BCDQueensDomainPack.make(identity:identity,bindings:bindings)}
         if BCDSulfurPack.matches(identity) {return try? BCDSulfurPack.make(identity:identity)}
         if BCDDreadPack.matches(identity) {return try? BCDDreadPack.make(identity:identity)}
@@ -75,15 +76,37 @@ enum BCDApprovedDefaultRouting {
         }
         return nil
     }
-    static func choose(_ identity:BCDControlPack.Identity,bindings:[String:String],local:BCDControlPack?,cached:BCDControlPack?,customized:Bool) -> (pack:BCDControlPack?,table:String) {
+    static func choose(_ identity:BCDControlPack.Identity,bindings:[String:String],local:BCDControlPack?,cached:BCDControlPack?,customized:Bool,mergeable:Bool=false) -> (pack:BCDControlPack?,table:String) {
         // An explicitly selected local layout or actual saved edits outrank migration.
-        if let local {return (local,"")}
-        if customized,let cached {return (cached,"")}
-        let table=tableKind(identity)
-        if !table.isEmpty {return (nil,table)}
+        if let local {
+            if customized && !mergeable {return (local,"")}
+            // Upgrade only an exact known shipped default. Imported layouts and
+            // in-file edits remain explicit personal choices; no file is rewritten.
+            if BCDSulfurPack.matches(identity),BCDSulfurPack.isPreviousDefault(local) {return (defaultPack(identity,bindings:bindings,cached:nil),"")}
+            if BCDQueensDomainPack.matches(identity),local == BCDQueensDomainPack.make(identity:identity,bindings:bindings,glyphs:false) {return (defaultPack(identity,bindings:bindings,cached:nil),"")}
+            return (local,"")
+        }
+        if customized,let cached {
+            // Same-family defaults merge through the stored baseline below.
+            // Never migrate bindings or IDs of an unrelated personal pack.
+            if mergeable,BCDQueensDomainPack.matches(identity) || BCDSulfurPack.matches(identity),
+               let approved=defaultPack(identity,bindings:bindings,cached:nil),approved.id == cached.id {return (approved,"")}
+            return (cached,"")
+        }
         if let approved=defaultPack(identity,bindings:bindings,cached:cached) {return (approved,"")}
         if BCDChroniclesPack.matches(identity) {return (nil,"")} // missing config must not resurrect stale guessed bindings
         return (cached,"")
+    }
+    static func hasPersonalChanges(_ personal:BCDControlPack,baseline:BCDControlPack?) -> Bool {
+        guard var baseline else{return true} // legacy edit provenance is unknown
+        var personal=personal
+        // Cache provenance/diagnostics are not editor changes.
+        baseline.identity=personal.identity;baseline.id=personal.id;baseline.title=personal.title
+        baseline.version=personal.version;baseline.evidence=personal.evidence;baseline.unresolved=personal.unresolved
+        for i in personal.actions.indices {
+            if let before=baseline.actions.first(where:{$0.id == personal.actions[i].id}) {personal.actions[i].evidence=before.evidence}
+        }
+        return personal != baseline
     }
 }
 // END APPROVED DEFAULT ROUTING
@@ -117,29 +140,39 @@ enum BCDApprovedDefaultRouting {
         UserDefaults.standard.set(choice,forKey:"TouchPackSulfurNativeSprint."+gameKey)
         sulfurChoice.begin(saved:choice,verifiedShippedDefault:sulfurProof.defaultVerified)
     }
-    // Narrow keyboard exception explicitly approved after this PC build's
-    // disabled controller manager/maps were verified. No XInput imitation.
-    private var inscryptionMode=BCDInscryptionMode()
-    @Published var inscryptionExplore=false
-    func switchInscryptionMode() {
-        guard tableSurface == "inscryption",enabled,!LibraryModel.shared.blocksGameplayTouch,
-              BCDPackFocus.shared.refresh(),BCDTableInputActivity.contacts == 0 else {return}
-        let request=BCDInscryptionSwitch(&inscryptionMode,1)
-        if request == BCD_INSCRYPTION_REQUEST_STEP_BACK {BCDTableKeys.shared.pulse(83)}
-        inscryptionExplore=inscryptionMode.explore != 0
-        tableInspectOnly=false
-        BCDTableKeys.shared.releaseHeldControls()
+    @Published var controllerFallback=false
+    var controllerFallbackAvailable:Bool {
+        !GamepadInput.packKeyboardMouseSession && GamepadInput.enabled && GamepadInput.touchEnabled
     }
-    func resyncInscryption(explore:Bool) {
-        guard BCDTableInputActivity.contacts == 0 else{return}
-        BCDInscryptionResync(&inscryptionMode,explore ? 1:0)
-        inscryptionExplore=explore;tableInspectOnly=false
-        BCDTableKeys.shared.releaseAll()
+    var controllerFallbackUnavailableReason:String {
+        GamepadInput.packKeyboardMouseSession
+            ? "This profile started without a virtual controller. Select a controller input profile and relaunch the game; your touch layout and edits remain unchanged."
+            : "Virtual touch controller input is disabled in Controls. Enable controller and touch input there; your saved profile remains unchanged."
+    }
+    func setControllerFallback(_ value:Bool) {
+        guard !value || controllerFallbackAvailable else {
+            status=controllerFallbackUnavailableReason;return
+        }
+        guard !value || !BCDTableInputActivity.busy else {
+            status="Finish your card/pointer touch or cancellation before opening Controller.";return
+        }
+        guard value != controllerFallback else{return}
+        NotificationCenter.default.post(name:BCDTablePack.willChangeSession,object:nil)
+        tableInputEpoch=UUID();BCDTablePad.shared.cancel()
+        GamepadInput.shared.configurePack(enabled:value || (enabled && usesController),accepting:false,calibration:pack?.aim ?? .init())
+        editing=false;placingControls=false;tuningControls=false;tableInspectOnly=false
+        controllerFallback=value;BCDGyroLive.shared.refresh()
+    }
+    func beginEditingControls() {
+        guard !BCDTableInputActivity.busy else {status="Finish your card/pointer touch or cancellation before editing controls.";return}
+        setControllerFallback(false);tuningControls=false;placingControls=true;editing=true
     }
     @Published var tableInspectOnly=false
     @Published var tableCancelSequence=0
     @Published var tableSurface = ""
-    var usesController:Bool {pack?.inputMode == "controller" || tableSurface == "skald" || tableSurface == "spire2"}
+    @Published private(set) var tableInputEpoch = UUID()
+    var usesController:Bool {pack?.inputMode == "controller" || tableSurface == "spire2"}
+    var usesCursor:Bool {pack.map { $0.cursorControls != nil || ["skald","inscryption"].contains(BCDTablePack.kind($0)) } ?? false}
     @Published var skaldUtilitiesVerified=false
     @Published var spireUtilitiesVerified=false
     var hasSurface: Bool { pack != nil || !tableSurface.isEmpty }
@@ -151,6 +184,7 @@ enum BCDApprovedDefaultRouting {
     @Published var debug = false
     @Published var editing = false
     @Published var placingControls = false
+    @Published var tuningControls = false
     @Published var selectedControl = ""
     @Published var context = "onFoot"
     @Published var enabled = true
@@ -160,13 +194,18 @@ enum BCDApprovedDefaultRouting {
     private var personalKey: String?
     private var sessionID: UUID?
     private var sessionUsesLocal = false
+    private var sessionUsesReviewedProfile = false
     struct PersonalEdit: Codable { var pack: BCDControlPack; var baseline: BCDControlPack? }
     private var overrides: [String: PersonalEdit] = [:]
     private var undoHistory: [BCDControlPack] = []
     private var gameKey: String?
     private var base: BCDControlPack?
-    let folder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("TouchPacks", isDirectory: true)
-    private init() {
+    let folder: URL
+    private convenience init() {
+        self.init(folder:FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0].appendingPathComponent("TouchPacks",isDirectory:true))
+    }
+    init(folder:URL) {
+        self.folder=folder
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         if let d = try? Data(contentsOf: folder.appendingPathComponent("jobs.json")), let j = try? JSONDecoder().decode([String: Job].self, from: d) { jobs = j }
         if let d = try? Data(contentsOf: folder.appendingPathComponent("personal-edits-v2.json")), let o = try? JSONDecoder().decode([String: PersonalEdit].self, from: d) { overrides = o }
@@ -216,7 +255,7 @@ enum BCDApprovedDefaultRouting {
     func moveBlockReason(_ entry: LibraryEntry) -> String? {
         let executable = entry.launchRelativePath.lowercased()
         let key = identityKey(entry)
-        let preferenceKeys = ["TouchPackPointer." + key, "TouchPackGenerated." + key, "TouchPackLocal." + key,
+        let preferenceKeys = ["TouchPackPointer." + key, "TouchPackGenerated." + key, "TouchPackLocal." + key, "TouchPackReviewedProfile." + key,
                               "TouchPack.genre." + executable, "TouchPack.mode." + executable]
         if preferenceKeys.contains(where: { UserDefaults.standard.object(forKey: $0) != nil }) {
             return BCDPackMoveSafety.reason
@@ -241,6 +280,20 @@ enum BCDApprovedDefaultRouting {
     func setAuthoringChoice(_ entry: LibraryEntry, key: String, value: String) {
         UserDefaults.standard.set(value, forKey: "TouchPack." + key + "." + entry.launchRelativePath.lowercased())
         status = "Preparation preference saved"
+    }
+    func offersReviewedProfile(_ entry: LibraryEntry) -> Bool {
+        BCDQueensDomainPack.matches(request(entry).identity) || BCDSulfurPack.matches(request(entry).identity)
+    }
+    func reviewedProfileSelected(_ entry: LibraryEntry) -> Bool {
+        offersReviewedProfile(entry) && UserDefaults.standard.bool(forKey: "TouchPackReviewedProfile." + identityKey(entry))
+    }
+    /// Explicit selection, not migration: old cache, local preset and its edits stay intact.
+    /// New-profile edits have their own namespace so old edits cannot recreate the old layout.
+    func selectReviewedProfile(_ entry: LibraryEntry, selected: Bool) {
+        guard offersReviewedProfile(entry) else { return }
+        UserDefaults.standard.set(selected, forKey: "TouchPackReviewedProfile." + identityKey(entry))
+        UserDefaults.standard.set(true, forKey: preferenceKey(entry))
+        status = selected ? "New reviewed touch profile selected · quit and relaunch game. Previous layout retained." : "Previous touch layout selected · quit and relaunch game. New-profile edits retained."
     }
     func usePreset(_ entry: LibraryEntry) {
         let kind=tableKind(entry)
@@ -271,6 +324,7 @@ enum BCDApprovedDefaultRouting {
     }
     func summary(_ entry: LibraryEntry) -> String {
         let req = request(entry), key = Self.hash(Self.encoded(req.identity))
+        if reviewedProfileSelected(entry) { return "New reviewed touch profile selected · next launch; previous layout retained" }
         if UserDefaults.standard.bool(forKey: "TouchPackLocal." + identityKey(entry)) { return "Personal preset selected · edit in game" }
         if !tableKind(entry).isEmpty || BCDApprovedDefaultRouting.defaultPack(req.identity,bindings:req.bindings,cached:nil) != nil {return "Approved controls included · generated mode uses latest defaults"}
         if let p = cached(key, identity: req.identity) { return "Validated · \(p.actions.count) actions · physical test required" }
@@ -342,9 +396,13 @@ enum BCDApprovedDefaultRouting {
             steamProgram:entry.steamProgram,steamAppID:entry.steamAppID,drive:LibraryEntry.hostDrive)
     }
     func activate(_ entry: LibraryEntry?) {
-        guard let entry else { BCDTablePad.shared.cancel();skaldUtilitiesVerified=false;spireUtilitiesVerified=false;BCDTableKeys.shared.releaseAll();inscryptionMode=BCDInscryptionMode();inscryptionExplore=false;tableSurface=""; sessionID = nil; pack = nil; base = nil; personalKey = nil; gameKey = nil; selectedControl = ""; undoHistory.removeAll(); return }
+        if entry == nil || entry?.id != sessionID {
+            NotificationCenter.default.post(name:BCDTablePack.willChangeSession,object:nil)
+            tableInputEpoch=UUID()
+        }
+        guard let entry else { BCDTablePad.shared.cancel();controllerFallback=false;skaldUtilitiesVerified=false;spireUtilitiesVerified=false;tableSurface=""; sessionID = nil; pack = nil; base = nil; personalKey = nil; gameKey = nil; selectedControl = ""; undoHistory.removeAll(); return }
         let sameSession = sessionID == entry.id
-        if !sameSession { BCDTablePad.shared.cancel();skaldUtilitiesVerified=false;spireUtilitiesVerified=false; cursorMode = .gameplay;tableInspectOnly=false;tableCancelSequence=0;inscryptionMode=BCDInscryptionMode();inscryptionExplore=false;BCDTableKeys.shared.releaseAll() }
+        if !sameSession { controllerFallback=false;BCDTablePad.shared.cancel();skaldUtilitiesVerified=false;spireUtilitiesVerified=false; cursorMode = .gameplay;tableInspectOnly=false;tableCancelSequence=0 }
         if !sameSession { selectedControl = "" }
         if sessionID == entry.id && !LibraryModel.shared.blocksGameplayTouch { return }
         // Changing a running HID session into XInput requires a new guest enumeration.
@@ -358,7 +416,8 @@ enum BCDApprovedDefaultRouting {
         let req = request(entry), key = Self.hash(Self.encoded(req.identity)); selectedKey = key
         gameKey = Self.hash(Self.encoded([req.identity.executable, req.identity.storeID, req.identity.edition]))
         if !sameSession { sessionUsesLocal = UserDefaults.standard.bool(forKey: "TouchPackLocal." + gameKey!) }
-        let localSelected = sessionUsesLocal
+        if !sameSession { sessionUsesReviewedProfile = reviewedProfileSelected(entry) }
+        let localSelected = sessionUsesLocal && !sessionUsesReviewedProfile
         var local: BCDControlPack?
         if localSelected && sameSession { local = base }
         else if localSelected, let data = try? Data(contentsOf: folder.appendingPathComponent("local-" + gameKey! + ".json")), var candidate = try? BCDControlPack.decode(data, placement: .personal) {
@@ -366,29 +425,46 @@ enum BCDApprovedDefaultRouting {
             if (try? candidate.validate(for: req.identity, placement: .personal)) != nil { local = candidate }
         }
         let cachedPack=cached(key,identity:req.identity)
-        let savedEdit=overrides[gameKey!]
+        let scopedFeedback=BCDQueensDomainPack.matches(req.identity) || BCDSulfurPack.matches(req.identity) || ["inscryption","skald"].contains(BCDApprovedDefaultRouting.tableKind(req.identity))
+        var savedEdit=overrides[scopedFeedback ? (local.map {gameKey!+"."+$0.id} ?? gameKey!) : gameKey!]
+        var queenBase:BCDControlPack?
+        if !sessionUsesReviewedProfile,!localSelected,BCDQueensDomainPack.matches(req.identity),let original=savedEdit {
+            let approved=BCDQueensDomainPack.make(identity:req.identity,bindings:req.bindings)
+            if let migrated=BCDQueensDomainPack.migrateLegacyEdit(identity:req.identity,bindings:req.bindings,personal:original.pack,baseline:original.baseline) {
+                savedEdit=PersonalEdit(pack:migrated,baseline:approved);queenBase=approved
+            } else if original.pack.id == approved.id,original.baseline?.id == approved.id,
+                      original.pack.identity.executable.lowercased() == req.identity.executable.lowercased() {
+                // A migrated edit saved later must not fall back to the old raw cache.
+                queenBase=approved
+            }
+        }
         let customized:Bool
         if let savedEdit {
-            if var baseline=savedEdit.baseline {
-                baseline.identity=savedEdit.pack.identity
-                customized=Self.encoded(savedEdit.pack) != Self.encoded(baseline)
-            } else {customized=true}
-        } else {customized=false}
-        var preservedBase=cachedPack
+            if scopedFeedback {customized=BCDApprovedDefaultRouting.hasPersonalChanges(savedEdit.pack,baseline:savedEdit.baseline)}
+            else if var baseline=savedEdit.baseline {baseline.identity=savedEdit.pack.identity;customized=Self.encoded(savedEdit.pack) != Self.encoded(baseline)}
+            else {customized=true}
+        }
+        else {customized=false}
+        var preservedBase=queenBase ?? cachedPack
         if customized,preservedBase == nil,let savedEdit {
             var previous=savedEdit.baseline ?? savedEdit.pack
             previous.identity=req.identity
             if (try? previous.validate(for:req.identity,placement:.personal)) != nil {preservedBase=previous}
         }
-        let route=BCDApprovedDefaultRouting.choose(req.identity,bindings:req.bindings,local:local,cached:preservedBase,customized:customized)
+        let route = sessionUsesReviewedProfile
+            ? (pack: BCDApprovedDefaultRouting.defaultPack(req.identity,bindings:req.bindings,cached:nil), table: "")
+            : BCDApprovedDefaultRouting.choose(req.identity,bindings:req.bindings,local:local,cached:preservedBase,customized:customized,mergeable:savedEdit?.baseline != nil)
         if !sameSession {tableSurface=route.table}
         let candidate = BCDNoitaPack.matches(req.identity) ? (local ?? BCDNoitaPack.make(identity:req.identity,bindings:req.bindings)) : route.pack
-        if !sameSession,["skald","spire2"].contains(tableSurface) {
-            let session=entry.id,url=installedExecutable(entry),kind=tableSurface
+        if !sameSession,tableSurface == "spire2" || candidate.map({["skald","spire2"].contains(BCDTablePack.kind($0))}) == true {
+            let session=entry.id,url=installedExecutable(entry),kind=tableSurface == "spire2" || candidate.map({BCDTablePack.kind($0) == "spire2"}) == true ? "spire2":"skald"
             Task { [weak self] in
                 let verified=await Task.detached(priority:.utility) { kind == "skald" ? BCDSkaldUtilityVerifier.verify(url):BCDSpireUtilityVerifier.verify(url) }.value
                 guard let self,self.sessionID == session else{return}
-                if kind == "skald" {self.skaldUtilitiesVerified=verified} else {self.spireUtilitiesVerified=verified}
+                if kind == "skald" {
+                    self.skaldUtilitiesVerified=verified
+                    self.status=verified ? "Trackpad and verified shortcuts ready — playtest required":"Trackpad ready — confirm this game's shortcuts in Edit pack"
+                } else {self.spireUtilitiesVerified=verified}
             }
         }
 
@@ -412,11 +488,12 @@ enum BCDApprovedDefaultRouting {
         base = candidate; pack = tableSurface.isEmpty ? base : nil
         // The built-in cursor pack and its prepared/local form are the same
         // profile. Switching that launch preference must retain its edits.
-        if let candidate,candidate.cursorControls != nil { personalKey=gameKey!+"."+candidate.id }
+        if sessionUsesReviewedProfile { personalKey=gameKey!+".reviewed-"+(candidate?.id ?? "unavailable") }
+        else if let candidate,candidate.cursorControls != nil { personalKey=gameKey!+"."+candidate.id }
         else { personalKey = local.map { gameKey! + "." + $0.id } ?? gameKey }
         undoHistory.removeAll()
         var editFailure: String?
-        if tableSurface.isEmpty, let b = base, let personal = overrides[personalKey!] {
+        if tableSurface.isEmpty, let b = base, let personal = (queenBase != nil ? savedEdit:overrides[personalKey!]) {
             do { pack = try BCDPackAuthoring.merge(base: b, personal: personal.pack, baseline: personal.baseline) }
             catch { editFailure = "Personal edits need review · validated base active: \(error)" }
         }
@@ -427,6 +504,9 @@ enum BCDApprovedDefaultRouting {
         else if !tableSurface.isEmpty { status="Direct touch pointer · context controls pending verification" }
         else { status = "Stock fallback · pack pending"; prepare(entry) }
         if let editFailure { status = editFailure }
+        if !sameSession {
+            LogStore.shared.log("[touch-route] pack=\(pack?.id ?? tableSurface) input=\(pack?.inputMode ?? "table") source=\(localSelected ? "local":customized ? "personal":"default") app=\(Bundle.main.object(forInfoDictionaryKey:"MadeiraCommit") as? String ?? "unreported")")
+        }
         for k in jobs.keys where jobs[k]?.state != "validated" { resume(k) }
     }
     private func resume(_ key: String) {
@@ -478,6 +558,18 @@ enum BCDApprovedDefaultRouting {
             return true
         } catch { status = "Edit not saved: \(error)"; return false }
     }
+    func setSwipeSensitivity(_ value:Double) {
+        guard value.isFinite,var p=pack else{return}
+        p.aim.sensitivity=min(8,max(0.1,value))
+        if p != pack {_=saveEdits(p)}
+    }
+    func resizeSelectedControl(scale:Double,pad:Bool) {
+        guard var p=pack else{return}
+        if pad,let i=p.pad.controls.firstIndex(where:{$0.id == selectedControl}),let c=BCDPackAuthoring.resizedControl(p.pad.controls[i],scale:scale) {p.pad.controls[i]=c}
+        else if !pad,let i=p.phone.controls.firstIndex(where:{$0.id == selectedControl}),let c=BCDPackAuthoring.resizedControl(p.phone.controls[i],scale:scale) {p.phone.controls[i]=c}
+        else{return}
+        if p != pack {_=saveEdits(p)}
+    }
     func undoEdit() {
         guard let previous = undoHistory.last else { return }
         if saveEdits(previous, recordUndo: false) { undoHistory.removeLast() }
@@ -505,21 +597,39 @@ struct BCDPackLayer: View {
             GeometryReader { geo in
                 ZStack(alignment: .topLeading) {
                     BCDPackSurface(pack: p, context: store.context, debug: store.debug, editing: store.editing)
-                        .id(p.id + store.context + String(store.editing) + (p.cursorControls == nil ? String(focus.gameFocused):""))
+                        .id(p.id + store.context + String(store.editing) + (p.cursorControls == nil ? String(focus.gameFocused):"") + (BCDTablePack.kind(p).isEmpty && p.id != "sulfur-minimal-controller-v6" ? "":store.tableInputEpoch.uuidString))
+                    if p.id == "sulfur-minimal-controller-v6", store.context == "onFoot",
+                       !store.editing, !library.blocksGameplayTouch, focus.gameFocused {
+                        BCDPackGyroQuickToggle()
+                            .padding(.leading, geo.safeAreaInsets.leading + geo.size.width * 0.20)
+                            .padding(.top, geo.safeAreaInsets.top + 8)
+                    }
                     if store.editing && !store.placingControls {
-                        BCDPackInspector().frame(width: min(380, geo.size.width * 0.46), height: max(120, geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom - 64))
+                        Group {
+                            if store.tuningControls {BCDPackAimPanel()}
+                            else {BCDPackInspector()}
+                        }.frame(width: min(380, geo.size.width * 0.46), height: max(120, geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom - 64))
                             .padding(.leading, geo.safeAreaInsets.leading + 8).padding(.top, geo.safeAreaInsets.top + 52)
                     }
                     if store.editing && store.placingControls {
                         VStack {
                             if placementBarAtBottom { Spacer() }
-                            HStack {
-                                Button("Edit controls", systemImage: "slider.horizontal.3") { store.placingControls = false }
-                                Button("Undo", systemImage: "arrow.uturn.backward") { store.undoEdit() }
-                                Button(placementBarAtBottom ? "Toolbar to top" : "Toolbar to bottom", systemImage: placementBarAtBottom ? "arrow.up" : "arrow.down") { placementBarAtBottom.toggle() }
-                                    .labelStyle(.iconOnly)
-                                Button("Back to game", systemImage: "xmark") { store.editing = false }
-                            }.buttonStyle(.bordered).padding(6).background(.ultraThinMaterial).clipShape(RoundedRectangle(cornerRadius: 12))
+                            VStack(spacing:4) {
+                                HStack {
+                                    Text("Tap to select · drag to move · pinch to resize").font(.caption)
+                                    Button("Smaller",systemImage:"minus.circle") {store.resizeSelectedControl(scale:0.9,pad:UIDevice.current.userInterfaceIdiom == .pad)}
+                                        .labelStyle(.iconOnly).disabled(store.selectedControl.isEmpty).accessibilityIdentifier("pack-size-smaller")
+                                    Button("Larger",systemImage:"plus.circle") {store.resizeSelectedControl(scale:1.1,pad:UIDevice.current.userInterfaceIdiom == .pad)}
+                                        .labelStyle(.iconOnly).disabled(store.selectedControl.isEmpty).accessibilityIdentifier("pack-size-larger")
+                                }
+                                HStack {
+                                    Button("Aim & gyro",systemImage:"gyroscope") {store.tuningControls=true;store.placingControls=false}
+                                    Button("More",systemImage:"slider.horizontal.3") {store.tuningControls=false;store.placingControls=false}
+                                    Button("Undo",systemImage:"arrow.uturn.backward") {store.undoEdit()}.labelStyle(.iconOnly)
+                                    Button(placementBarAtBottom ? "Toolbar to top":"Toolbar to bottom",systemImage:placementBarAtBottom ? "arrow.up":"arrow.down") {placementBarAtBottom.toggle()}.labelStyle(.iconOnly)
+                                    Button("Done",systemImage:"checkmark") {store.editing=false}
+                                }
+                            }.buttonStyle(.bordered).padding(6).background(.ultraThinMaterial).clipShape(RoundedRectangle(cornerRadius:12))
                             if !placementBarAtBottom { Spacer() }
                         }.padding(.horizontal, 8).padding(.top, geo.safeAreaInsets.top + 52).padding(.bottom, geo.safeAreaInsets.bottom + 6)
                             .frame(maxWidth: .infinity)
@@ -528,20 +638,98 @@ struct BCDPackLayer: View {
             }.onAppear { configure() }
                 .onChange(of: p) { _, _ in configure() }
                 .onChange(of: store.context) { _, _ in configure(); BCDGyroLive.shared.refresh() }
-                .onChange(of: store.editing) { _, editing in if !editing { store.placingControls = false }; configure() }
+                .onChange(of: store.editing) { _, editing in if !editing { store.placingControls = false; store.tuningControls = false }; configure() }
                 .onChange(of: library.blocksGameplayTouch) { _, _ in configure() }
                 .onChange(of: focus.gameFocused) { _, _ in configure() }
                 .onDisappear {
-                    if p.cursorControls != nil { HardwareInput.shared.setCursorPackFocused(false) }
-                    GamepadInput.shared.configurePack(enabled: library.current != nil && store.pack != nil && store.enabled && p.inputMode == "controller", accepting: false, calibration: p.aim)
+                    if p.cursorControls != nil || !BCDTablePack.kind(p).isEmpty { HardwareInput.shared.setCursorPackFocused(false) }
+                    // A disappearing profile must not disable the newly opened fallback.
+                    if !store.controllerFallback {GamepadInput.shared.configurePack(enabled: library.current != nil && store.pack != nil && store.enabled && p.inputMode == "controller", accepting: false, calibration: p.aim)}
                 }
         }
     }
     private func configure() {
-        guard let p = store.pack else { return }
+        guard !store.controllerFallback,let p = store.pack else { return }
         focus.setMonitoring(true)
-        if p.cursorControls != nil { HardwareInput.shared.setCursorPackFocused(focus.gameFocused && !library.blocksGameplayTouch && !store.editing) }
+        if p.cursorControls != nil || !BCDTablePack.kind(p).isEmpty { HardwareInput.shared.setCursorPackFocused(focus.gameFocused && !library.blocksGameplayTouch && !store.editing) }
         GamepadInput.shared.configurePack(enabled: p.inputMode == "controller", accepting: focus.gameFocused && !library.blocksGameplayTouch && !store.editing, calibration: p.aim)
+        BCDGyroLive.shared.refresh()
+    }
+}
+
+/// A visible per-game gyro switch. No default write: existing off/on, sensitivity,
+/// inversion and hold-gate choices remain authoritative. Enabling selects mouse
+/// aiming to match this hybrid pack; game actions remain native XInput.
+@MainActor private struct BCDPackGyroQuickToggle: View {
+    @ObservedObject private var library = LibraryModel.shared
+    @State private var changes = 0
+    @ObservedObject private var store = BCDPackStore.shared
+    var body: some View {
+        let _ = changes
+        if let entry = library.activeEntry {
+            let on = BCDGyroStore.settings(entry.windowsPath).isOn
+            HStack(spacing:6) {
+            Button {
+                BCDGyroStore.set(entry.windowsPath, "gyro-aim", on ? "" : "mouse")
+                changes &+= 1
+                BCDGyroLive.shared.refresh()
+            } label: {
+                Label(on ? "Gyro on" : "Gyro off", systemImage: "gyroscope")
+                    .font(.caption).padding(.horizontal, 5).frame(minWidth: 72, minHeight: 36)
+            }
+            .buttonStyle(.bordered).tint(on ? .orange : .white)
+            .accessibilityIdentifier("pack-sulfur-gyro")
+            .accessibilityHint("Toggle motion aiming for this game. Sensitivity and hold settings remain in Controls.")
+            .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in changes &+= 1 }
+            Button("Controls",systemImage:"hand.draw") {store.tuningControls=false;store.placingControls=true;store.editing=true}
+                .font(.caption).frame(minHeight:36).buttonStyle(.bordered).accessibilityIdentifier("pack-quick-controls")
+            }
+        }
+    }
+}
+
+/// Only explicit slider/button changes are persisted. Opening this panel is read-only.
+@MainActor private struct BCDPackAimPanel: View {
+    @ObservedObject private var store=BCDPackStore.shared
+    @ObservedObject private var library=LibraryModel.shared
+    @State private var changes=0
+    var body:some View {
+        let _=changes
+        VStack(spacing:10) {
+            HStack {
+                Text("Aim & gyro").font(.headline)
+                Spacer()
+                Button("Done",systemImage:"checkmark") {store.editing=false}
+            }
+            ScrollView {
+                VStack(alignment:.leading,spacing:12) {
+                    if let p=store.pack {
+                        Text("Swipe sensitivity \(p.aim.sensitivity,specifier:"%.2f")×")
+                        Slider(value:Binding(get:{store.pack?.aim.sensitivity ?? 1},set:store.setSwipeSensitivity),in:0.1...8)
+                            .accessibilityIdentifier("pack-swipe-sensitivity")
+                        Text(p.lookMode == "relativeMouse" || p.inputMode == "keyboardMouse" ? "Changes mouse camera travel per finger movement. Independent of gyro and the game's own mouse sensitivity.":"Changes how quickly a swipe reaches full stick; maximum turn speed is set inside the game.").font(.caption)
+                    }
+                    if let entry=library.activeEntry {
+                        let gyro=BCDGyroStore.settings(entry.windowsPath)
+                        Toggle("Gyro (enable mouse aiming)",isOn:Binding(get:{gyro.isOn},set:{enabled in
+                            BCDGyroStore.set(entry.windowsPath,"gyro-aim",enabled ? "mouse":"");changes &+= 1;BCDGyroLive.shared.refresh()
+                        }))
+                        Text("Gyro sensitivity \(gyro.sensitivity,specifier:"%.2f")×")
+                        Slider(value:Binding(get:{BCDGyroStore.settings(entry.windowsPath).sensitivity},set:{value in
+                            guard value.isFinite else{return}
+                            BCDGyroStore.set(entry.windowsPath,"gyro-sens",String(value));changes &+= 1;BCDGyroLive.shared.refresh()
+                        }),in:BCDGyroSettings.sensitivityRange)
+                            .accessibilityIdentifier("pack-gyro-sensitivity")
+                        Text("Up to 32×. Changing sensitivity leaves the target, hold-button, inversion and dead zone unchanged. Gyro resumes when you return to the game.").font(.caption)
+                    }
+                    BCDTouchCursorToggle()
+                    Text("Hides BCD's touch cursor only. A game-drawn cursor is controlled by that game; hardware mouse and dialog cursors remain available.").font(.caption)
+                    Button("Move / resize buttons",systemImage:"hand.draw") {store.tuningControls=false;store.placingControls=true}
+                    Button("All control settings",systemImage:"slider.horizontal.3") {store.tuningControls=false}
+                }
+            }
+        }.padding(12).background(.ultraThinMaterial).clipShape(RoundedRectangle(cornerRadius:14))
+        .onReceive(NotificationCenter.default.publisher(for:UserDefaults.didChangeNotification)) {_ in changes &+= 1}
     }
 }
 
@@ -600,7 +788,8 @@ struct BCDPackInspector: View {
             ScrollView {
             VStack(spacing: 10) {
             Text(store.status).font(.caption)
-            Button("Move buttons", systemImage: "hand.draw") { store.placingControls = true }
+            Button("Move / resize buttons", systemImage: "hand.draw") { store.placingControls = true }
+            Button("Aim & gyro",systemImage:"gyroscope") {store.tuningControls=true}
             Text("Drag anywhere, including over other controls. Front buttons receive overlapping taps.").font(.caption)
             Toggle("iPad layout", isOn: $pad).onChange(of: pad) { _, _ in store.selectedControl = "" }
             if let p = store.pack {
@@ -668,7 +857,9 @@ struct BCDPackInspector: View {
                 if p.cursorControls != nil { BCDCursorPackSettings(pad:pad) }
                 Text(p.inputMode == "controller" ? "Swipe response \(p.aim.sensitivity, specifier: "%.2f")×" : "Mouse sensitivity \(p.aim.sensitivity, specifier: "%.2f")×")
                 Slider(value: Binding(get: { p.aim.sensitivity }, set: { v in edit { $0.aim.sensitivity = v } }), in: 0.1...8)
-                if p.inputMode == "controller" {
+                if p.lookMode == "relativeMouse" {
+                    Text("Changes mouse camera travel per finger movement, independently of gyro. The game's mouse sensitivity also applies.").font(.caption)
+                } else if p.inputMode == "controller" {
                     Text("Controls how quickly a swipe reaches full stick. Set maximum camera speed in the game's look-sensitivity settings.").font(.caption)
                 }
                 Text("Vertical scale")
@@ -862,9 +1053,11 @@ struct BCDPackActionEditor: View {
 struct BCDPackTools: View {
     @ObservedObject var store = BCDPackStore.shared
     var body: some View {
+        HStack(spacing:6) {
         Menu {
             Button("Back to game", systemImage: "xmark") { store.editing = false }
-            Button("Edit pack") { store.editing = true }
+            Button("Move / resize buttons") { store.beginEditingControls() }
+            BCDTouchCursorToggle()
             Toggle("Show hit regions", isOn: $store.debug)
             if let p = store.pack {
                 ForEach(p.contexts, id: \.self) { c in Button("Context: " + c) { store.context = c } }
@@ -879,7 +1072,65 @@ struct BCDPackTools: View {
             Button("Reset layout and aim") { store.reset() }
             Button("Use stock input profile next launch") { store.preferStockNextLaunch() }
             Button("Use stock controls for this session") { store.enabled = false; BCDInputLive.shared.refresh() }
-        } label: { Image(systemName: "hand.draw").padding(12).background(.black.opacity(0.2)).clipShape(Circle()) }
+        } label: { Label("Controls",systemImage:"hand.draw").font(.caption).padding(9).background(.ultraThinMaterial,in:Capsule()) }
+        BCDControllerFallbackToggle()
+        }
+    }
+}
+
+@MainActor private struct BCDTouchCursorToggle:View {
+    @ObservedObject private var library=LibraryModel.shared
+    @State private var changes=0
+    var body:some View {
+        let _=changes
+        if let entry=library.activeEntry {
+            Toggle("Hide BCD touch cursor",isOn:Binding(get:{HardwareInput.shared.touchCursorHidden(for:entry.windowsPath)},set:{value in
+                HardwareInput.shared.setTouchCursorHidden(value,for:entry.windowsPath);changes &+= 1
+            })).accessibilityIdentifier("pack-hide-touch-cursor")
+        }
+    }
+}
+
+@MainActor struct BCDControllerFallbackToggle:View {
+    @ObservedObject private var store=BCDPackStore.shared
+    @State private var unavailable=false
+    @State private var explanation=""
+    var body:some View {
+        Button {
+            if BCDTableInputActivity.busy {explanation="Finish your card or pointer touch first, and allow any cancellation to finish. Switching controls will not release a held card for you.";unavailable=true}
+            else if store.controllerFallbackAvailable {store.setControllerFallback(true)}
+            else {explanation=store.controllerFallbackUnavailableReason;unavailable=true}
+        } label: {
+            Label("Controller",systemImage:"gamecontroller").font(.caption).padding(9).background(.ultraThinMaterial,in:Capsule())
+        }.accessibilityIdentifier("pack-controller-fallback")
+        .alert("Controller not ready",isPresented:$unavailable) {
+            Button("OK",role:.cancel) {}
+        } message: {Text(explanation)}
+    }
+}
+
+@MainActor struct BCDControllerFallbackLayer:View {
+    @ObservedObject private var store=BCDPackStore.shared
+    @ObservedObject private var library=LibraryModel.shared
+    @ObservedObject private var focus=BCDPackFocus.shared
+    private var accepting:Bool {store.controllerFallback && store.controllerFallbackAvailable && focus.gameFocused && !library.blocksGameplayTouch}
+    var body:some View {
+        BCDControllerFallback(accepting:accepting,output:{owner,value in
+            if value == nil || accepting {GamepadInput.shared.packTouch(owner:owner,value:value)}
+        },close:{store.setControllerFallback(false)})
+        .frame(maxWidth:440).padding(12)
+        .onAppear {configure()}
+        .onChange(of:accepting) {_,_ in configure()}
+        .onDisappear {
+            // On close, the restored pack owns configuration. SwiftUI callback order is not guaranteed.
+            if store.controllerFallback {GamepadInput.shared.configurePack(enabled:store.controllerFallbackAvailable,accepting:false,calibration:.init())}
+            BCDGyroLive.shared.refresh()
+        }
+    }
+    private func configure() {
+        guard store.controllerFallback else{return}
+        focus.setMonitoring(true)
+        GamepadInput.shared.configurePack(enabled:store.controllerFallback && store.controllerFallbackAvailable,accepting:accepting,calibration:.init())
     }
 }
 

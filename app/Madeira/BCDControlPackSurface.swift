@@ -100,7 +100,7 @@ struct BCDPackSurface: UIViewRepresentable {
     static func dismantleUIView(_ v: BCDPackView, coordinator: ()) { v.clear() }
 }
 
-final class BCDPackView: UIView {
+final class BCDPackView: UIView, UIGestureRecognizerDelegate {
     struct Finger {
         var owner = UUID()
         var role: String
@@ -117,6 +117,8 @@ final class BCDPackView: UIView {
         var slideFired = false
         var didDrag = false
         var sulfurSprint = BCDSulfurSprintState()
+        var sulfurADSCandidate = false
+        var sulfurADSTravel: CGFloat = 0
         var sideMovement = BCDChroniclesMovementState()
         var surfaceTap: BCDPackSurfaceTap? = nil
     }
@@ -174,20 +176,65 @@ final class BCDPackView: UIView {
     private var tapTimer: Timer?
     private(set) var cursorEngine: BCDCursorPack?
     private var cursorTimer: Timer?
+    private struct ControlResize {
+        var pack:BCDControlPack
+        var original:BCDControlPack.Control
+        var preview:BCDControlPack.Control
+    }
+    private var controlResize:ControlResize?
+    private lazy var resizeRecognizer:UIPinchGestureRecognizer = {
+        let r=UIPinchGestureRecognizer(target:self,action:#selector(resizeGesture(_:)))
+        r.delegate=self;r.cancelsTouchesInView=true;r.isEnabled=false
+        return r
+    }()
+    private var tablePointer: BCDTableView?
+    private var tableTouches = Set<AnyHashable>()
+    private var sulfurDoubleTap = BCDSulfurDoubleTapState()
+    private var sulfurAim:BCDControlPack.Action? {
+        pack.flatMap{BCDSulfurPack.doubleTapAim(in:$0,context:context)}
+    }
     init() {
         super.init(frame: .zero); backgroundColor = .clear; isMultipleTouchEnabled = true
+        addGestureRecognizer(resizeRecognizer)
         NotificationCenter.default.addObserver(self, selector: #selector(interrupted), name: UIApplication.willResignActiveNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(interrupted), name: BCDPackFocus.didLoseFocus, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(rotated), name: UIDevice.orientationDidChangeNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(tableSessionWillChange), name: BCDTablePack.willChangeSession, object: nil)
     }
     required init?(coder: NSCoder) { fatalError() }
     deinit { queenTimer?.invalidate();cursorTimer?.invalidate();tapTimer?.invalidate();NotificationCenter.default.removeObserver(self) }
     @objc private func interrupted() { clear() }
-    @objc private func rotated() { if cursorEngine != nil || pack?.gestures.contains(where: { $0.kind == "tap" }) == true { clear() } }
+    @objc private func tableSessionWillChange() {
+        if pack != nil {
+            clear();tablePointer?.accepting=false;self.pack=nil
+        }
+    }
+    @objc private func rotated() { if editing || controlResize != nil || cursorEngine != nil || tablePointer != nil || sulfurAim != nil || pack?.gestures.contains(where: { $0.kind == "tap" }) == true { clear() } }
     func configure(_ p: BCDControlPack, context: String, debug: Bool, editing: Bool) {
         let changed = pack != p || self.context != context || self.editing != editing
-        if changed { clear();cursorEngine = nil;cursorTimer?.invalidate();cursorTimer=nil }
+        if changed { clear();cursorEngine = nil;cursorTimer?.invalidate();cursorTimer=nil;tablePointer?.removeFromSuperview();tablePointer=nil }
         pack = p; self.context = context;
+        let tableKind=BCDTablePack.kind(p)
+        if !tableKind.isEmpty && !editing {
+            if tablePointer == nil {
+                let pointer=BCDTableView();pointer.isUserInteractionEnabled=false
+                insertSubview(pointer,at:0);tablePointer=pointer
+            }
+            tablePointer?.frame=bounds;tablePointer?.accepting=true
+            tablePointer?.relative=tableKind == "skald"
+            tablePointer?.allowDrag=tableKind != "skald"
+            tablePointer?.rightClickCancelsDrag=tableKind == "spire2"
+            tablePointer?.secondaryOnHold=tableKind == "inscryption"
+            tablePointer?.directionalSwipeRegion=inscryptionSwipeRegion
+            tablePointer?.directionalSwipe = tableKind == "inscryption" ? { [weak self] direction in
+                guard let self,!self.editing,self.pack.map({BCDTablePack.kind($0) == "inscryption"}) == true,
+                      !LibraryModel.shared.blocksGameplayTouch,BCDPackFocus.shared.refresh() else{return}
+                let ids=[Int32(BCDInscryptionSwipeLeft):"left",Int32(BCDInscryptionSwipeRight):"right",Int32(BCDInscryptionSwipeUp):"forward",Int32(BCDInscryptionSwipeDown):"back"]
+                if let id=ids[direction],let action=self.action(id) {self.pulse(action)}
+            } : nil
+            tablePointer?.sensitivity=p.aim.sensitivity
+            tablePointer?.verticalScale=p.aim.vertical*(p.aim.invertY ? -1:1)
+        }
         if (p.id != "queens-domain-v6" && !p.id.hasPrefix("sulfur")) || editing {queenTimer?.invalidate();queenTimer=nil}
         if (p.id == "queens-domain-v6" || p.id.hasPrefix("sulfur")) && !editing && queenTimer == nil {
             queen.journalEnabled=p.actions.contains{$0.id == "journal"}
@@ -207,7 +254,7 @@ final class BCDPackView: UIView {
                 }
             };RunLoop.main.add(timer,forMode:.common);queenTimer=timer
         }
-         self.debug = debug; self.editing = editing; setNeedsDisplay()
+         self.debug = debug; self.editing = editing; resizeRecognizer.isEnabled=editing; setNeedsDisplay()
         if p.cursorControls != nil && p.contexts.contains(context) && !editing && cursorEngine == nil {
             cursorEngine = BCDCursorPack(pack:p,pad:pad)
             if context == "pointer" { cursorEngine?.switchMode(.pointer) }
@@ -222,7 +269,7 @@ final class BCDPackView: UIView {
         super.didMoveToWindow()
         if let window { BCDPackFocus.shared.observe(window) } else { clear() }
     }
-    override func layoutSubviews() { super.layoutSubviews(); if bounds.size != previousSize { clear(); previousSize = bounds.size }; setNeedsDisplay() }
+    override func layoutSubviews() { super.layoutSubviews(); if bounds.size != previousSize { clear(); previousSize = bounds.size };tablePointer?.frame=bounds;tablePointer?.directionalSwipeRegion=inscryptionSwipeRegion;setNeedsDisplay() }
     private var pad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
     private var layout: BCDControlPack.Layout? { pad ? pack?.pad : pack?.phone }
     private var safe: CGRect { bounds.inset(by: safeAreaInsets) }
@@ -248,10 +295,74 @@ final class BCDPackView: UIView {
         result.y = Double((point.y - bounds.minY) / max(1, bounds.height))
         return result
     }
+    private func resizeTarget(at point:CGPoint) -> BCDControlPack.Control? {
+        guard point.x.isFinite,point.y.isFinite,let layout else{return nil}
+        let touched=Set(fingers.values.filter{$0.role == "edit"}.compactMap{$0.control?.id})
+        guard touched.count <= 1 else{return nil}
+        // A pinch around the selected button need not put both fingers on its small hit circle.
+        if let selected=layout.controls.first(where:{$0.id == BCDPackStore.shared.selectedControl}),visible(selected),
+           hypot(point.x-center(selected).x,point.y-center(selected).y) <= max(36,selected.hitRadius*unit*1.8) {return selected}
+        return layout.controls.reversed().first{visible($0) && hypot(point.x-center($0).x,point.y-center($0).y) <= $0.hitRadius*unit}
+    }
+    override func gestureRecognizerShouldBegin(_ gestureRecognizer:UIGestureRecognizer) -> Bool {
+        gestureRecognizer === resizeRecognizer && editing && resizeTarget(at:gestureRecognizer.location(in:self)) != nil
+    }
+    @objc private func resizeGesture(_ recognizer:UIPinchGestureRecognizer) {
+        switch recognizer.state {
+        case .began:
+            guard recognizer.numberOfTouches == 2 else{return}
+            _=beginControlResize(at:recognizer.location(in:self))
+        case .changed:
+            guard recognizer.numberOfTouches == 2 else{endControlResize(cancelled:true);return}
+            updateControlResize(scale:Double(recognizer.scale))
+        case .ended: updateControlResize(scale:Double(recognizer.scale));endControlResize(cancelled:false)
+        case .cancelled,.failed: endControlResize(cancelled:true)
+        default: break
+        }
+    }
+    @discardableResult func beginControlResize(at point:CGPoint) -> Bool {
+        guard editing,UIApplication.shared.applicationState == .active,!LibraryModel.shared.blocksGameplayTouch,
+              BCDPackFocus.shared.refresh(),let pack,let c=resizeTarget(at:point) else{return false}
+        clear() // Cancel provisional drags. A pinch must never also move or fire the button.
+        BCDPackStore.shared.selectedControl=c.id
+        controlResize=ControlResize(pack:pack,original:c,preview:c)
+        setNeedsDisplay();return true
+    }
+    func updateControlResize(scale:Double) {
+        guard editing,var resize=controlResize else{return}
+        guard let value=BCDPackAuthoring.resizedControl(resize.original,scale:scale) else{controlResize=nil;setNeedsDisplay();return}
+        resize.preview=value;controlResize=resize;setNeedsDisplay()
+    }
+    func endControlResize(cancelled:Bool) {
+        guard let resize=controlResize else{return}
+        controlResize=nil;setNeedsDisplay()
+        guard !cancelled,editing,!LibraryModel.shared.blocksGameplayTouch,BCDPackFocus.shared.refresh(),
+              pack == resize.pack,BCDPackStore.shared.pack == resize.pack,resize.preview != resize.original else{return}
+        var edited=resize.pack
+        if pad,let i=edited.pad.controls.firstIndex(where:{$0.id == resize.original.id}) {edited.pad.controls[i]=resize.preview}
+        if !pad,let i=edited.phone.controls.firstIndex(where:{$0.id == resize.original.id}) {edited.phone.controls[i]=resize.preview}
+        BCDPackStore.shared.saveEdits(edited)
+    }
     private func action(_ id: String) -> BCDControlPack.Action? { pack?.actions.first { $0.id == id && $0.contexts.contains(context) } }
     private var radialActions: [BCDControlPack.Action] { (pack?.radial ?? []).compactMap { action($0) } }
+    /// Existing personal arrow geometry defines the zone; no layout file is reset.
+    /// The anchors remain visible/editable in the editor, but not during gameplay.
+    var inscryptionSwipeRegion:CGRect? {
+        guard pack.map({BCDTablePack.kind($0) == "inscryption"}) == true,let layout else{return nil}
+        let ids=Set(["forward","back","left","right"])
+        let anchors=layout.controls.filter{ids.contains($0.action) && action($0.action) != nil}
+        guard Set(anchors.map(\.action)) == ids else{return nil}
+        var region=CGRect.null
+        for control in anchors {
+            let point=controlCenter(control),r=CGFloat(control.hitRadius)*unit+8
+            region=region.union(CGRect(x:point.x-r,y:point.y-r,width:r*2,height:r*2))
+        }
+        region=region.intersection(CGRect(x:bounds.minX,y:bounds.minY,width:bounds.width/2,height:bounds.height))
+        return !region.isNull && region.width>=48 && region.height>=48 ? region:nil
+    }
     private func visible(_ c: BCDControlPack.Control) -> Bool {
         if let pack, !editing, BCDTenebrisOwnerCompatibility.hiddenAttack(c,in:pack) {return false}
+        if !editing,inscryptionSwipeRegion != nil,["forward","back","left","right"].contains(c.action) {return false}
         if isQueen && c.action == "attack" && c.role == "gesture" { return false }
         if c.role == "radial" { return !radialActions.isEmpty }
         if c.role == "gesture" { return pack?.gestures.contains { action($0.action) != nil } == true }
@@ -302,6 +413,9 @@ final class BCDPackView: UIView {
     }
     var radialLabelFrames: [CGRect] { fingers.values.filter { $0.role == "radial" }.flatMap { radialLabels($0).map { $0.frame } } }
     func clear() {
+        controlResize=nil
+        BCDSulfurDoubleTapCancel(&sulfurDoubleTap)
+        tablePointer?.cancelInput();tableTouches.removeAll()
         queenEvents(queen.cancel());queenFinger=nil;utilityTouches.removeAll();utilityEnded=0;utilityInvalid=false
         cursorEngine?.cancel(resetMode:false);flushCursor()
         cancelSurfaceTaps()
@@ -417,6 +531,12 @@ final class BCDPackView: UIView {
     }
     private func send(_ a: BCDControlPack.Action, owner: UUID) {
         guard let p = pack else { return }
+        if BCDTablePack.kind(p) == "skald",a.evidence == "skald-shipped-input",!BCDPackStore.shared.skaldUtilitiesVerified {return}
+        if BCDTablePack.kind(p) == "spire2",a.evidence == "spire-shipped-input" {
+            guard !BCDTableInputActivity.cancelPending else{return}
+            if a.id == "cancel",BCDTableInputActivity.contacts > 0 {tablePointer?.explicitCancel();return}
+            guard BCDPackStore.shared.spireUtilitiesVerified,!BCDTableInputActivity.busy else{return}
+        }
         // The preserved V3 owner pack predates gesture.cancelOn. Its Inventory
         // utility must release Aim and pending right-surface attacks too.
         let legacyInventory = BCDTenebrisOwnerCompatibility.matches(p) && a.id == "raw-b"
@@ -452,6 +572,7 @@ final class BCDPackView: UIView {
     func beginTouch(_ identity: AnyHashable, at point: CGPoint, time: Double, receivedAt: Double? = nil) {
         guard UIApplication.shared.applicationState == .active, !LibraryModel.shared.blocksGameplayTouch,
               BCDPackFocus.shared.refresh(), let pack else { clear(); return }
+        if editing,controlResize != nil {return}
         if let engine=cursorEngine { cursorGeometry();engine.begin(identity,at:point,time:receivedAt ?? time);flushCursor(redraw:true);return }
         // Idempotent configuration keeps another finger's movement/fire held.
         GamepadInput.shared.configurePack(enabled: pack.inputMode == "controller", accepting: !editing, calibration: pack.aim)
@@ -460,6 +581,12 @@ final class BCDPackView: UIView {
             hypot(point.x - center(c).x, point.y - center(c).y) <= c.hitRadius * unit
         }
         var role = editing ? "edit" : (control?.role ?? "look")
+        if editing,let control {BCDPackStore.shared.selectedControl=control.id}
+        if !editing, BCDSulfurPack.combatDragRole(pack: pack, control: control, context: context) { role = "fireAim" }
+        if !editing,control != nil {tablePointer?.invalidateDirectionalSwipe()}
+        if !editing,control == nil,let tablePointer {
+            tableTouches.insert(identity);tablePointer.beginContact(identity,at:point,time:time);return
+        }
         if !editing, control == nil, let move = movementControl,
            movementStartRegion.contains(point) || hypot(point.x - center(move).x, point.y - center(move).y) <= move.hitRadius * unit {
             control = move
@@ -468,6 +595,13 @@ final class BCDPackView: UIView {
         if !editing, role == "look", pack.lookMode == "none" || (pack.id.hasPrefix("sulfur") && context == "inventory") { role = "ignore" }
         if !editing, role == "button", let c = control, action(c.action)?.behavior == "toggle" { role = "toggle" }
         var finger = Finger(role: role, control: control, start: point, last: point, time: time, began: time)
+        if !editing,role == "look",control == nil,sulfurAim != nil {
+            if fingers.values.contains(where:{$0.role == "look"}) {
+                for key in Array(fingers.keys) {fingers[key]?.sulfurADSCandidate=false}
+                BCDSulfurDoubleTapCancel(&sulfurDoubleTap)
+            } else if point.x >= bounds.midX,bounds.contains(point) {finger.sulfurADSCandidate=true}
+            else {BCDSulfurDoubleTapCancel(&sulfurDoubleTap)}
+        }
         if !editing, ["look","ignore","move"].contains(role), (control == nil || control?.role == "move"),
            bounds.contains(point), let g=pack.gestures.first(where: { $0.kind == "tap" }),
            let source=g.whenToggled, action(g.action) != nil, let owner=toggles[source] {
@@ -531,6 +665,12 @@ final class BCDPackView: UIView {
         if queenFinger == identity {queenEvents(queen.move(to:point))}
         if let (start,_)=utilityTouches[identity],hypot(point.x-start.x,point.y-start.y)>12 {utilityInvalid=true;queen.cancelPendingUtility()}
     }
+    private func observeSulfurADSMotion(_ identity:AnyHashable,at point:CGPoint) {
+        guard var f=fingers[identity],f.sulfurADSCandidate else{return}
+        if !point.x.isFinite || !point.y.isFinite {f.sulfurADSCandidate=false;BCDSulfurDoubleTapCancel(&sulfurDoubleTap)}
+        else {f.sulfurADSTravel=max(f.sulfurADSTravel,hypot(point.x-f.start.x,point.y-f.start.y))}
+        fingers[identity]=f
+    }
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         let delivery = ProcessInfo.processInfo.systemUptime
         for t in touches {
@@ -541,7 +681,9 @@ final class BCDPackView: UIView {
             // Aim keeps batch timing; tap rejection additionally observes the whole
             // coalesced path so a rapid out-and-back drag never becomes an attack.
             for past in event?.coalescedTouches(for:t) ?? [] {
+                if tableTouches.contains(ObjectIdentifier(t)) {tablePointer?.moveContact(ObjectIdentifier(t),to:past.location(in:self))}
                 fingers[ObjectIdentifier(t)]?.surfaceTap?.moved(to:past.location(in:self))
+                observeSulfurADSMotion(ObjectIdentifier(t),at:past.location(in:self))
                 observeQueenMotion(ObjectIdentifier(t),at:past.location(in:self))
             }
             moveTouch(ObjectIdentifier(t), to: sample.location(in: self), time: sample.timestamp, receivedAt: delivery)
@@ -550,8 +692,10 @@ final class BCDPackView: UIView {
     func moveTouch(_ identity: AnyHashable, to point: CGPoint, time: Double, receivedAt: Double? = nil) {
         guard UIApplication.shared.applicationState == .active, !LibraryModel.shared.blocksGameplayTouch,
               BCDPackFocus.shared.refresh() else { clear(); return }
+        if tableTouches.contains(identity) {tablePointer?.moveContact(identity,to:point);return}
         if let engine=cursorEngine { cursorGeometry();engine.move(identity,to:point,time:receivedAt ?? time);flushCursor(redraw:true);return }
         guard var finger = fingers[identity], time > finger.time else { return }
+        finger.sulfurADSTravel=max(finger.sulfurADSTravel,hypot(point.x-finger.start.x,point.y-finger.start.y))
         finger.surfaceTap?.moved(to:point)
         observeQueenMotion(identity,at:point)
         finger.queenTravel=max(finger.queenTravel,hypot(point.x-finger.start.x,point.y-finger.start.y))
@@ -592,7 +736,9 @@ final class BCDPackView: UIView {
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
             for sample in event?.coalescedTouches(for:touch) ?? [] {
+                if tableTouches.contains(ObjectIdentifier(touch)) {tablePointer?.moveContact(ObjectIdentifier(touch),to:sample.location(in:self),allowBeginDrag:false)}
                 fingers[ObjectIdentifier(touch)]?.surfaceTap?.moved(to:sample.location(in:self))
+                observeSulfurADSMotion(ObjectIdentifier(touch),at:sample.location(in:self))
                 observeQueenMotion(ObjectIdentifier(touch),at:sample.location(in:self))
             }
         }
@@ -605,6 +751,9 @@ final class BCDPackView: UIView {
         }
     }
     func endTouch(_ identity: AnyHashable, at point: CGPoint, cancelled: Bool, time: Double? = nil) {
+            if tableTouches.remove(identity) != nil {
+                tablePointer?.endContact(identity,at:point,time:time ?? ProcessInfo.processInfo.systemUptime,cancelled:cancelled);return
+            }
             if let engine=cursorEngine {
                 if LibraryModel.shared.blocksGameplayTouch || !BCDPackFocus.shared.refresh() { clear();return }
                 engine.end(identity,at:point,time:ProcessInfo.processInfo.systemUptime,cancelled:cancelled);flushCursor(redraw:true);return
@@ -612,12 +761,28 @@ final class BCDPackView: UIView {
             if isQueen {finishQueen(identity,point:point,time:time ?? ProcessInfo.processInfo.systemUptime,cancelled:cancelled)}
             guard var f = fingers.removeValue(forKey: identity) else { return }
             release(f.owner)
+            if pack?.id == "sulfur-minimal-controller-v6",f.role == "move" {
+                // Entry is one L3 pulse. Lift releases its owner immediately;
+                // never send a second L3 edge as a guessed sprint-off command.
+                let owners=pulseActions.filter{$0.value == "sprint"}.map(\.key)
+                for owner in owners {release(owner);pulses.remove(owner);pulseActions[owner]=nil}
+            }
             defer { setNeedsDisplay() }
             if cancelled {
+                if f.sulfurADSCandidate {
+                    BCDSulfurDoubleTapCancel(&sulfurDoubleTap)
+                    if let aim=sulfurAim {setToggle(aim,enabled:false)}
+                }
                 if f.role == "toggle", let c = f.control, let a = action(c.action) { setToggle(a, enabled: false) }
                 return
             }
             guard !LibraryModel.shared.blocksGameplayTouch, BCDPackFocus.shared.refresh(), let pack else { clear(); return }
+            if f.sulfurADSCandidate,let aim=sulfurAim {
+                let travel=max(f.sulfurADSTravel,hypot(point.x-f.start.x,point.y-f.start.y))
+                if BCDSulfurDoubleTapEnd(&sulfurDoubleTap,Double(point.x),Double(point.y),f.began,time ?? ProcessInfo.processInfo.systemUptime,Double(travel),0) != 0 {
+                    setToggle(aim,enabled:toggles[aim.id] == nil)
+                }
+            }
             if let tap=f.surfaceTap, tap.recognizes(end:point,time:time ?? ProcessInfo.processInfo.systemUptime,gateOwner:toggles[tap.gate]) {
                 if !BCDTenebrisOwnerCompatibility.matches(pack) || max(tap.travel,hypot(point.x-tap.start.x,point.y-tap.start.y)) <= 8 {queueSurfaceTap(tap)}
             }
@@ -637,6 +802,9 @@ final class BCDPackView: UIView {
                 }
             }
             if f.role == "edit", let c = f.control {
+                BCDPackStore.shared.selectedControl=c.id
+                // A tap only selects. It must not rewrite the original coordinate space.
+                guard hypot(point.x-f.start.x,point.y-f.start.y) >= 3 else{return}
                 var edited = pack
                 edited.version = max(edited.version, 2)
                 let origin = controlCenter(c)
@@ -653,6 +821,11 @@ final class BCDPackView: UIView {
     override func draw(_ rect: CGRect) {
         guard let layout, let ctx = UIGraphicsGetCurrentContext() else { return }
         cursorGeometry()
+        if editing,let region=inscryptionSwipeRegion {
+            ctx.saveGState();ctx.setStrokeColor(UIColor.systemPurple.withAlphaComponent(0.7).cgColor)
+            ctx.setLineWidth(1);ctx.setLineDash(phase:0,lengths:[4,3]);ctx.stroke(region);ctx.restoreGState()
+            ("Swipe zone · tap still clicks" as NSString).draw(at:CGPoint(x:region.minX+5,y:region.minY+4),withAttributes:[.font:UIFont.systemFont(ofSize:11),.foregroundColor:UIColor.white])
+        }
         if debug {
             let a = layout.aimRect
             if pack?.lookMode != "none" {
@@ -672,7 +845,8 @@ final class BCDPackView: UIView {
                 (caption as NSString).draw(at:CGPoint(x:safe.minX+8,y:safe.minY+18),withAttributes:[.font:UIFont.systemFont(ofSize:10),.foregroundColor:UIColor.orange])
             }
         }
-        for c in layout.controls where visible(c) {
+        for original in layout.controls where visible(original) {
+            let c=controlResize?.original.id == original.id ? controlResize!.preview:original
             if let engine=cursorEngine, [.pointer,.paused,.utilities].contains(engine.mode) { continue }
             if cursorEngine?.mode == .equipment && c.role != "move" { continue }
             let p = center(c), r = c.radius * unit
@@ -685,6 +859,12 @@ final class BCDPackView: UIView {
                     let knob = stick.radius * 0.38
                     ctx.setFillColor(UIColor.white.withAlphaComponent(max(0.2, c.opacity * 0.7)).cgColor)
                     ctx.fillEllipse(in: CGRect(x: stick.thumb.x - knob, y: stick.thumb.y - knob, width: knob * 2, height: knob * 2))
+                    if pack?.id == "sulfur-minimal-controller-v6",BCDPackStore.shared.sulfurSprintAllowed {
+                        let requested=(fingers.values.first{$0.role == "move"}?.sulfurSprint.emitted ?? 0) != 0
+                        let tint=requested ? UIColor(red:1,green:0.67,blue:0.18,alpha:0.95) : UIColor.white.withAlphaComponent(max(0.35,c.opacity))
+                        let size=stick.radius*0.5
+                        BCDPackIcons.image("bcd.run")?.withTintColor(tint,renderingMode:.alwaysOriginal).draw(in:CGRect(x:stick.origin.x-size/2,y:stick.origin.y-stick.radius*1.55,width:size,height:size))
+                    }
                 }
                 if debug {
                     let h = c.hitRadius * unit
@@ -694,16 +874,21 @@ final class BCDPackView: UIView {
             }
             let circle = CGRect(x: p.x-r, y: p.y-r, width: r*2, height: r*2)
             let a = action(c.action)
-            let toggled = toggles[c.action] != nil
-            let tint = toggled ? UIColor(red:1,green:0.67,blue:0.18,alpha:1) : UIColor.white
+            let toggled = toggles[c.action] != nil || (c.action == "attack" && sulfurAim.map{toggles[$0.id] != nil} == true)
+            let selected=editing && c.id == BCDPackStore.shared.selectedControl
+            let tint = toggled || selected ? UIColor(red:1,green:0.67,blue:0.18,alpha:1) : UIColor.white
             let pressed = fingers.values.contains { $0.control?.id == c.id } || pulseActions.values.contains(c.action) || (tapPulses.down && tapGate?.action == c.action) || cursorEngine?.fingers.values.contains { $0.action == c.action && $0.role != "ignore" } == true
             if pressed { ctx.setFillColor(tint.withAlphaComponent(0.08).cgColor); ctx.fillEllipse(in: circle) }
-            ctx.setStrokeColor(tint.withAlphaComponent(toggled || pressed ? 0.95 : c.opacity * ((pack?.version ?? 1) >= 3 ? 0.9 : 0.65)).cgColor)
-            ctx.setLineWidth(pressed ? 1.5 : 1); ctx.strokeEllipse(in: circle)
-            let icon = c.role == "radial" ? "circle.grid.2x2" : (a?.icon ?? "hand.draw")
+            ctx.setStrokeColor(tint.withAlphaComponent(toggled || pressed || selected ? 0.95 : c.opacity * ((pack?.version ?? 1) >= 3 ? 0.9 : 0.65)).cgColor)
+            let themedArrow=pack.map{BCDTablePack.kind($0) == "inscryption"} == true && a.map{BCDPackCatalog.inscryptionArrowIcon(action:$0.id,icon:$0.icon) != $0.icon} == true
+            ctx.setLineWidth(pressed ? 1.5 : 1); if !themedArrow || editing || debug {ctx.strokeEllipse(in: circle)}
+            let glyphPack=pack?.id == "queens-domain-v6" || pack?.id == "sulfur-minimal-controller-v6"
+            let rawIcon = c.role == "radial" ? (glyphPack ? "bcd.more":"circle.grid.2x2") : (a?.icon ?? "hand.draw")
+            let icon = themedArrow ? BCDPackCatalog.inscryptionArrowIcon(action:a!.id,icon:rawIcon):rawIcon
             let inside = c.labelPlacement == "inside" && c.showLabel != false
             if let image = BCDPackIcons.image(icon)?.withTintColor(tint.withAlphaComponent(c.opacity), renderingMode: .alwaysOriginal) {
-                image.draw(in: CGRect(x: p.x-r*0.42, y: p.y-r*(inside ? 0.65 : 0.42), width: r*0.84, height: r*0.84))
+                let size=r*(c.showLabel == false && (BCDPackCatalog.glyphPaths[icon] != nil || BCDPackCatalog.inscryptionArrowNames.contains(icon)) ? 1.18:0.84)
+                image.draw(in:CGRect(x:p.x-size/2,y:p.y-(inside ? r*0.65:size/2),width:size,height:size))
             } else {
                 ((a?.output ?? "…") as NSString).draw(at: CGPoint(x:p.x-r*0.5,y:p.y-8),withAttributes:[.font:UIFont.boldSystemFont(ofSize:14),.foregroundColor:UIColor.white])
             }

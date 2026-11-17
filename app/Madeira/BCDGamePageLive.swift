@@ -150,6 +150,12 @@ import UniformTypeIdentifiers
                 BCDGameSetting(id: "pack.generated", title: "Use generated controls next launch", kind: .action),
                 BCDGameSetting(id: "pack.stock", title: "Use stock input profile next launch", kind: .action, note: "Keeps the stock profile's relative-mouse aim choice")
             ])) }
+            if !desktop, BCDPackStore.shared.offersReviewedProfile(entry) {
+                d.groups.append(BCDGameSettingGroup(id: "reviewed-game-touch", title: "Reviewed touch profile", symbol: "hand.draw", settings: [
+                    BCDGameSetting(id: "pack.reviewed-new", title: "Use new touch profile next launch", kind: .action, note: (BCDPackStore.shared.reviewedProfileSelected(entry) ? "Selected. " : "") + "Selects the approved gesture layout instead of an older local/generated layout. Quit and relaunch the game; your previous layout and edits are kept."),
+                    BCDGameSetting(id: "pack.reviewed-previous", title: "Restore previous touch layout next launch", kind: .action, note: "Returns to your previous selection without deleting edits made to either layout.")
+                ]))
+            }
             d.groups.insert(contentsOf: setupGroups(game, entry, profile), at: 3)   // round 604: BCDGameSetup/BCDGamePageLiveSetup.swift (Windows, Components, CPU translation, Game fixes, Wine desktop)
             if let binds = binds(entry) { d.groups.append(binds) }
             if !desktop { d.groups += inputGroups(entry) }   // round 604: BCDInputPage.swift (turbo and macros, ...)
@@ -1012,6 +1018,9 @@ import UniformTypeIdentifiers
     }
 
     func set(_ setting: String, to value: String, for game: BCDGame) {
+        if ["pack.reviewed-new", "pack.reviewed-previous"].contains(setting), let entry = entry(for: game) {
+            BCDPackStore.shared.selectReviewedProfile(entry, selected: setting == "pack.reviewed-new"); onChange?(); return
+        }
         if setting == "pack.wgi" {
             setLine(game, "env.MADEIRA_WGI_HOST_PADS", value == "1" ? "1" : "0"); onChange?(); return
         }

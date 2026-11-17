@@ -12,8 +12,38 @@ enum BCDSulfurPack {
         guard matches(identity) else { throw BCDControlPack.Invalid.reason("Not a supported SULFUR identity") }
         var pack = try BCDControlPack.decode(Data(template.utf8))
         pack.identity = identity
+        // Keep the historical template immutable for exact old-default recognition.
+        // New defaults allow either held combat thumb to swipe the camera.
+        for i in pack.phone.controls.indices where pack.phone.controls[i].action == "melee" {pack.phone.controls[i].role="fireAim"}
+        for i in pack.pad.controls.indices where pack.pad.controls[i].action == "melee" {pack.pad.controls[i].role="fireAim"}
+        pack.radial.removeAll{$0 == "jump"}
+        let jump=BCDControlPack.Control(id:"phone-jump",action:"jump",role:"button",x:0.94,y:0.58,radius:0.05,hitRadius:0.05,opacity:0.4,labelPlacement:"inside",showLabel:false)
+        pack.phone.controls.append(jump)
+        var padJump=jump;padJump.id="pad-jump";pack.pad.controls.append(padJump)
+        pack=BCDPackCatalog.glyphPresentation(pack,icons:["attack":"bcd.fire","melee":"bcd.blade","interact":"bcd.use","inventory":"bcd.pack","pause":"bcd.pause","jump":"bcd.jump","inventory-use":"bcd.confirm","inventory-close":"bcd.back"])
         try pack.validate(for: identity)
         return pack
+    }
+    static func doubleTapAim(in pack:BCDControlPack,context:String) -> BCDControlPack.Action? {
+        guard pack.id == "sulfur-minimal-controller-v6",matches(pack.identity),context == "onFoot",pack.inputMode == "controller",pack.lookMode == "relativeMouse" else{return nil}
+        // Follow the editable action; never invent a second hard-coded LT binding.
+        return pack.actions.first{$0.id == "aim" && $0.behavior == "hold" && $0.contexts.contains(context)}
+    }
+    static func isPreviousDefault(_ pack:BCDControlPack) -> Bool {
+        guard var previous=try? BCDControlPack.decode(Data(template.utf8)) else{return false}
+        previous.identity=pack.identity
+        if previous == pack{return true}
+        let glyphs=BCDPackCatalog.glyphPresentation(previous,icons:["attack":"bcd.fire","melee":"bcd.blade","interact":"bcd.use","inventory":"bcd.pack","pause":"bcd.pause","inventory-use":"bcd.confirm","inventory-close":"bcd.back"])
+        return glyphs == pack
+    }
+    /// Upgrade only the original combat holds' touch role, not personal geometry,
+    /// bindings, toggles or inventory controls. The per-finger owner remains held.
+    static func combatDragRole(pack: BCDControlPack, control: BCDControlPack.Control?, context: String) -> Bool {
+        guard pack.id == "sulfur-minimal-controller-v6", pack.lookMode == "relativeMouse",
+              context == "onFoot", let control, control.role == "button",
+              let expected = ["attack":"RT", "melee":"X"][control.action],
+              let action = pack.actions.first(where: { $0.id == control.action }) else { return false }
+        return action.output == expected && action.behavior == "hold" && action.contexts.contains(context)
     }
     static let reviewedFiles: [(path: String, size: Int, sha256: String)] = [
         ("Sulfur_Data/Managed/PerfectRandom.Sulfur.Core.dll", 2357760, "70542851b8bbb561186b53ef4ffd1f66249863a6a0044057c5f2c7b878f7f300"),
@@ -42,5 +72,22 @@ struct BCDSulfurSprintChoice {
                  identity: BCDControlPack.Identity, sprintAction: BCDControlPack.Action?) -> Bool {
         selectedForSession && active && verifiedBuild && !inventory && BCDSulfurPack.matches(identity) &&
         sprintAction?.output == "L3" && sprintAction?.behavior == "tap" && sprintAction?.contexts.contains("onFoot") == true
+    }
+}
+
+enum BCDSulfurGyroDefaults {
+    /// One-time choice for this requested pack; an existing gyro choice wins,
+    /// and removing/turning it off later must never seed it again.
+    static func seed(_ windowsPath:String,storeKey:String,defaults:UserDefaults = .standard) {
+        let marker="TouchPackSulfurGyroSeed."+windowsPath
+        guard defaults.object(forKey:marker) == nil else{return}
+        let raw=defaults.object(forKey:storeKey)
+        guard raw == nil || raw is [String:[String:String]] else{return}
+        var all=(raw as? [String:[String:String]]) ?? [:]
+        if all[windowsPath] == nil {
+            all[windowsPath]=["gyro-aim":"mouse"]
+            defaults.set(all,forKey:storeKey)
+        }
+        defaults.set(true,forKey:marker)
     }
 }

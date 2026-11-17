@@ -281,6 +281,9 @@ final class GamepadInput: @unchecked Sendable {
     @MainActor func packTouch(owner: UUID, value: GamepadSample?) {
         queue.async { [self] in
             guard active || value == nil else { return }
+            if packTrace {
+                fputs("[touch-pack-dispatch] accepting=\(packState.acceptingInput ? 1:0) reserved=\(packState.reserved ? 1:0) buttons=\(value?.buttons ?? 0) lt=\(value?.lt ?? 0) rt=\(value?.rt ?? 0) release=\(value == nil ? 1:0)\n",stderr)
+            }
             packState.update(owner: owner, control: packControl, value: value); sample()
         }
     }

@@ -1,0 +1,17 @@
+--- a/src/dxmt/dxmt_dynamic.cpp
++++ b/src/dxmt/dxmt_dynamic.cpp
+@@ -67,6 +67,14 @@
+     const void *prev_seen[8] = {nullptr};
+     unsigned pi = 0;
+     for (const auto &e : fifo) {
++      // Trimming applies to every instance. Census fields below are only
++      // consumed for tracked instances; retain full eligibility counting even
++      // when sequence IDs are not ordered in the queue.
++      if (!stats) {
++        if (e.will_free_at <= coherent_seq_id)
++          en++;
++        continue;
++      }
+       uint64_t bytes = e.allocation.ptr() ? e.allocation->census_bytes_ : 0;
+       if (e.will_free_at <= coherent_seq_id) { en++; eb += bytes; }
+       else                                   { in_n++; in_b += bytes; }

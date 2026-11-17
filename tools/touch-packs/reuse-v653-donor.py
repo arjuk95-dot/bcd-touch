@@ -279,14 +279,21 @@ def macho_dependencies(executable):
     return sorted(deps)
 
 
-def assemble(prepared, compiled, output, source):
+def assemble(prepared, compiled, output, source, app_repository=None):
     donor, receipt = load_prepared(prepared)
     compiled = Path(compiled)
     if not re.fullmatch('[0-9a-f]{40}', source):
         raise ValueError('Expected full source commit')
     old = plistlib.loads((donor / 'Info.plist').read_bytes())
     new = plistlib.loads((compiled / 'Info.plist').read_bytes())
-    if new.get('MadeiraCommit') != source or new.get('MadeiraRepo') != old['MadeiraRepo']:
+    # The immutable donor remains attributed to its pinned original repository.
+    # A migration must separately state the exact expected new app repository.
+    expected_repository = old['MadeiraRepo']
+    if app_repository is not None:
+        if app_repository not in (expected_repository, 'arjuks-9/bcd-touch', 'arjuk8-dot/bcd-ios-builds'):
+            raise ValueError('Unapproved migrated app repository')
+        expected_repository = app_repository
+    if new.get('MadeiraCommit') != source or new.get('MadeiraRepo') != expected_repository:
         raise ValueError('Compiled app source metadata mismatch')
     if new.get('CFBundleIdentifier') != old['CFBundleIdentifier'] or new.get('CFBundleExecutable') != 'Madeira':
         raise ValueError('Compiled app identity mismatch')
@@ -319,6 +326,7 @@ def assemble(prepared, compiled, output, source):
     if {p: v for p, v in final.items() if p not in ('Madeira', 'Info.plist')} != preserved:
         raise ValueError('Runtime/resource preservation failed')
     result = {'donor': receipt['provenance'], 'app_source': source,
+              'app_repository': expected_repository,
               'main_sha256': digest(app / 'Madeira'), 'dynamic_dependencies': deps,
               'preserved_files': len(preserved), 'files': final,
               'runtime_byte_identical_before_signing': True,
@@ -356,7 +364,7 @@ def main():
     sub = parser.add_subparsers(dest='command', required=True)
     p = sub.add_parser('prepare'); p.add_argument('--artifact', required=True); p.add_argument('--output', required=True)
     p = sub.add_parser('stage'); p.add_argument('--prepared', required=True); p.add_argument('--repo', required=True)
-    p = sub.add_parser('assemble'); p.add_argument('--prepared', required=True); p.add_argument('--compiled-app', required=True); p.add_argument('--output', required=True); p.add_argument('--source', required=True)
+    p = sub.add_parser('assemble'); p.add_argument('--prepared', required=True); p.add_argument('--compiled-app', required=True); p.add_argument('--output', required=True); p.add_argument('--source', required=True); p.add_argument('--app-repository', help='Exact expected migrated app repository; original donor pins remain unchanged')
     p = sub.add_parser('verify'); p.add_argument('--output', required=True)
     p = sub.add_parser('link-inputs'); p.add_argument('--repo', required=True); p.add_argument('--output', required=True)
     a = parser.parse_args()
@@ -364,7 +372,7 @@ def main():
         r = prepare(a.artifact, a.output); r = {'verified_files': len(r['files']), 'donor_source': r['provenance']['source']}
     elif a.command == 'stage': r = stage(a.prepared, a.repo)
     elif a.command == 'assemble':
-        r = assemble(a.prepared, a.compiled_app, a.output, a.source); r = {k: v for k, v in r.items() if k != 'files'}
+        r = assemble(a.prepared, a.compiled_app, a.output, a.source, a.app_repository); r = {k: v for k, v in r.items() if k != 'files'}
     elif a.command == 'verify': r = verify(a.output)
     else: r = link_inputs(a.repo, a.output)
     print(json.dumps(r, indent=2))

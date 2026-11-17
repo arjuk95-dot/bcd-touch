@@ -1,0 +1,100 @@
+--- a/src/dxmt/dxmt_dynamic.cpp
++++ b/src/dxmt/dxmt_dynamic.cpp
+@@ -1,6 +1,7 @@
+ #include "dxmt_dynamic.hpp"
+ #include "dxmt_texture.hpp"
+ #include "dxmt_mem_census.hpp"
++#include <algorithm>
+ 
+ namespace dxmt {
+ DynamicBuffer::DynamicBuffer(Buffer *buffer, Flags<BufferAllocationFlag> flags) :
+@@ -48,9 +49,8 @@
+     fifo.pop_front();
+     break;
+   }
+-  /* ml681: walk the retained set while we already hold the lock. eligible vs
+-   * ineligible is the discriminator; min/max will_free_at shows whether the
+-   * tail is fenced by one burst or spread across many sequences. */
++  /* Exact eligibility counting is authoritative. Census fields are sampled
++   * and may be stale; they never control allocation, lifetime or trimming. */
+   /* ml685 DESIGN BUG, found by accident: this whole block -- INCLUDING THE TRIM
+    * -- used to sit behind `census_id_ < DYN_CENSUS_SLOTS`. Allocator behaviour
+    * was therefore decided by whether an object happened to fit in a DIAGNOSTIC
+@@ -63,29 +63,43 @@
+    * gated. Behaviour must never depend on diagnostic capacity. */
+   {
+     const bool stats = census_id_ < DYN_CENSUS_SLOTS;
+-    uint64_t en = 0, eb = 0, in_n = 0, in_b = 0, lo = ~0ull, hi = 0, dup = 0;
+-    const void *prev_seen[8] = {nullptr};
+-    unsigned pi = 0;
+-    for (const auto &e : fifo) {
+-      uint64_t bytes = e.allocation.ptr() ? e.allocation->census_bytes_ : 0;
+-      if (e.will_free_at <= coherent_seq_id) { en++; eb += bytes; }
+-      else                                   { in_n++; in_b += bytes; }
+-      if (e.will_free_at < lo) lo = e.will_free_at;
+-      if (e.will_free_at > hi) hi = e.will_free_at;
+-      for (unsigned k = 0; k < 8; k++)
+-        if (prev_seen[k] && prev_seen[k] == (const void *)e.allocation.ptr()) { dup++; break; }
+-      prev_seen[pi++ & 7] = (const void *)e.allocation.ptr();
+-    }
+-    if (stats) {
+-      DynStat &st = g_dyn_stats[census_id_];
+-      st.depth.store(fifo.size(), std::memory_order_relaxed);
+-      st.eligible_n.store(en, std::memory_order_relaxed);
+-      st.eligible_bytes.store(eb, std::memory_order_relaxed);
+-      st.inelig_n.store(in_n, std::memory_order_relaxed);
+-      st.inelig_bytes.store(in_b, std::memory_order_relaxed);
+-      st.wfa_min.store(lo == ~0ull ? 0 : lo, std::memory_order_relaxed);
+-      st.wfa_max.store(hi, std::memory_order_relaxed);
+-      if (dup) st.dup_ptrs.fetch_add(dup, std::memory_order_relaxed);
++    // At most64 retained entries cannot have more than64 eligible entries,
++    // so no trim decision requires a scan. For larger queues count exactly:
++    // deferred recycling can append older sequence IDs after newer ones.
++    const uint64_t eligible_count = fifo.size() <= 64 ? 0 : std::count_if(
++        fifo.begin(), fifo.end(),
++        [coherent_seq_id](const QueueEntry &entry) {
++          return entry.will_free_at <= coherent_seq_id;
++        });
++
++    // Census is advisory only. Sample the expensive bytes/duplicate walk,
++    // never the lifetime or trim decision; untracked objects need no walk.
++    static std::atomic<uint64_t> census_sample_ticket{0};
++    if (stats && !(census_sample_ticket.fetch_add(1, std::memory_order_relaxed) & 1023)) {
++      uint64_t en = 0, eb = 0, in_n = 0, in_b = 0, lo = ~0ull, hi = 0, dup = 0;
++      const void *prev_seen[8] = {nullptr};
++      unsigned pi = 0;
++      for (const auto &e : fifo) {
++        uint64_t bytes = e.allocation.ptr() ? e.allocation->census_bytes_ : 0;
++        if (e.will_free_at <= coherent_seq_id) { en++; eb += bytes; }
++        else                                   { in_n++; in_b += bytes; }
++        if (e.will_free_at < lo) lo = e.will_free_at;
++        if (e.will_free_at > hi) hi = e.will_free_at;
++        for (unsigned k = 0; k < 8; k++)
++          if (prev_seen[k] && prev_seen[k] == (const void *)e.allocation.ptr()) { dup++; break; }
++        prev_seen[pi++ & 7] = (const void *)e.allocation.ptr();
++      }
++      {
++        DynStat &st = g_dyn_stats[census_id_];
++        st.depth.store(fifo.size(), std::memory_order_relaxed);
++        st.eligible_n.store(en, std::memory_order_relaxed);
++        st.eligible_bytes.store(eb, std::memory_order_relaxed);
++        st.inelig_n.store(in_n, std::memory_order_relaxed);
++        st.inelig_bytes.store(in_b, std::memory_order_relaxed);
++        st.wfa_min.store(lo == ~0ull ? 0 : lo, std::memory_order_relaxed);
++        st.wfa_max.store(hi, std::memory_order_relaxed);
++        if (dup) st.dup_ptrs.fetch_add(dup, std::memory_order_relaxed);
++      }
+     }
+ 
+     /* ml681 SAFE TRIM. Release only entries the GPU has demonstrably finished
+@@ -97,8 +111,8 @@
+      * A blanket depth cap would be a use-after-free: an entry whose
+      * will_free_at still exceeds coherent_seq_id can be in GPU use right now. */
+     enum { DYN_KEEP_ELIGIBLE = 64 };
+-    if (en > DYN_KEEP_ELIGIBLE) {
+-      uint64_t drop = en - DYN_KEEP_ELIGIBLE, freed = 0, freed_n = 0;
++    if (eligible_count > DYN_KEEP_ELIGIBLE) {
++      uint64_t drop = eligible_count - DYN_KEEP_ELIGIBLE, freed = 0, freed_n = 0;
+       while (drop && !fifo.empty()) {
+         const QueueEntry &f = fifo.front();
+         if (f.will_free_at > coherent_seq_id) break;   /* never touch fenced */

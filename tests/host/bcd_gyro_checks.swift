@@ -19,7 +19,7 @@ require(settings([:]) == BCDGyroSettings() && !settings([:]).isOn, "no lines: of
 require(settings(["gyro-aim": "mouse"]).target == .mouse && settings(["gyro-aim": " Stick "]).target == .stick, "gyro-aim: mouse or stick, any case")
 require(settings(["gyro-aim": "on"]).target == .off && settings(["gyro-aim": "1"]).target == .off && settings(["gyro-aim": ""]).target == .off,
         "anything else is off")
-require(near(settings(["gyro-sens": "2.5"]).sensitivity, 2.5) && near(settings(["gyro-sens": "100"]).sensitivity, 8) && near(settings(["gyro-sens": "0"]).sensitivity, 0.1)
+require(near(settings(["gyro-sens": "2.5"]).sensitivity, 2.5) && near(settings(["gyro-sens": "100"]).sensitivity, 32) && near(settings(["gyro-sens": "0"]).sensitivity, 0.1)
         && near(settings(["gyro-sens": "x"]).sensitivity, 1) && near(settings(["gyro-sens": "nan"]).sensitivity, 1), "gyro-sens is kept in range, a bad one is the default")
 require(near(settings(["gyro-deadzone": "2"]).deadzone, 2) && near(settings(["gyro-deadzone": "-4"]).deadzone, 0) && near(settings(["gyro-deadzone": "99"]).deadzone, 10)
         && near(settings(["gyro-deadzone": "inf"]).deadzone, 0.5), "gyro-deadzone likewise")
@@ -38,6 +38,24 @@ require(words.invertX && words.invertY, "... and back")
 require(BCDGyroSettings.keys.count == 6 && Set(BCDGyroSettings.keys).count == 6, "six lines")
 require(BCDGyroSettings.sensitivityChoices.allSatisfy { BCDGyroSettings.sensitivityRange.contains($0) }
         && BCDGyroSettings.deadzoneChoices.allSatisfy { BCDGyroSettings.deadzoneRange.contains($0) }, "every offered value is in range")
+
+// Expanded ceiling is opt-in; every formerly accepted saved multiplier stays exact.
+for value in [0.1, 0.25, 1, 2.5, 4, 6, 8] {
+    require(settings(["gyro-sens": String(value)]).sensitivity == value, "saved gyro multiplier stays unchanged: \(value)")
+}
+require(BCDGyroSettings.sensitivityChoices.first == BCDGyroSettings.sensitivityRange.lowerBound
+        && BCDGyroSettings.sensitivityChoices.last == BCDGyroSettings.sensitivityRange.upperBound,
+        "both menus expose the full gyro range")
+require(BCDGyroSettings.sensitivityChoices == BCDGyroSettings.sensitivityChoices.sorted()
+        && Set(BCDGyroSettings.sensitivityChoices).count == BCDGyroSettings.sensitivityChoices.count,
+        "gyro choices are unique and increasing")
+var lowCarry = BCDGyroMath.Carry(), highCarry = BCDGyroMath.Carry()
+let lowCounts = BCDGyroMath.mouse((right: 10, down: -5), dt: 0.01, settings(["gyro-sens": "4"]), carry: &lowCarry)
+let highCounts = BCDGyroMath.mouse((right: 10, down: -5), dt: 0.01, settings(["gyro-sens": "32"]), carry: &highCarry)
+require(highCounts.dx > lowCounts.dx && highCounts.dy < lowCounts.dy,
+        "new ceiling increases mouse gain on both axes without reversing them")
+let highStick = BCDGyroMath.stick((right: 100, down: 0), settings(["gyro-sens": "32"]))
+require(highStick.rx == 32767 && highStick.ry == 0, "high gyro gain still saturates safely at the XInput limit")
 
 // ---- the hold gate ---------------------------------------------------------------------------------
 require(BCDGyroHold.isOpen("", buttons: 0, lt: 0, rt: 0), "always: open")

@@ -1,0 +1,154 @@
+--- a/src/d3d11/d3d11_context_impl.cpp
++++ b/src/d3d11/d3d11_context_impl.cpp
+@@ -8,6 +8,7 @@
+ */
+ #include "Metal.hpp"
+ #include "config/config.hpp"   /* ml869 */
++#include <cstdlib>
+ #include <deque>   /* ml1256 */
+ #include "d3d11_annotation.hpp"
+ #include "d3d11_context.hpp"
+@@ -3857,6 +3858,8 @@
+           cmd.dst = dst->buffer();
+           cmd.dst_offset = DstX + dst_offset;
+         });
++        // Readback readiness is chunk-retirement based. Keep the early
++        // submit boundary so later rendering cannot extend this copy's wait.
+         promote_flush = true;
+       } else if (auto src = reinterpret_cast<D3D11ResourceCommon *>(pSrcResource)) {
+         // copy from device to staging
+@@ -3873,6 +3876,8 @@
+           cmd.dst = dst->buffer();
+           cmd.dst_offset = DstX + dst_offset;
+         });
++        // Readback readiness is chunk-retirement based. Keep the early
++        // submit boundary so later rendering cannot extend this copy's wait.
+         promote_flush = true;
+       } else {
+         UNIMPLEMENTED("todo");
+@@ -4024,6 +4029,8 @@
+             }
+           }
+         });
++        // Readback readiness is chunk-retirement based. Keep the early
++        // submit boundary so later rendering cannot extend this copy's wait.
+         promote_flush = true;
+       } else if (auto src = GetTexture(cmd.pSrc)) {
+         if (cmd.DstFormat.Flag & MTL_DXGI_FORMAT_EMULATED_LINEAR_DEPTH_STENCIL) {
+@@ -4036,7 +4043,9 @@
+                 dst_->bytesPerImage, cmd.DstFormat.Flag & MTL_DXGI_FORMAT_EMULATED_D24
+             );
+           });
+-          promote_flush = true;
++          // Readback readiness is chunk-retirement based. Keep the early
++        // submit boundary so later rendering cannot extend this copy's wait.
++        promote_flush = true;
+           return;
+         }
+         SwitchToBlitEncoder(CommandBufferState::ReadbackBlitEncoderActive);
+@@ -4059,6 +4068,8 @@
+           cmd_cpbuf.bytes_per_row = dst_->bytesPerRow;
+           cmd_cpbuf.bytes_per_image = dst_->bytesPerImage;
+         });
++        // Readback readiness is chunk-retirement based. Keep the early
++        // submit boundary so later rendering cannot extend this copy's wait.
+         promote_flush = true;
+       } else {
+         UNREACHABLE
+@@ -4686,6 +4697,29 @@
+ #pragma region CommandEncoder Maintain State
+ 
+   bool promote_flush = false;
++  bool pending_batched_submission = false;
++  bool batch_policy_seen = false;
++  uint64_t batch_promotions = 0, batch_boundaries = 0;
++  uint64_t batch_demand_flushes = 0, batch_commits = 0, batch_promoted_commits = 0;
++  uint64_t batch_report_frame = 0;
++
++  // Only immediate contexts opt in. Deferred command lists retain their
++  // original promotion contract and require no serialized-format change.
++  void PromoteImplicitFlush() {
++    if constexpr (requires { ctx_state.cmd_queue; }) {
++      static const bool batch = [] {
++        const char *v = std::getenv("BCD_QUEEN_RENDER_BATCH");
++        return v && v[0] == '1' && !v[1];
++      }();
++      if (batch) {
++        pending_batched_submission = true;
++        batch_policy_seen = true;
++        ++batch_promotions;
++        return;
++      }
++    }
++    promote_flush = true;
++  }
+ 
+   /**
+   Render pass can be invalidated by reasons:
+@@ -4733,6 +4767,8 @@
+     }
+ 
+     cmdbuf_state = CommandBufferState::Idle;
++    if (pending_batched_submission && !promote_flush && !defer_commit)
++      ++batch_boundaries;
+     if (promote_flush && !defer_commit) {
+       Commit();
+       return true;
+--- a/src/d3d11/d3d11_context_imm.cpp
++++ b/src/d3d11/d3d11_context_imm.cpp
+@@ -278,7 +278,7 @@
+         if (MapFlags & D3D11_MAP_FLAG_DO_NOT_WAIT) {
+           /* ml1246: the pending copy may sit in the unflushed seq, and a caller
+            * spinning on DO_NOT_WAIT would then never see the resource go idle */
+-          if (rename_refused)
++          if (rename_refused || pending_batched_submission)
+             Flush();
+           return DXGI_ERROR_WAS_STILL_DRAWING;
+         }
+@@ -393,7 +393,7 @@
+         EmitOP([event_id](ArgumentEncodingContext &enc) mutable {
+           enc.signalEvent(event_id);
+         });
+-        promote_flush = true;
++        PromoteImplicitFlush();
+         ctx_state.has_dirty_op_since_last_event = false;
+       } else {
+         static_cast<MTLD3D11EventQuery *>(pAsync)->Issue(cmd_queue.GetCurrentEventSeqId());
+@@ -512,9 +512,11 @@
+   Flush() override {
+     std::lock_guard<d3d11_device_mutex> lock(mutex);
+ 
+-    if (!ctx_state.has_dirty_op_since_last_event && !promote_flush) {
++    if (!ctx_state.has_dirty_op_since_last_event && !promote_flush && !pending_batched_submission) {
+       return;
+     }
++    if (pending_batched_submission)
++      ++batch_demand_flushes;
+     promote_flush = true;
+     InvalidateCurrentPass();
+   }
+@@ -603,7 +605,24 @@
+ 
+   void
+   Commit() override {
++    if (batch_policy_seen) {
++      ++batch_commits;
++      batch_promoted_commits += promote_flush ? 1 : 0;
++      const auto frame = cmd_queue.CurrentFrameSeq();
++      if (frame >= batch_report_frame + 64) {
++        ERR("[queen-submit] frames=", frame - batch_report_frame,
++            " delayed-promotions=", batch_promotions,
++            " deferred-boundary-attempts=", batch_boundaries,
++            " demand-flushes=", batch_demand_flushes,
++            " commits=", batch_commits,
++            " promoted-commits=", batch_promoted_commits);
++        batch_report_frame = frame;
++        batch_promotions = batch_boundaries = batch_demand_flushes = 0;
++        batch_commits = batch_promoted_commits = 0;
++      }
++    }
+     promote_flush = false;
++    pending_batched_submission = false;
+     D3D11_ASSERT(cmdbuf_state == CommandBufferState::Idle);
+     ctx_state.cmd_queue.CommitCurrentChunk();
+     ctx_state.has_dirty_op_since_last_event = false;

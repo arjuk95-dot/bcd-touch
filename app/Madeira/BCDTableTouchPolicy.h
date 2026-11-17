@@ -27,4 +27,33 @@ static inline int BCDTableEndAt(BCDTableTouchState *s,double x,double y,double n
  else { (void)BCDTableMove(s,x,y); (void)BCDTableTick(s,now); if(s->multi&&now-s->began>.35)cancelled=1; }
  return BCDTableEnd(s,cancelled);
 }
+/* Inscryption only: commit a stationary hold as RMB on lift. Movement can
+ * still claim a normal drag after the hold threshold; cancellation emits no
+ * click. Other table games retain the original hover/inspect policy. */
+static inline int BCDTableHoldMove(BCDTableTouchState *s,double x,double y,int secondaryOnHold) {
+ if(secondaryOnHold && isfinite(x) && isfinite(y) && hypot(x-s->x,y-s->y)>10)s->inspect=0;
+ return BCDTableMove(s,x,y);
+}
+static inline int BCDTableHoldEnd(BCDTableTouchState *s,double x,double y,double now,int cancelled,int secondaryOnHold) {
+ int held=s->active && !s->multi && !s->drag && !s->moved &&
+     isfinite(x) && isfinite(y) && isfinite(now) && now>=s->began+.35 &&
+     hypot(x-s->x,y-s->y)<=10;
+ (void)BCDTableHoldMove(s,x,y,secondaryOnHold);
+ int result=BCDTableEndAt(s,x,y,now,cancelled);
+ return secondaryOnHold && held && !cancelled ? BCD_TABLE_SECONDARY:result;
+}
+/* Relative cursor accumulation shared with the UIKit adapter. A new contact
+ * only anchors the finger; it never warps the guest cursor. */
+typedef struct { double x,y,carryX,carryY; int active,dx,dy; } BCDTableRelativeState;
+static inline void BCDTableRelativeBegin(BCDTableRelativeState *s,double x,double y) {
+ *s=(BCDTableRelativeState){0};if(isfinite(x)&&isfinite(y)){s->x=x;s->y=y;s->active=1;}
+}
+static inline int BCDTableRelativeMove(BCDTableRelativeState *s,double x,double y,double scaleX,double scaleY) {
+ s->dx=s->dy=0;
+ if(!s->active || !isfinite(x)||!isfinite(y)||!isfinite(scaleX)||!isfinite(scaleY)) {s->active=0;return 0;}
+ double dx=fmax(-32768,fmin(32767,s->carryX+(x-s->x)*scaleX));
+ double dy=fmax(-32768,fmin(32767,s->carryY+(y-s->y)*scaleY));
+ s->dx=(int)dx;s->dy=(int)dy;s->carryX=dx-s->dx;s->carryY=dy-s->dy;s->x=x;s->y=y;
+ return s->dx!=0 || s->dy!=0;
+}
 #endif

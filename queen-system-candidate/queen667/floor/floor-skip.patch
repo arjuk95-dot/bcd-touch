@@ -1,0 +1,113 @@
+--- a/build/ntdll-unix/virtual_ios.c
++++ b/build/ntdll-unix/virtual_ios.c
+@@ -9372,6 +9372,8 @@
+  * map_free_area call. virtual_mutex is held throughout, so a plain global is
+  * safe. Proves or refutes the grind above in one run. */
+ static unsigned int ios_va_scan_tries;
++/* Of tries: forbidden floor granules counted but not mapped. */
++static unsigned int ios_va_scan_below_floor;
+ /* ml211: how many times the scan JUMPED over a foreign Mach region instead of
+  * crawling a granule at a time. Reported next to tries= so the two are directly
+  * comparable: before this, placing 1MB cost ~8000 tries and 0 skips. */
+@@ -15242,11 +15244,78 @@
+     return ios_layerkit_enforce && ios_layerkit_hi && a + size > ios_layerkit_lo && a < ios_layerkit_hi;
+ }
+ 
++/* Adapted from Vuqar05, Madeira PR #622 (commit 3adceb5), LGPL-2.1-or-later.
++ * The kernel reports a hole below min_address but refuses all mappings in it.
++ * Cache once under virtual_mutex, with old behavior on query failure/opt-out.
++ * Unlike a region query, this boundary describes addresses that cannot map.
++ */
++static uintptr_t ios_va_map_floor(void)
++{
++    static uintptr_t floor;
++    static int initialized;
++    if (!initialized)
++    {
++        const char *e = getenv( "MADEIRA_VA_SCAN_FLOOR" );
++        task_vm_info_data_t vmi = {0};
++        mach_msg_type_number_t cnt = TASK_VM_INFO_COUNT;
++        if (!(e && !strcmp(e, "0")) &&
++            task_info( mach_task_self(), TASK_VM_INFO, (task_info_t)&vmi, &cnt ) == KERN_SUCCESS &&
++            vmi.min_address < vmi.max_address)
++            floor = (uintptr_t)vmi.min_address;
++        initialized = 1;
++        dprintf( 2, "[va-scan] floor=%p (MADEIRA_VA_SCAN_FLOOR=0 restores old scans)\n", (void *)floor );
++    }
++    return floor;
++}
++
++/* Returns 0=unchanged, 1=jump upward, 2=scan exhausted. Called only for a
++ * candidate already in the scan window. Division/remainders avoid ceil-add
++ * and step-negation overflow; a jump is formed only if it still fits.
++ * Logical refused attempts retain the old diagnostic/pressure-latch behavior.
++ * The input lattice is preserved even if a caller supplies an unaligned start.
++ */
++static int ios_va_skip_floor( uintptr_t base, uintptr_t end, ptrdiff_t step,
++                              uintptr_t *start, size_t size, uintptr_t floor )
++{
++    uintptr_t a = *start, g, distance, count, up = 0, fit = 0;
++    if (!step || !floor || a >= floor) return 0;
++    if (a < base || a > end || size > end - a) return 0;
++    g = step < 0 ? (uintptr_t)0 - (uintptr_t)step : (uintptr_t)step;
++    if (step < 0)
++    {
++        count = (a - base) / g + 1;
++    }
++    else
++    {
++        distance = floor - a;
++        up = distance / g + (distance % g != 0);
++        /* a is nonzero in the caller, so inclusive fit cannot wrap. */
++        fit = (end - size - a) / g + 1;
++        count = up < fit ? up : fit;
++    }
++    ios_va_scan_tries += (unsigned int)count;
++    ios_va_scan_below_floor += (unsigned int)count;
++    if (!ios_scan_fail_addr) { ios_scan_fail_addr = (void *)a; ios_scan_fail_errno = ENOMEM; }
++    errno = ENOMEM;
++    if (step < 0 || up >= fit) return 2;
++    *start = a + up * g; /* bounded by end-size because up < fit */
++    return 1;
++}
++
+ static void* try_map_free_area( void *base, void *end, ptrdiff_t step,
+                                 void *start, size_t size, int unix_prot )
+ {
+     while (start && base <= start && (char*)start + size <= (char*)end)
+     {
++        /* Fixed-address attempts remain untouched. */
++        if (step)
++        {
++            uintptr_t candidate = (uintptr_t)start;
++            int skipped = ios_va_skip_floor( (uintptr_t)base, (uintptr_t)end,
++                                             step, &candidate, size, ios_va_map_floor() );
++            if (skipped == 2) break;
++            if (skipped == 1) { start = (void *)candidate; continue; }
++        }
+         /* ml253 ROOT-CAUSE FIX: never allocate inside the JIT pool.
+          *
+          * Wine's scanner walks straight through the pool -- measured, marching upward in
+@@ -24708,6 +24777,7 @@
+         {
+             unsigned int tries0 = ios_va_scan_tries;
+             unsigned int skips0 = ios_va_scan_skips;
++            unsigned int below0 = ios_va_scan_below_floor;
+ 
+             ptr = map_free_area( start, end, host_size, top_down, unix_prot, align_mask );
+ #ifdef WINE_IOS
+@@ -24776,12 +24846,13 @@
+                  * a thread 6 minutes later. */
+                 if (ptr ? ios_storm_gate( &vs_storm )
+                         : ceiling_relaxable ? (++vs_relaxed <= 64 || !(vs_relaxed % 1024)) : (vs_fails++ < 256))
+-                dprintf( 2, "[va-scan] %s window=%p..%p size=%p align=%p %s tries=%u skips=%u"
++                dprintf( 2, "[va-scan] %s window=%p..%p size=%p align=%p %s tries=%u skips=%u below-floor=%u"
+                             " | seen=%p..%p views=%u maxgap=%p tailgap=%p stop=%s"
+                             " | firstfail=%p errno=%d(%s) %s%s\n",
+                          ptr ? "SLOW" : "FAILED", start, end, (void *)size,
+                          (void *)(align_mask + 1), top_down ? "top-down" : "bottom-up",
+                          ios_va_scan_tries - tries0, ios_va_scan_skips - skips0,
++                         ios_va_scan_below_floor - below0,
+                          ios_scan_base, ios_scan_end, ios_scan_views,
+                          (void *)ios_scan_maxgap, (void *)ios_scan_tailgap,
+                          ios_scan_stop_name( ios_scan_stop ),

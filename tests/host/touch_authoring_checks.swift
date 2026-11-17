@@ -18,6 +18,17 @@ func checkTouchAuthoring() throws {
         }
     }
     let original = BCDPackAuthoring.preset(identity: identity, title: "Merge fixture", genre: "first-person", mode: "controller")
+    let resizeOriginal=original.phone.controls[0]
+    let larger=BCDPackAuthoring.resizedControl(resizeOriginal,scale:1.5)!
+    assert(larger.radius == min(0.2,resizeOriginal.radius*1.5))
+    var unchanged=larger;unchanged.radius=resizeOriginal.radius;unchanged.hitRadius=resizeOriginal.hitRadius
+    assert(unchanged == resizeOriginal,"Resize changed binding, position or another personal field")
+    assert(BCDPackAuthoring.resizedControl(resizeOriginal,scale:1000)!.radius == 0.2)
+    assert(BCDPackAuthoring.resizedControl(resizeOriginal,scale:0.001)!.radius == 0.035)
+    for bad in [Double.nan,Double.infinity,0,-1] {assert(BCDPackAuthoring.resizedControl(resizeOriginal,scale:bad) == nil)}
+    var hit=resizeOriginal;hit.hitRadius=hit.radius*1.1
+    let resizedHit=BCDPackAuthoring.resizedControl(hit,scale:1.2)!
+    assert(abs(resizedHit.hitRadius/resizedHit.radius-1.1)<0.000001)
     var noLT = original
     BCDPackAuthoring.removeAction(noLT.actions.first { $0.output == "LT" }!.id, from: &noLT)
     let addedLT = try BCDPackAuthoring.addButton(to: noLT, context: "onFoot", output: "LT")

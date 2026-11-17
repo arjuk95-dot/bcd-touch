@@ -1,0 +1,38 @@
+name: BCD667 Queen coherent render candidate
+'on':
+  push:
+    branches: [queen-system-667-public]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: bcd667-queen-nav
+  cancel-in-progress: false
+jobs:
+  build:
+    if: github.repository == 'arjuk95-dot/bcd-touch' && contains(github.event.head_commit.message, '[queen-system-667-public-build]')
+    runs-on: macos-15
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PYTHONUNBUFFERED: '1'
+      HOMEBREW_NO_AUTO_UPDATE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Targeted runtime, paired shader compiler and app relink
+        shell: bash
+        run: |
+          brew install llvm lld
+          python3 queen-system-candidate/tests/check-fingerprint-hash.py
+          bash queen-system-candidate/run-build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BCD-667-Queen-System-existing-update
+          path: |
+            source/build-out/BCD-667-Queen-System-update.ipa
+            source/build-out/ipa.sha256
+          if-no-files-found: error
+          retention-days: 7

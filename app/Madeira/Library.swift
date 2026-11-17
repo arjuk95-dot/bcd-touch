@@ -1391,8 +1391,12 @@ final class LibraryModel: ObservableObject {
         let packAvailable = MainActor.assumeIsolated {
             BCDPackStore.shared.applyLaunchPreference(entry)
             BCDPackStore.shared.activate(entry)
+            if BCDPackStore.shared.enabled,let selected=BCDPackStore.shared.pack,
+               selected.id == "sulfur-minimal-controller-v6",BCDSulfurPack.matches(selected.identity) {
+                BCDGyroStore.prepareSulfur(entry.windowsPath)
+            }
             GamepadInput.packControllerSession = BCDPackStore.shared.enabled && BCDPackStore.shared.usesController
-            GamepadInput.packKeyboardMouseSession = BCDPackStore.shared.enabled && BCDPackStore.shared.pack?.cursorControls != nil
+            GamepadInput.packKeyboardMouseSession = BCDPackStore.shared.enabled && BCDPackStore.shared.usesCursor
             HardwareInput.shared.setCursorPackActive(GamepadInput.packKeyboardMouseSession)
             GamepadInput.shared.configurePack(enabled: GamepadInput.packControllerSession, accepting: false, calibration: BCDPackStore.shared.pack?.aim ?? BCDMouseJoystick.Calibration())
             return BCDPackStore.shared.enabled && BCDPackStore.shared.hasSurface

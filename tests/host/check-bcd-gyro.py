@@ -105,6 +105,7 @@ check(live.count("CMMotionManager()") == 1, "the sensor is made in one place")
 start = func(live, "private func startIfNeeded(")
 check("CMMotionManager()" in start and "guard motion == nil else { return }" in start, "... which is the start, once")
 refresh = func(live, "@MainActor func refresh()")
+check("!store.controllerFallback" in refresh, "temporary controller fallback suppresses gyro without changing its settings")
 check("let on = wanted.isOn && playing && entry != nil" in refresh, "it starts only for a game whose gyro is on, while it is played")
 check("let playing = library.current != nil && !library.desktopHome && !library.launching && !library.menu && appActive" in refresh
       and "applicationState == .active" in refresh and "willResignActiveNotification" in live and "didBecomeActiveNotification" in live,

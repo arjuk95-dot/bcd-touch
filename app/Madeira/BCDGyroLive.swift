@@ -27,6 +27,9 @@ import UIKit
 /// A game's gyro choices.
 enum BCDGyroStore {
     private static let key = "bcd.gyro"
+    static func prepareSulfur(_ windowsPath:String) {
+        BCDSulfurGyroDefaults.seed(windowsPath,storeKey:key)
+    }
 
     /// The lines of a game's choices ("gyro-aim", ...) as stored; empty when it has none.
     static func lines(_ windowsPath: String) -> [String: String] {
@@ -96,7 +99,9 @@ final class BCDGyroLive: @unchecked Sendable {
         let playing = library.current != nil && !library.desktopHome && !library.launching && !library.menu && appActive
         let store=BCDPackStore.shared
         let pointerSurface = store.enabled && (!store.tableSurface.isEmpty || store.pack?.lookMode == "none" || (store.pack?.id.hasPrefix("sulfur") == true && store.context == "inventory"))
-        let on = wanted.isOn && playing && entry != nil && !pointerSurface
+        // Pack editors and native dialogs must not receive latent sensor motion.
+        let packFocused = !(store.enabled && store.hasSurface) || (!store.editing && BCDPackFocus.shared.gameFocused)
+        let on = wanted.isOn && playing && entry != nil && !pointerSurface && packFocused && !store.controllerFallback && !library.blocksGameplayTouch
         let wasStick = Self.stickActive
         lock.lock()
         let changed = settings != wanted

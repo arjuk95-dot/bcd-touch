@@ -7,6 +7,8 @@ import shutil
 import subprocess
 import tempfile
 import time
+import sys
+FOCUSED = "--focused-profiles" in sys.argv
 ROOT=Path(__file__).resolve().parents[2]
 out=ROOT/'touch-evidence';out.mkdir(exist_ok=True)
 def run(args,**kw):return subprocess.check_output(args,text=True,**kw).strip()
@@ -23,10 +25,12 @@ with tempfile.TemporaryDirectory(prefix='touch-preview-') as tmp:
     routing=(ROOT/'app/Madeira/ContentView.swift').read_text()
     window=tmp/'Window.swift';window.write_text('import UIKit\nfinal class ControlsWindow: UIWindow {'+routing.split('final class ControlsWindow: UIWindow {',1)[1].split('\nenum TouchControlsHost',1)[0])
     gate=tmp/'Gate.swift';gate.write_text('import UIKit\n@MainActor enum TouchMouseGate {'+routing.split('@MainActor enum TouchMouseGate {',1)[1].split('\n}\n',1)[0]+'\n}')
-    sources=[ROOT/'app/Madeira/BCDMouseJoystick.swift',ROOT/'app/Madeira/BCDControlPack.swift',ROOT/'app/Madeira/BCDControlPackAuthoring.swift',ROOT/'app/Madeira/BCDCursorPack.swift',ROOT/'app/Madeira/BCDNoitaPack.swift',state,window,gate,ROOT/'app/Madeira/BCDControlPackLive.swift',ROOT/'app/Madeira/BCDCursorPackSettings.swift',ROOT/'app/Madeira/BCDControlPackSurface.swift',ROOT/'tests/host/touch_pack_ui_stubs.swift',ROOT/'tests/host/touch_pack_preview.swift',ROOT/'tests/host/touch_noita_preview.swift']
-    sources += [ROOT/'app/Madeira'/n for n in ['BCDQueensDomainPack.swift','BCDQueensGesturePolicy.swift','BCDSulfurPack.swift','BCDSulfurInstalledVerifier.swift','BCDDreadPack.swift','BCDChroniclesPack.swift','BCDTenebrisOwnerCompatibility.swift','BCDTableSurface.swift']]
+    sources=[ROOT/'app/Madeira/BCDMouseJoystick.swift',ROOT/'app/Madeira/BCDGyroAim.swift',ROOT/'app/Madeira/BCDControlPack.swift',ROOT/'app/Madeira/BCDControlPackAuthoring.swift',ROOT/'app/Madeira/BCDCursorPack.swift',ROOT/'app/Madeira/BCDNoitaPack.swift',state,window,gate,ROOT/'app/Madeira/BCDControlPackLive.swift',ROOT/'app/Madeira/BCDCursorPackSettings.swift',ROOT/'app/Madeira/BCDControlPackSurface.swift',ROOT/'tests/host/touch_pack_ui_stubs.swift',ROOT/'tests/host/touch_pack_preview.swift',ROOT/'tests/host/touch_noita_preview.swift']
+    sources += [ROOT/'app/Madeira'/n for n in ['BCDTablePack.swift','BCDQueensDomainPack.swift','BCDQueensGesturePolicy.swift','BCDSulfurPack.swift','BCDSulfurInstalledVerifier.swift','BCDDreadPack.swift','BCDChroniclesPack.swift','BCDTenebrisOwnerCompatibility.swift','BCDTableSurface.swift','BCDControllerFallback.swift']]
+    sources += [ROOT/'tests/host/touch_feedback_preview.swift']
+    sources += [ROOT/'tests/host'/n for n in ['touch_sulfur_interaction_checks.swift','queen_selection_checks.swift','controller_fallback_checks.swift','touch_all_titles_checks.swift']]
     bridge=tmp/'ProfilePolicies.h'
-    bridge.write_text('\n'.join('#include "'+str(ROOT/'app/Madeira'/n)+'"' for n in ['BCDTableTouchPolicy.h','BCDSulfurSprintPolicy.h','BCDInscryptionPolicy.h','BCDTableNativeUtilities.h','BCDChroniclesMovementPolicy.h']))
+    bridge.write_text('\n'.join('#include "'+str(ROOT/'app/Madeira'/n)+'"' for n in ['BCDTableTouchPolicy.h','BCDSulfurSprintPolicy.h','BCDInscryptionPolicy.h','BCDTableNativeUtilities.h','BCDChroniclesMovementPolicy.h','BCDInscryptionSwipePolicy.h']))
     subprocess.run(['xcrun','swiftc','-import-objc-header',str(bridge),'-target' ,os.uname().machine+'-apple-ios18.0-simulator','-sdk',sdk,'-parse-as-library',*map(str,sources),'-o',str(app/'TouchPreview')],check=True)
     info=dict(CFBundleIdentifier='com.arjunkl.bcdtouch.preview',CFBundleExecutable='TouchPreview',CFBundleName='Touch Preview',CFBundlePackageType='APPL',CFBundleVersion='1',CFBundleShortVersionString='1',MinimumOSVersion='18.0',LSRequiresIPhoneOS=True,UIDeviceFamily=[1,2],UIRequiresFullScreen=True,UISupportedInterfaceOrientations=['UIInterfaceOrientationLandscapeLeft','UIInterfaceOrientationLandscapeRight'])
     (app/'Info.plist').write_bytes(plistlib.dumps(info))
@@ -39,10 +43,35 @@ with tempfile.TemporaryDirectory(prefix='touch-preview-') as tmp:
     subprocess.run(['xcrun','simctl','bootstatus',uid,'-b'],check=True,timeout=360)
     subprocess.run(['xcrun','simctl','uninstall',uid,'com.arjunkl.bcdtouch.preview'],check=False,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     subprocess.run(['xcrun','simctl','install',uid,str(app)],check=True,timeout=180)
+    if FOCUSED:
+        subprocess.run(['xcrun','simctl','launch','--terminate-running-process',uid,'com.arjunkl.bcdtouch.preview'],env=dict(os.environ,SIMCTL_CHILD_PACK_FOCUSED_PROFILES='1'),check=True,timeout=120)
+        container=Path(run(['xcrun','simctl','get_app_container',uid,'com.arjunkl.bcdtouch.preview','data']))/'Documents'
+        for _ in range(45):
+            if (container/'focused-profiles.txt').exists():break
+            time.sleep(1)
+        for p in container.glob('*.txt'):shutil.copyfile(p,out/p.name)
+        for p in container.glob('editor-*.png'):shutil.copyfile(p,out/p.name)
+        for p in container.glob('editor-reload-*.json'):shutil.copyfile(p,out/p.name)
+        try:
+            for name in ['focused-profiles.txt','sulfur-combat-regression.txt','queen-explicit-selection.txt','editor-tuning-regression.txt','all-title-editing-regression.txt','controller-fallback-regression.txt']:
+                assert (container/name).read_text().startswith('PASS:'),name+' did not pass'
+        except Exception:
+            try:
+                result=subprocess.run(['xcrun','simctl','spawn',uid,'log','show','--style','compact','--last','5m','--predicate','process == "TouchPreview"'],capture_output=True,text=True,timeout=20)
+                (out/'simulator-app-log.txt').write_text((result.stdout+result.stderr)[-100000:])
+            except subprocess.TimeoutExpired:(out/'simulator-app-log.txt').write_text('Simulator log query timed out')
+            reports=Path.home()/'Library/Logs/DiagnosticReports'
+            for p in sorted(reports.glob('TouchPreview*.ips'),key=lambda p:p.stat().st_mtime)[-2:]:
+                if p.stat().st_size<=2*1024*1024:shutil.copyfile(p,out/p.name)
+            raise
+        finally:
+            subprocess.run(['xcrun','simctl','shutdown',uid],check=True,timeout=30)
+        print('PASS: focused SULFUR combat and explicit Queen selection in simulator (no guest/sensor test)',flush=True)
+        sys.exit(0)
     subprocess.run(['xcrun','simctl','launch','--terminate-running-process',uid,'com.arjunkl.bcdtouch.preview'],env=dict(os.environ,SIMCTL_CHILD_PACK_FIXTURES='1'),check=True,timeout=120)
     container=Path(run(['xcrun','simctl','get_app_container',uid,'com.arjunkl.bcdtouch.preview','data']))/'Documents'
     for _ in range(45):
-        if len(list(container.glob('*.png')))==59 and (container/'tenebris-tap-interaction-regression.txt').exists() and (container/'client-phase-1.txt').exists():break
+        if len(list(container.glob('*.png')))==65 and (container/'touch-feedback-dispatch.txt').exists() and (container/'tenebris-tap-interaction-regression.txt').exists() and (container/'client-phase-1.txt').exists() and (container/'queen-legacy-phase-1.txt').exists():break
         time.sleep(1)
     for p in container.glob('client-*.txt'):shutil.copyfile(p,out/p.name)
     for p in container.glob('*routing*.txt'):shutil.copyfile(p,out/p.name)
@@ -59,15 +88,20 @@ with tempfile.TemporaryDirectory(prefix='touch-preview-') as tmp:
         for p in sorted(reports.glob('TouchPreview*.ips'),key=lambda p:p.stat().st_mtime)[-2:]:
             if p.stat().st_size<=2*1024*1024:shutil.copyfile(p,out/p.name)
     assert (container/'client-phase-1.txt').exists(),'Production Swift store client fixture did not finish'
+    assert (container/'touch-feedback-dispatch.txt').read_text().startswith('PASS:'),'Touch feedback dispatch fixture did not finish'
+    shutil.copyfile(container/'touch-feedback-dispatch.txt',out/'touch-feedback-dispatch.txt')
     assert (container/'approved-default-store-routing.txt').read_text().startswith('PASS:'),'Approved-default production store regression did not finish'
+    assert (container/'queen-legacy-phase-1.txt').read_text().startswith('PASS:'),'Queen legacy migration/dispatch/glyph fixture did not finish'
     subprocess.run(['xcrun','simctl','launch','--terminate-running-process',uid,'com.arjunkl.bcdtouch.preview'],env=dict(os.environ,SIMCTL_CHILD_PACK_FIXTURES='1',SIMCTL_CHILD_PACK_CLIENT_RESUME='1'),check=True,timeout=120)
     for _ in range(30):
-        if (container/'client-phase-2.txt').exists():break
+        if (container/'client-phase-2.txt').exists() and (container/'queen-legacy-phase-2.txt').exists():break
         time.sleep(1)
     for evidence in container.glob('client-*.txt'):shutil.copyfile(evidence,out/evidence.name)
     if (container/'client-error.txt').exists():print((container/'client-error.txt').read_text()[:2000],flush=True)
     assert (container/'client-phase-2.txt').exists(),'Production Swift store restart fixture did not finish'
-    images=list(container.glob('*.png'));assert len(images)==59 and len(list(container.glob('template-*.png')))==20,'Renderer/editor/template/placement/owner fixture export did not complete'
+    assert (container/'queen-legacy-phase-2.txt').read_text().startswith('PASS:'),'Queen migrated edit did not survive process restart'
+    for p in container.glob('queen-legacy-phase-*.txt'):shutil.copyfile(p,out/p.name)
+    images=list(container.glob('*.png'));assert len(images)==65 and len(list(container.glob('template-*.png')))==20,'Renderer/editor/template/placement/owner fixture export did not complete'
     for p in images:shutil.copyfile(p,out/p.name)
     for p in container.glob('*-swift-identity.txt'):shutil.copyfile(p,out/p.name)
     for p in container.glob('*-context-visibility.txt'):shutil.copyfile(p,out/p.name)

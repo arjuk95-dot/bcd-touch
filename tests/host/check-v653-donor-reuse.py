@@ -102,6 +102,50 @@ class DonorTests(unittest.TestCase):
         (app / 'gl/payload.bin').write_bytes(b'changed')
         with self.assertRaisesRegex(ValueError, 'changed'): m.verify(out)
 
+    def migrated_compiled(self):
+        p = self.prepared(); c = self.compiled(p)
+        info = plistlib.loads((c / 'Info.plist').read_bytes())
+        info['MadeiraRepo'] = 'arjuks-9/bcd-touch'
+        (c / 'Info.plist').write_bytes(plistlib.dumps(info))
+        return p, c
+
+    def test_migrated_app_identity_preserves_original_donor(self):
+        p, c = self.migrated_compiled(); out = self.base / 'migrated'
+        r = m.assemble(p, c, out, '4' * 40, 'arjuks-9/bcd-touch')
+        self.assertEqual(r['app_repository'], 'arjuks-9/bcd-touch')
+        self.assertEqual(r['donor']['repository'], 'arjuk95-dot/bcd-touch')
+        self.assertTrue(r['runtime_byte_identical_before_signing'])
+        self.assertEqual(plistlib.loads((out / 'Payload/Madeira.app/Info.plist').read_bytes())['MadeiraRepo'], r['app_repository'])
+        self.assertTrue(m.verify(out)['pre_signing_payload_verified'])
+
+    def test_migrated_app_requires_explicit_expected_repository(self):
+        p, c = self.migrated_compiled()
+        with self.assertRaisesRegex(ValueError, 'source metadata'):
+            m.assemble(p, c, self.base / 'out', '4' * 40)
+
+    def test_migrated_app_rejects_different_repository_or_source(self):
+        p, c = self.migrated_compiled()
+        for source, repository in [('4' * 40, 'arjuks-9/different'),
+                                   ('5' * 40, 'arjuks-9/bcd-touch')]:
+            with self.subTest(source=source, repository=repository):
+                with self.assertRaisesRegex(ValueError, 'repository|source metadata'):
+                    m.assemble(p, c, self.base / 'out', source, repository)
+
+    def test_migrated_app_rejects_unapproved_owner(self):
+        p, c = self.migrated_compiled()
+        for repository in ['other/bcd', 'arjuks-90/bcd', 'arjuks-9/../bcd', 'arjuks-9/bcd/extra']:
+            with self.subTest(repository=repository):
+                with self.assertRaisesRegex(ValueError, 'Unapproved'):
+                    m.assemble(p, c, self.base / 'out', '4' * 40, repository)
+
+    def test_migration_does_not_authorize_donor_provenance_change(self):
+        p, c = self.migrated_compiled()
+        receipt = json.loads((p / 'donor-manifest.json').read_text())
+        receipt['provenance']['repository'] = 'arjuks-9/bcd-touch'
+        (p / 'donor-manifest.json').write_text(json.dumps(receipt))
+        with self.assertRaisesRegex(ValueError, 'Donor provenance'):
+            m.assemble(p, c, self.base / 'out', '4' * 40, 'arjuks-9/bcd-touch')
+
     def test_wrong_artifact_hash(self):
         self.artifact.write_bytes(self.artifact.read_bytes() + b'changed')
         with self.assertRaisesRegex(ValueError, 'ZIP hash'): self.prepared()

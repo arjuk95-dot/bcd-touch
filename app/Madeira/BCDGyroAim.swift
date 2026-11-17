@@ -52,9 +52,11 @@ struct BCDGyroSettings: Equatable {
 
     var isOn: Bool { target != .off }
 
-    static let sensitivityChoices: [Double] = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4]
+    // Shared by the in-game and per-game menus: expose the entire supported range.
+    // Existing stored values/defaults are unchanged; higher gain is an explicit choice.
+    static let sensitivityChoices: [Double] = [0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8, 12, 16, 24, 32]
     static let deadzoneChoices: [Double] = [0, 0.25, 0.5, 1, 2, 4]
-    static let sensitivityRange = 0.1...8.0, deadzoneRange = 0.0...10.0
+    static let sensitivityRange = 0.1...32.0, deadzoneRange = 0.0...10.0
 
     /// The game's lines. `gyro-aim`: mouse or stick (anything else: off). `gyro-sens`, `gyro-deadzone`: numbers, kept in
     /// range. `gyro-invert`: x, y or xy. `gyro-turn`: screen. `gyro-hold`: an input of BCDGyroHold, else always.

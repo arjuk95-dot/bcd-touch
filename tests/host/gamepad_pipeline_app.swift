@@ -7,6 +7,9 @@ import UIKit
         try! FileManager.default.createDirectory(at:startupFolder,withIntermediateDirectories:true)
         try? Data("applicationState=\(UIApplication.shared.applicationState.rawValue)".utf8).write(to:startupFolder.appendingPathComponent("startup-state.txt"))
         guard UIApplication.shared.applicationState == .active else { DispatchQueue.main.asyncAfter(deadline:.now()+0.1){run()};return }
+        if ProcessInfo.processInfo.environment["SULFUR_BUTTON_FIXTURE"] == "1" {
+            Task { @MainActor in await runSulfurButtons() };return
+        }
         if let selected=ProcessInfo.processInfo.environment["RESERVATION_FIXTURE"],let index=Int(selected) {
             let cases=[(false,false,true,0),(false,true,true,1),(true,false,true,1),(false,true,false,0),(true,false,false,0),(true,true,true,0)]
             let (force,game,touch,expected)=cases[index]
@@ -64,5 +67,25 @@ import UIKit
                 }
             }
         }
+    }
+    @MainActor func runSulfurButtons() async {
+        let pad=GamepadInput.shared,owner=UUID()
+        BCDGyroLive.padNeeded=false;pad.start()
+        try? await Task.sleep(nanoseconds:400_000_000)
+        pad.configurePack(enabled:true,accepting:true,calibration:.init())
+        var receipt:[String]=[]
+        for output in ["RT","X","A","Menu","View","Y","LT","LB","B","R3","L3","LS"] {
+            let expected=TouchPadAction.sample(output,x:output == "LS" ? 0.7:0)
+            pad.packTouch(owner:owner,value:expected)
+            try? await Task.sleep(nanoseconds:50_000_000)
+            let state=PipelineSpy.read().0
+            assert(state.connected==1 && state.buttons==expected.buttons && state.left_trigger==expected.lt && state.right_trigger==expected.rt && state.lx==expected.lx,"SULFUR native output did not reach slot0: \(output)")
+            receipt.append("\(output): buttons=\(state.buttons) lt=\(state.left_trigger) rt=\(state.right_trigger) lx=\(state.lx)")
+            pad.packTouch(owner:owner,value:nil);try? await Task.sleep(nanoseconds:50_000_000)
+            let neutral=PipelineSpy.read().0
+            assert(neutral.connected==1 && neutral.buttons==0 && neutral.left_trigger==0 && neutral.right_trigger==0 && neutral.lx==0)
+        }
+        let file=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0].appendingPathComponent("sulfur-native-dispatch.txt")
+        try! Data(("PASS: production GamepadInput serial publisher down/up at slot0; engine spy, no Wine guest or phone.\n"+receipt.joined(separator:"\n")).utf8).write(to:file)
     }
 }

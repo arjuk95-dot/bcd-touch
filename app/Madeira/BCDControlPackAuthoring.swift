@@ -3,7 +3,37 @@
 import Foundation
 
 enum BCDPackCatalog {
-    static let customIconNames: Set<String> = ["bcd.sword", "bcd.interact", "bcd.inventory", "bcd.run", "bcd.wand", "bcd.boot"]
+    static let glyphPaths: [String: [[[Double]]]] = [
+        "bcd.fire": [[[24,5],[24,14]],[[24,34],[24,43]],[[5,24],[14,24]],[[34,24],[43,24]],[[13,13],[35,13],[35,35],[13,35],[13,13]],[[21,24],[27,24]],[[24,21],[24,27]]],
+        "bcd.blade": [[[12,32],[34,6],[41,6],[41,13],[18,38],[12,32]],[[7,27],[24,43]],[[13,35],[6,42]]],
+        "bcd.use": [[[13,26],[9,22],[5,26],[14,40],[32,40],[39,29],[39,21],[35,18],[32,21],[32,12],[28,9],[25,12],[25,23],[25,7],[21,4],[18,7],[18,25],[18,11],[14,8],[11,11],[11,25]]],
+        "bcd.pack": [[[15,14],[15,8],[33,8],[33,14]],[[10,15],[38,15],[40,40],[8,40],[10,15]],[[16,27],[32,27],[32,35],[16,35],[16,27]],[[15,19],[15,23]],[[33,19],[33,23]]],
+        "bcd.pause": [[[15,9],[15,39]],[[33,9],[33,39]]],
+        "bcd.jump": [[[27,5],[32,5],[35,9],[32,13],[27,13],[24,9],[27,5]],[[26,16],[20,27],[12,40]],[[20,27],[31,32],[38,42]],[[26,16],[16,18],[10,13]],[[26,16],[35,20],[41,14]]],
+        "bcd.journal": [[[24,12],[16,8],[6,8],[6,36],[16,36],[24,40],[32,36],[42,36],[42,8],[32,8],[24,12],[24,40]],[[11,16],[18,16]],[[11,23],[18,23]],[[30,16],[37,16]],[[30,23],[37,23]]],
+        "bcd.more": [[[9,9],[18,9],[18,18],[9,18],[9,9]],[[30,9],[39,9],[39,18],[30,18],[30,9]],[[9,30],[18,30],[18,39],[9,39],[9,30]],[[30,30],[39,30],[39,39],[30,39],[30,30]]],
+        "bcd.back": [[[21,10],[7,24],[21,38]],[[7,24],[33,24],[40,31]]],
+        "bcd.confirm": [[[8,25],[19,36],[40,12]]],
+        "bcd.up": [[[10,22],[24,8],[38,22]],[[24,8],[24,40]]],
+        "bcd.down": [[[10,26],[24,40],[38,26]],[[24,8],[24,40]]],
+        "bcd.left": [[[24,10],[10,24],[24,38]],[[10,24],[40,24]]],
+        "bcd.right": [[[24,10],[38,24],[24,38]],[[8,24],[38,24]]]
+    ]
+    static let inscryptionArrowNames:Set<String> = ["bcd.inscryption.up","bcd.inscryption.down","bcd.inscryption.left","bcd.inscryption.right"]
+    /// Presentation-only upgrade; custom icons, bindings and layout geometry win.
+    static func inscryptionArrowIcon(action:String,icon:String)->String {
+        let direction=["forward":"up","back":"down","left":"left","right":"right"][action]
+        guard let direction,icon == "bcd."+direction else{return icon}
+        return "bcd.inscryption."+direction
+    }
+    static let customIconNames: Set<String> = Set(["bcd.sword", "bcd.interact", "bcd.inventory", "bcd.run", "bcd.wand", "bcd.boot"]).union(glyphPaths.keys).union(inscryptionArrowNames)
+    static func glyphPresentation(_ original:BCDControlPack, icons:[String:String]) -> BCDControlPack {
+        var pack=original
+        for i in pack.actions.indices {if let icon=icons[pack.actions[i].id] {pack.actions[i].icon=icon}}
+        for i in pack.phone.controls.indices {pack.phone.controls[i].showLabel=false}
+        for i in pack.pad.controls.indices {pack.pad.controls[i].showLabel=false}
+        return pack
+    }
     struct Icon: Identifiable { var id: String; var label: String }
     static let icons: [Icon] = [
         ("bcd.sword", "Sword outline"), ("bcd.interact", "Interact outline"), ("bcd.inventory", "Inventory outline"), ("bcd.run", "Run outline"),
@@ -19,7 +49,7 @@ enum BCDPackCatalog {
         ("airplane", "Flight"), ("gearshape", "Settings"), ("person.2", "Companion"), ("flag", "Objective"),
         ("magnifyingglass", "Search"), ("cursorarrow", "Pointer"), ("keyboard", "Keyboard"),
         ("a.circle", "A"), ("b.circle", "B"), ("x.circle", "X"), ("y.circle", "Y")
-    ].map { Icon(id: $0.0, label: $0.1) }
+    ].map { Icon(id: $0.0, label: $0.1) } + glyphPaths.keys.sorted().map {Icon(id:$0,label:$0.replacingOccurrences(of:"bcd.",with:"").capitalized+" glyph")}
     static let genres: [(String, String)] = [
         ("first-person", "First-person / shooter"), ("third-person", "Third-person / action RPG"),
         ("side-scroller", "Platformer / side-scroller"), ("racing", "Driving / racing"),
@@ -75,6 +105,27 @@ import UIKit
             let format = UIGraphicsImageRendererFormat(); format.scale = 3
             image = UIGraphicsImageRenderer(size: CGSize(width:48,height:48),format:format).image { context in
                 let c = context.cgContext
+                if BCDPackCatalog.inscryptionArrowNames.contains(name) {
+                    // Thin, hand-drawn curved arrows; no borrowed game artwork.
+                    c.translateBy(x:24,y:24)
+                    let angle:CGFloat = name.hasSuffix(".down") ? .pi : (name.hasSuffix(".left") ? -.pi/2 : (name.hasSuffix(".right") ? .pi/2 : 0))
+                    c.rotate(by:angle);c.translateBy(x:-24,y:-24)
+                    c.setStrokeColor(UIColor.white.cgColor);c.setLineWidth(1.7);c.setLineCap(.round);c.setLineJoin(.round)
+                    c.move(to:CGPoint(x:23,y:41));c.addCurve(to:CGPoint(x:24,y:8),control1:CGPoint(x:30,y:30),control2:CGPoint(x:17,y:20))
+                    c.move(to:CGPoint(x:12,y:21));c.addCurve(to:CGPoint(x:24,y:8),control1:CGPoint(x:15,y:20),control2:CGPoint(x:19,y:10))
+                    c.addCurve(to:CGPoint(x:37,y:20),control1:CGPoint(x:28,y:10),control2:CGPoint(x:31,y:18));c.strokePath();return
+                }
+                if let paths=BCDPackCatalog.glyphPaths[name] {
+                    c.setStrokeColor(UIColor.white.cgColor);c.setLineWidth(name == "bcd.pause" ? 5:3)
+                    c.setLineCap(.round);c.setLineJoin(.round)
+                    for path in paths {
+                        guard let first=path.first else{continue}
+                        c.beginPath();c.move(to:CGPoint(x:first[0],y:first[1]))
+                        for point in path.dropFirst(){c.addLine(to:CGPoint(x:point[0],y:point[1]))}
+                        c.strokePath()
+                    }
+                    return
+                }
                 let box: CGRect
                 switch name {
                 case "bcd.sword": box=CGRect(x:5,y:6,width:36,height:38)
@@ -130,6 +181,16 @@ import UIKit
 #endif
 
 enum BCDPackAuthoring {
+    /// Size changes preserve bindings, placement and the player's visible/hit-radius ratio.
+    static func resizedControl(_ original: BCDControlPack.Control, scale: Double) -> BCDControlPack.Control? {
+        guard scale.isFinite, scale > 0, original.radius.isFinite, original.radius > 0,
+              original.hitRadius.isFinite else { return nil }
+        var c=original
+        c.radius=min(0.2,max(0.035,original.radius*scale))
+        c.hitRadius=c.radius*min(1.15,max(1,original.hitRadius/original.radius))
+        return c
+    }
+
     /// Templates expose real outputs with honest raw labels, never guessed gameplay meanings.
     static func preset(identity: BCDControlPack.Identity, title: String, genre: String, mode: String) -> BCDControlPack {
         let controller = mode == "controller"
@@ -294,6 +355,13 @@ enum BCDPackAuthoring {
                 let byID = Dictionary(uniqueKeysWithValues: layout.controls.map { ($0.id, $0) })
                 let personalIDs = Set(edited.controls.map(\.id))
                 layout.controls = edited.controls.compactMap { byID[$0.id] } + layout.controls.filter { !personalIDs.contains($0.id) }
+            }
+            if base.id == "sulfur-minimal-controller-v6",let old,
+               edited.controls.contains(where:{$0.action == "jump" && $0.role == "button"}) {
+                // A personal Jump already supplies this new default affordance.
+                // Keep its ID, geometry and binding instead of duplicating it.
+                let personalIDs=Set(edited.controls.map(\.id)),oldIDs=Set(old.controls.map(\.id))
+                layout.controls.removeAll{$0.action == "jump" && !personalIDs.contains($0.id) && !oldIDs.contains($0.id)}
             }
             if pad { p.pad = layout } else { p.phone = layout }
         }

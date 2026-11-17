@@ -1,0 +1,97 @@
+diff --git a/app/Madeira/ContentView.swift b/app/Madeira/ContentView.swift
+index 51f0b66d..5769b975 100644
+--- a/app/Madeira/ContentView.swift
++++ b/app/Madeira/ContentView.swift
+@@ -3122,6 +3122,19 @@ struct TouchControlsOverlay: View {
+             .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
+             .contentShape(Rectangle())
+             .gesture(scalePinch, including: m.editing ? .all : .subviews)
++            // Overlay only: leave control geometry, HUD placement and hit regions unchanged.
++            .overlay(alignment: .top) {
++                if session {
++                    Text(BuildStamp.diagnosticLabel)
++                        .font(.system(size: 9, weight: .medium, design: .monospaced))
++                        .foregroundStyle(.white.opacity(0.8))
++                        .padding(.horizontal, 5).padding(.vertical, 2)
++                        .background(Color.black.opacity(0.45), in: Capsule())
++                        .padding(.top, geo.safeAreaInsets.top + 2)
++                        .allowsHitTesting(false)
++                        .accessibilityLabel("Diagnostic build " + BuildStamp.diagnosticLabel)
++                }
++            }
+             .onAppear { applyDefaultLayout(geo); configureGamepad(landscape: landscape) }
+             .onChange(of: geo.size) { _, _ in applyDefaultLayout(geo); configureGamepad(landscape: landscape) }
+             .onChange(of: m.controls) { _, _ in configureGamepad(landscape: landscape) }
+diff --git a/app/Madeira/Library.swift b/app/Madeira/Library.swift
+index 570d0b1c..ee032851 100644
+--- a/app/Madeira/Library.swift
++++ b/app/Madeira/Library.swift
+@@ -78,6 +78,13 @@ enum DeviceLoadDiagnostics {
+ /// `MadeiraBuild` into Info.plist (a round tag and build time) shows that; other
+ /// builds show the bundle version.
+ enum BuildStamp {
++    /// Installed bundle identity, not a retained donor's optional round tag.
++    static let diagnosticLabel: String = {
++        let info = Bundle.main.infoDictionary ?? [:]
++        let version = info["CFBundleShortVersionString"] as? String ?? "?"
++        let build = info["CFBundleVersion"] as? String ?? "?"
++        return "BCD v\(version) / b\(build)"
++    }()
+     static let text: String = {
+         let info = Bundle.main.infoDictionary ?? [:]
+         if let stamp = info["MadeiraBuild"] as? String, !stamp.isEmpty { return stamp }
+@@ -709,6 +716,12 @@ struct LibraryEntry: Codable, Identifiable {
+         // madeira-bcd (round 602): DXMT's Direct3D 9 is a 64-bit Direct3D 9 game's default when its folder shows nothing of Direct3D 11, DXGI or
+         // Direct3D 12 (BCDGraphicsDefaults.swift); the game's own env.MADEIRA_D3D9_X64 line, read just above, always wins.
+         BCDGraphicsDefaults.applyD3D9X64(for: self)
++        // Diagnostic candidate only; never persist or inherit this choice across games.
++        let queenNavCandidate = Bundle.main.object(forInfoDictionaryKey: "BCDQueenNativeNav") as? Bool == true
++        let queenExecutable = (launchRelativePath.replacingOccurrences(of: "\\", with: "/") as NSString).lastPathComponent.lowercased()
++        let useQueenNav = queenNavCandidate && queenExecutable == "queensdomain-win64-shipping.exe"
++        if useQueenNav { setenv("BCD_QUEEN_NATIVE_NAV", "1", 1) }
++        else { unsetenv("BCD_QUEEN_NATIVE_NAV") }
+         BCDGameSetup.prepare(self)   // madeira-bcd (round 604): the game's Windows version, Wine desktop settings and fixes, before the wineserver exists (BCDGameSetup/BCDGameSetupLaunch.swift)
+         fputs("[frontend] launch profile applied\n", stderr)
+         if usesLaunchOptions {
+diff --git a/app/Madeira/WineProcessBridge.m b/app/Madeira/WineProcessBridge.m
+index cd22a97b..e0c22073 100644
+--- a/app/Madeira/WineProcessBridge.m
++++ b/app/Madeira/WineProcessBridge.m
+@@ -2639,6 +2639,27 @@ static void *wine_process_thread(void *arg) {
+                 }
+             }
+ 
++            /* Queen-only diagnostic module; keep the stock and AVX DLLs untouched.
++             * The normal DLL farms are rebuilt above each session. No other game
++             * inherits this override, and missing candidate falls back to stock. */
++            {
++                const char *queenNav = getenv("BCD_QUEEN_NATIVE_NAV");
++                if (use_arm64ec && queenNav && !strcmp(queenNav, "1")) {
++                    NSString *candidate = [[bundlePath stringByAppendingPathComponent:@"arm64ec-windows"]
++                                           stringByAppendingPathComponent:@"xtajit64-queen-nav.dll"];
++                    if ([fm fileExistsAtPath:candidate]) {
++                        for (NSString *dir in @[ sys32Dir, [prefix stringByAppendingPathComponent:@"drive_c/windows/sysx64"] ]) {
++                            NSString *dst = [dir stringByAppendingPathComponent:@"xtajit64.dll"];
++                            [fm removeItemAtPath:dst error:nil];
++                            [fm createSymbolicLinkAtPath:dst withDestinationPath:candidate error:nil];
++                        }
++                        dprintf(STDERR_FILENO, "[queen-nav] native navigation candidate selected for this session\n");
++                    } else {
++                        dprintf(STDERR_FILENO, "[queen-nav] candidate absent; existing emulator unchanged\n");
++                    }
++                }
++            }
++
+             /* madeira-bcd: env.MADEIRA_DXGI_SRC = 1 (the game's own file) runs the
+              * 64-bit dxgi.dll built from the dxmt submodule source
+              * (tools/build-dxgi-dll.sh ships it as dxgi-src.dll): upstream's committed
+@@ -3585,6 +3606,7 @@ static void wine_session_end(void)
+     /* madeira-bcd: Horizon Zero Dawn's per-game switches must not reach a later game
+      * of this app run (GTA V Enhanced runs without them). */
+     unsetenv("MADEIRA_UCRT_X64_MATH"); unsetenv("MADEIRA_SRV_FGETPATH");
++    unsetenv("BCD_QUEEN_NATIVE_NAV");
+     unsetenv("MADEIRA_NTDLL_SYNC");   /* madeira-bcd: a game's switch is its own */
+     unsetenv("MADEIRA_ANON_LDADDAL32"); /* build 608: opt-in belongs only to the game that enabled it */
+     unsetenv("MADEIRA_REAL_SUSPEND");   /* a game's switch is its own: the server reads it per session now (mach_ios.c ios_real_suspend_enabled), so a later game must not inherit it */
+
+

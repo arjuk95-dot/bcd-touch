@@ -548,7 +548,13 @@ struct BCDSessionLiveLayer: View {
         // The touch controls (on or off, layout, opacity, size, the editor): BCD's touch section
         // (BCDTouchMenuSectionLive, ui-touch), drawn into the menu (BCDSessionMenuModel.custom).
         var out = [BCDMenuSection(id: "touch", rows: [BCDMenuRow(id: "touch", title: "Touch controls", kind: .custom("touch"))])]
+        if BCDPackStore.shared.enabled, BCDPackStore.shared.pack != nil {
+            out.insert(BCDMenuSection(id:"touch.pack",rows:[BCDMenuRow(id:"touch.pack.edit",title:"Move / resize game controls",symbol:"slider.horizontal.3",kind:.action())]),at:0)
+        }
 
+        if let entry=model.activeEntry {
+            out.insert(BCDMenuSection(id:"touch.cursor",rows:[BCDMenuRow(id:"touch.cursor.hide",title:"Hide BCD touch cursor",symbol:"cursorarrow",kind:.toggle(HardwareInput.shared.touchCursorHidden(for:entry.windowsPath)))]),at:0)
+        }
         var controller: [BCDMenuRow] = []
         if GamepadInput.keyboardMouseAvailable {
             let mode = model.controllerMode ?? ""
@@ -675,6 +681,9 @@ struct BCDSessionLiveLayer: View {
         if BCDInputMenu.handles(row), BCDInputMenuLive.act(row) { menu?.changed(); return }   // madeira-bcd (2026-10-25, round 604): choosing a controller for a player
         switch row {
         case "resume": close()
+        case "touch.pack.edit": close();BCDPackStore.shared.beginEditingControls()
+        case "touch.cursor.hide":
+            if let entry=model.activeEntry {HardwareInput.shared.setTouchCursorHidden(!HardwareInput.shared.touchCursorHidden(for:entry.windowsPath),for:entry.windowsPath);menu?.changed()}
         case "desktop.home": model.showDesktopHome()
         case "keyboard":
             model.menu = false

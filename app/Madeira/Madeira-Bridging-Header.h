@@ -123,3 +123,4 @@ int madeira_d3d12_canary_run_log(const char *fixture_dir, const char *dylib_path
 #include "BCDTableNativeUtilities.h"
 
 #include "BCDChroniclesMovementPolicy.h"
+#include "BCDInscryptionSwipePolicy.h"

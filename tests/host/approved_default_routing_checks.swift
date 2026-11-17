@@ -1,16 +1,36 @@
 import Foundation
+#if canImport(Darwin)
+import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#endif
 @main struct ApprovedDefaultChecks {
     static func main() throws {
         func identity(_ exe:String)->BCDControlPack.Identity {.init(executable:exe,storeID:"local",edition:"installed",build:"fixture",bindingDigest:"fixture")}
         let config="[varcom]\nM=32\nN=0\nO=5\nP=1\nQ=2\nR=3\nT=6\nU=7\n"
         let bindings=[BCDChroniclesPack.configPath:config]
+        let wgi="MADEIRA_WGI_HOST_PADS"
+        func currentWGI()->String? {getenv(wgi).map{String(cString:$0)}}
+        let originalWGI=currentWGI()
+        defer {if let originalWGI {setenv(wgi,originalWGI,1)} else {unsetenv(wgi)}}
+        // Exercise production route/factory code for two consecutive titles;
+        // ContentView's separate source contract forbids a late global mutation.
+        let inheritedChoices:[String?]=[nil,"0","1"]
+        for explicit in inheritedChoices {
+            if let explicit {setenv(wgi,explicit,1)} else {unsetenv(wgi)}
+            let sulfur=BCDApprovedDefaultRouting.choose(identity("Sulfur.exe"),bindings:[:],local:nil,cached:nil,customized:false)
+            assert(sulfur.pack?.id == "sulfur-minimal-controller-v6" && currentWGI() == explicit)
+            let next=BCDApprovedDefaultRouting.choose(identity("QueensDomain.exe"),bindings:[:],local:nil,cached:nil,customized:false)
+            assert(next.pack?.id == "queens-domain-v6" && currentWGI() == explicit,"Sulfur -> another title must leave the inherited WGI setting unchanged, including explicit zero")
+        }
         let games=["QueensDomain.exe","SULFUR.exe","Dread Delusion.exe","Cotw.exe","TenebrisSomnia.exe","SKALD Against the Black Priory.exe","SlayTheSpire2.exe","Inscryption.exe"]
         for exe in games {
             let i=identity(exe)
             var old=BCDQueensDomainPack.make(identity:i);old.id="obsolete-generated-default"
             let route=BCDApprovedDefaultRouting.choose(i,bindings:bindings,local:nil,cached:old,customized:false)
-            if ["SKALD Against the Black Priory.exe","SlayTheSpire2.exe","Inscryption.exe"].contains(exe) {
-                assert(route.pack == nil && !route.table.isEmpty,"Table default must beat old cache")
+            if exe == "SlayTheSpire2.exe" {
+                assert(route.pack?.id == "spire2-touch-v6" && route.table.isEmpty,"Editable direct-touch default must beat old cache")
+                try route.pack!.validate(for:i,placement:.personal)
             } else {
                 assert(route.pack != nil && route.pack!.id != old.id,"Reviewed pack must beat old generated cache: \(exe)")
                 try route.pack!.validate(for:i,placement:.personal)
@@ -35,6 +55,42 @@ import Foundation
             assert(BCDApprovedDefaultRouting.tableKind(dock)==kind)
         }
         dock.storeID="steam:1";assert(!BCDChroniclesPack.matches(dock) && BCDApprovedDefaultRouting.tableKind(dock).isEmpty)
+        dock.storeID="steam:1799840"
+        assert(BCDQueensDomainPack.matches(dock))
+        assert(BCDApprovedDefaultRouting.choose(dock,bindings:[:],local:nil,cached:nil,customized:false).pack?.id == "queens-domain-v6")
+        dock.storeID="steam:1";dock.executable="QueensDomain.exe"
+        assert(!BCDQueensDomainPack.matches(dock),"A different Steam ID must not borrow Queen's bindings")
+        let queenID=identity("QueensDomain.exe")
+        let previous=BCDQueensDomainPack.make(identity:queenID,glyphs:false)
+        let upgraded=BCDApprovedDefaultRouting.choose(queenID,bindings:[:],local:previous,cached:nil,customized:false).pack!
+        assert(upgraded.phone.controls.allSatisfy{$0.showLabel == false})
+        var moved=previous;moved.phone.controls[2].x=0.63
+        assert(BCDApprovedDefaultRouting.choose(queenID,bindings:[:],local:moved,cached:nil,customized:false).pack == moved)
+        var provenance=previous;provenance.unresolved=["updated diagnostic"]
+        assert(!BCDApprovedDefaultRouting.hasPersonalChanges(provenance,baseline:previous))
+        assert(BCDApprovedDefaultRouting.hasPersonalChanges(moved,baseline:previous))
+        assert(BCDApprovedDefaultRouting.choose(queenID,bindings:[:],local:previous,cached:nil,customized:true,mergeable:false).pack == previous,"Unknown legacy edit provenance must block default migration")
+        assert(BCDApprovedDefaultRouting.choose(queenID,bindings:[:],local:nil,cached:previous,customized:true,mergeable:true).pack == upgraded)
+        let merged=try BCDPackAuthoring.merge(base:upgraded,personal:moved,baseline:previous)
+        assert(merged.phone.controls[2].x == moved.phone.controls[2].x && merged.phone.controls[2].showLabel == false)
+        let reloaded=try BCDControlPack.decode(JSONEncoder().encode(merged),for:queenID,placement:.personal)
+        assert(reloaded == merged)
+        for kind in ["inscryption","skald","spire2"] {
+            let base=BCDTablePack.make(identity("fixture-\(kind).exe"),kind:kind)!
+            try base.validate()
+            assert(base.contexts == ["onFoot"])
+            if kind != "spire2" {assert(base.phone.controls.allSatisfy{$0.showLabel == false})}
+            var personal=base
+            personal.phone.controls[0].x=0.5;personal.phone.controls[0].y=0.55
+            personal.phone.controls[0].radius=0.09;personal.phone.controls[0].hitRadius=0.095
+            personal.phone.controls[0].showLabel=true;personal.phone.controls[0].coordinateSpace="screen"
+            personal.pad.controls[1].opacity=0.8;personal.actions[0].output=kind == "spire2" ? "X":"key:88"
+            let result=try BCDPackAuthoring.merge(base:base,personal:personal,baseline:base)
+            assert(result.phone.controls[0] == personal.phone.controls[0] && result.pad.controls[1] == personal.pad.controls[1])
+            assert(result.actions[0].output == (kind == "spire2" ? "X":"key:88"))
+            let restored=try BCDControlPack.decode(JSONEncoder().encode(result),for:base.identity,placement:.personal)
+            assert(restored == result,"Customized table controls must survive encode/reload")
+        }
         let drive=FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at:drive,withIntermediateDirectories:true)
         defer {try? FileManager.default.removeItem(at:drive)}

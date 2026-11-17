@@ -759,6 +759,26 @@ enum AutoLock {
     }
 }
 
+// BEGIN TOUCH CURSOR VISIBILITY (Foundation-only policy and preference tests)
+/// A presentation preference only. It never changes the guest's cursor state,
+/// pointer position, routing or automatic lock. Game-rendered sprites are not
+/// part of BCD's cursor overlay and cannot be hidden here.
+enum BCDTouchCursorVisibility {
+    private static func key(_ windowsPath: String) -> String { "BCDTouchCursorHidden." + windowsPath }
+    static func hidden(for windowsPath: String, defaults: UserDefaults = .standard) -> Bool {
+        guard !windowsPath.isEmpty else { return false }
+        return defaults.object(forKey: key(windowsPath)) as? Bool ?? false
+    }
+    static func setHidden(_ hidden: Bool, for windowsPath: String, defaults: UserDefaults = .standard) {
+        guard !windowsPath.isEmpty else { return }
+        defaults.set(hidden, forKey: key(windowsPath))
+    }
+    static func suppress(hidden: Bool, touchActive: Bool, hardwareMouseConnected: Bool, desktop: Bool) -> Bool {
+        hidden && touchActive && !hardwareMouseConnected && !desktop
+    }
+}
+// END TOUCH CURSOR VISIBILITY
+
 // MARK: - Device glue
 
 final class HardwareInput: ObservableObject {
@@ -2051,11 +2071,25 @@ final class HardwareInput: ObservableObject {
     /// The program's cursor, drawn where Wine's is: where the last absolute
     /// move put it, clamped as the wineserver clamps it to the program's clip
     /// rectangle (madeira-bcd), or where the driver reported it.
+    /// Called after an explicit per-game visibility choice. Rendering only:
+    /// no mouse event, focus change or mutation of the reported guest cursor.
+    func touchCursorHidden(for windowsPath: String) -> Bool {
+        BCDTouchCursorVisibility.hidden(for: windowsPath)
+    }
+    func setTouchCursorHidden(_ hidden: Bool, for windowsPath: String) {
+        BCDTouchCursorVisibility.setHidden(hidden, for: windowsPath)
+        renderCursor()
+    }
+    func refreshTouchCursorVisibility() { renderCursor() }
+
     private func renderCursor() {
         guard directCursorLive else { return }
         let shown = cursorState.shown != 0 || (touchCursorActive && cursorState.reports == 0)
         let focused=cursorPackActive ? cursorPackFocused:mouseFocused
-        let visible = (mouseInUse || touchCursorActive) && focused && shown && (cursorPackActive || !InputSettings.shared.relative)
+        let hidden=LibraryModel.shared.activeEntry.map { BCDTouchCursorVisibility.hidden(for: $0.windowsPath) } ?? false
+        let suppress=BCDTouchCursorVisibility.suppress(hidden:hidden,touchActive:touchCursorActive || cursorPackActive,
+            hardwareMouseConnected:mouseConnected,desktop:Self.desktopMode)
+        let visible = !suppress && (mouseInUse || touchCursorActive) && focused && shown && (cursorPackActive || !InputSettings.shared.relative)
         var pos = (x: cursorState.x, y: cursorState.y)
         if let last = lastAbsolute {
             // madeira-bcd (build 646, [ptr-map]): lastAbsolute is in the picture's space; Wine clips in screen pixels. Unchanged

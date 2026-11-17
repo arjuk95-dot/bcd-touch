@@ -63,4 +63,11 @@ with tempfile.TemporaryDirectory(prefix='touch-pipeline-') as tmp:
         time.sleep(1)
     assert data.exists(),'Production pipeline fixture did not pass; inspect simulator crash logs'
     receipt=data.read_text();print(receipt,flush=True);(out/'pipeline-receipt.txt').write_text(receipt)
+    subprocess.run(['xcrun','simctl','launch','--terminate-running-process',uid,'com.arjunkl.bcdtouch.pipeline'],env=dict(os.environ,SIMCTL_CHILD_SULFUR_BUTTON_FIXTURE='1'),check=True,timeout=120)
+    data=folder/'sulfur-native-dispatch.txt'
+    for _ in range(30):
+        if data.exists():break
+        time.sleep(1)
+    assert data.exists(),'SULFUR native dispatch fixture did not finish'
+    (out/data.name).write_bytes(data.read_bytes())
     subprocess.run(['xcrun','simctl','shutdown',uid],check=True,timeout=30)

@@ -14,10 +14,23 @@ import UIKit
                 }.foregroundStyle(.white).allowsHitTesting(false).padding(.top,8)
             }.ignoresSafeArea().statusBarHidden().onAppear {
                 UIDevice.current.setValue(UIInterfaceOrientation.landscapeLeft.rawValue,forKey:"orientation")
-                if ProcessInfo.processInfo.environment["PACK_FIXTURES"] == "1" {
+                if ProcessInfo.processInfo.environment["PACK_FOCUSED_PROFILES"] == "1" {
+                    Task { @MainActor in
+                        let folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
+                        do {
+                            checkControllerFallback()
+                            try await BCDSulfurTouchFixtures.run()
+                            try checkQueenExplicitSelection()
+                            try Data("PASS: targeted SULFUR combat and Queen explicit profile selection fixtures; engine boundaries stubbed.".utf8).write(to:folder.appendingPathComponent("focused-profiles.txt"))
+                        } catch {
+                            try? Data(String(describing:error).utf8).write(to:folder.appendingPathComponent("focused-profiles-error.txt"))
+                            assertionFailure("Focused profile fixture failed: \(error)")
+                        }
+                    }
+                } else if ProcessInfo.processInfo.environment["PACK_FIXTURES"] == "1" {
                     captureFixtures()
                     Task { @MainActor in
-                        do { try await checkStoreClient();try captureNoitaFixtures() }
+                        do { try await checkStoreClient();try await checkTouchFeedbackDispatch();try captureNoitaFixtures() }
                         catch {
                             let folder=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
                             try? Data(String(describing:error).utf8).write(to:folder.appendingPathComponent("client-error.txt"))
@@ -220,9 +233,10 @@ import UIKit
             ("fixture-approved/Opaque Dread",1574240,"dread-delusion-controller",""),
             ("fixture-approved/Opaque Wolf",2371890,"chronicles-reviewed-controller-v6",""),
             ("fixture-approved/TenebrisSomnia.exe",nil,"tenebris-owner-mockup-v3",""),
-            ("fixture-approved/Opaque Skald",1069160,"","skald"),
-            ("fixture-approved/Opaque Spire",2868840,"","spire2"),
-            ("fixture-approved/Opaque Cards",1092790,"","inscryption")]
+            ("fixture-approved/Opaque Skald",1069160,"skald-trackpad-v6",""),
+            ("fixture-approved/Opaque Spire",2868840,"spire2-touch-v6",""),
+            ("fixture-approved/Opaque Cards",1092790,"inscryption-walking-v6", ""),
+            ("fixture-approved/Opaque Queen",1799840,"queens-domain-v6", "")]
         for (path,steamID,packID,table) in cases {
             var entry=LibraryEntry();entry.title="Approved default fixture";entry.steamAppID=steamID
             entry.relativePath=path;entry.launchRelativePath=path
@@ -234,7 +248,7 @@ import UIKit
             let key=BCDPackStore.hash(BCDPackStore.encoded([identity.executable,identity.storeID,identity.edition]))
             UserDefaults.standard.removeObject(forKey:"TouchPackPointer."+key) // Simulate build654/missing upgrade flag.
             store.activate(nil);store.applyLaunchPreference(entry);store.prepare(entry);store.activate(entry)
-            assert(store.enabled && store.hasSurface && store.usesController == (table != "inscryption"),"Approved input route absent")
+            assert(store.enabled && store.hasSurface && store.usesController == (table == "spire2" || store.pack?.inputMode == "controller"),"Approved input route absent")
             assert(store.tableSurface==table && (table.isEmpty ? store.pack?.id==packID:store.pack==nil),"Stale cache displaced approved launch default: \(path)")
             let retainedCache=try Data(contentsOf:cache)
             assert(retainedCache==bytes,"Default selection overwrote old cache")

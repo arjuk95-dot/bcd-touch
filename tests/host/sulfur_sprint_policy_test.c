@@ -28,4 +28,23 @@ int main(void){BCDSulfurSprintState s={0};
  uint32_t r=42;for(int p=0;p<4000;p++){begin(&s);int count=0;
  for(int i=0;i<100;i++){r=r*1664525u+1013904223u;double x=((int)(r%401)-200)/100.;r=r*1664525u+1013904223u;double y=((int)(r%401)-200)/100.;int pulse=BCDSulfurSprintUpdate(&s,x,y,i*.02,1);count+=pulse;assert(count<=1);if(pulse)assert(-y>1.15&&fabs(x)<=-y*.45);}
  assert(!BCDSulfurSprintCancel(&s));}
- puts("PASS: controller sprint one-shot, dwell, cancellation, invalid input and 4000 trajectories");}
+ BCDSulfurDoubleTapState taps={0};
+ assert(!BCDSulfurDoubleTapEnd(&taps,100,100,0,.05,0,0));
+ assert(BCDSulfurDoubleTapEnd(&taps,103,101,.15,.20,3,0));
+ assert(!taps.pending); // a third tap starts a new pair, not a second toggle
+ assert(!BCDSulfurDoubleTapEnd(&taps,100,100,.3,.35,0,0));
+ assert(!BCDSulfurDoubleTapEnd(&taps,100,100,.7,.75,0,0)); // expired first tap
+ assert(!BCDSulfurDoubleTapEnd(&taps,200,200,.8,.85,0,0)); // different target
+ assert(!BCDSulfurDoubleTapEnd(&taps,200,200,.9,.95,9,0));assert(!taps.pending); // drag
+ assert(!BCDSulfurDoubleTapEnd(&taps,100,100,1,1.3,0,0));assert(!taps.pending); // hold
+ assert(!BCDSulfurDoubleTapEnd(&taps,100,100,2,2.05,0,0));
+ assert(!BCDSulfurDoubleTapEnd(&taps,100,100,2.1,2.15,0,1));assert(!taps.pending);
+ assert(!BCDSulfurDoubleTapEnd(&taps,100,100,3,3.05,0,0));
+ BCDSulfurDoubleTapCancel(&taps);assert(!BCDSulfurDoubleTapEnd(&taps,100,100,3.1,3.15,0,0));
+ assert(!BCDSulfurDoubleTapEnd(&taps,100,100,2,2.1,0,0));assert(!taps.pending); // stale timestamp
+ for(int i=0;i<3;i++){
+  assert(!BCDSulfurDoubleTapEnd(&taps,bad[i],0,4,4.1,0,0));assert(!taps.pending);
+  assert(!BCDSulfurDoubleTapEnd(&taps,0,0,4,bad[i],0,0));assert(!taps.pending);
+  assert(!BCDSulfurDoubleTapEnd(&taps,0,0,4,4.1,bad[i],0));assert(!taps.pending);
+ }
+ puts("PASS: controller sprint one-shot, dwell, cancellation, invalid input and 4000 trajectories; ADS double-tap, drag/hold/stale/cancel guards");}

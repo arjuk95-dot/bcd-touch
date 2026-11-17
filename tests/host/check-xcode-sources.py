@@ -22,7 +22,7 @@ missing = []
 for f in sorted(app.rglob("*")):
     if f.suffix not in (".swift", ".m", ".mm", ".c"):
         continue
-    rel = str(f.relative_to(app))
+    rel = f.relative_to(app).as_posix()
     if rel not in built and f.name not in built:
         missing.append(rel)
 

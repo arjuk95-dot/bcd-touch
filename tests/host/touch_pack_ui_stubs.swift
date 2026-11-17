@@ -6,18 +6,21 @@ struct LibraryEntry {
     var id = UUID(); var title = "Fixture"; var desktop: Bool?; var steamAppID: Int?
     var launchRelativePath = "fixture.exe"; var relativePath = "fixture.exe"; var steamMetadataInstall: String?; var steamProgram: String?; var controllerBinds: [String:String]?
     static let hostDrive = FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0].appendingPathComponent("fixture-drive",isDirectory:true)
-    var launchWindowsPath:String { "C:\\"+launchRelativePath }
+    var launchWindowsPath: String { "C:\\" + launchRelativePath.replacingOccurrences(of: "/", with: "\\") }
+    var windowsPath: String { "C:\\" + relativePath.replacingOccurrences(of: "/", with: "\\") }
     static func hostURL(ofWindowsPath:String) -> URL? { hostDrive.appendingPathComponent("fixture.exe") }
 }
 @MainActor final class LibraryModel: ObservableObject {
     static let shared = LibraryModel()
     @Published var blocksGameplayTouch = false
+    var activeEntry:LibraryEntry?
     var current:NSObject?
     var menu=false, launching=false, desktopHome=false
     var menuButtonRect=CGRect.zero, performanceRect=CGRect.zero
 }
 @MainActor final class GamepadInput {
     static let shared = GamepadInput()
+    static var enabled=true;static var touchEnabled=true
     static var sessionHIDKind:String?
     static var packControllerSession=false;static var packKeyboardMouseSession=false
     private var accepting=false
@@ -53,6 +56,9 @@ struct LibraryEntry {
     func setCursorPackActive(_ active:Bool) {}
     func setCursorPackFocused(_ focused:Bool) {}
     var pointerHeldByProgram=false
+    private var hiddenCursors:Set<String>=[]
+    func touchCursorHidden(for path:String)->Bool {hiddenCursors.contains(path)}
+    func setTouchCursorHidden(_ hidden:Bool,for path:String) {if hidden {hiddenCursors.insert(path)} else {hiddenCursors.remove(path)}}
     static var fixturePointer=false
     static func isPointerEvent(_ event:UIEvent?) -> Bool { fixturePointer }
 }
@@ -75,9 +81,10 @@ enum MadeiraConfig { static func gameValue(_ name:String)->String? { nil };stati
 @MainActor enum PackBoundarySpy {
     static var keyboardEvents=0;static var mouseEvents=0;static var relativeMoves=0
     static var keys:[(Int32,Int32)]=[];static var mouse:[(UInt32,UInt32)]=[]
+    static var pointer:[(Int32,Int32,UInt32,UInt32)]=[]
 }
 @MainActor func winios_post_key(_ key:Int32,_ down:Int32) { PackBoundarySpy.keyboardEvents += 1; PackBoundarySpy.keys.append((key,down)) }
-@MainActor func winios_pointer(_ x:Int32,_ y:Int32,_ flags:UInt32,_ wheel:UInt32) { PackBoundarySpy.mouseEvents += 1; PackBoundarySpy.mouse.append((flags,wheel)) }
+@MainActor func winios_pointer(_ x:Int32,_ y:Int32,_ flags:UInt32,_ wheel:UInt32) { PackBoundarySpy.mouseEvents += 1; PackBoundarySpy.mouse.append((flags,wheel));PackBoundarySpy.pointer.append((x,y,flags,wheel)) }
 
 @MainActor final class MetalHostView:UIView { static let shared=MetalHostView() }
 @MainActor func winios_screen_size(_ w:UnsafeMutablePointer<Int32>,_ h:UnsafeMutablePointer<Int32>) {w.pointee=1408;h.pointee=648}
@@ -90,3 +97,11 @@ enum BCDDuoFeatures { static let active = false }
 @MainActor final class BCDGyroLive { static let shared=BCDGyroLive(); func refresh() {} }
 // Cursor rendering boundary only; input evidence uses winios_pointer above.
 @MainActor func winios_cursor_move(_ x:Int32,_ y:Int32) {}
+
+// Settings persistence boundary; production BCDGyroSettings parsing stays real.
+@MainActor enum BCDGyroStore {
+    static func prepareSulfur(_ windowsPath:String) {}
+    static var values:[String:[String:String]]=[:]
+    static func settings(_ path:String)->BCDGyroSettings {BCDGyroSettings.parse{values[path]?[$0]}}
+    static func set(_ path:String,_ line:String,_ value:String) {values[path,default:[:]][line]=value.isEmpty ? nil:value}
+}

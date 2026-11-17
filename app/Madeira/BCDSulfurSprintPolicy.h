@@ -36,4 +36,24 @@ static inline int BCDSulfurSprintUpdate(BCDSulfurSprintState *s,double x,double 
 // Crouch/disable/external inputs may reset/change guest state. No same-contact
 // rearming after those events. Runtime must gate reviewed build/mode/configuration:
 // Always mode has inverse L3 semantics; this policy does not verify mode or state.
+
+typedef struct { int pending; double ended,x,y; } BCDSulfurDoubleTapState;
+static inline void BCDSulfurDoubleTapCancel(BCDSulfurDoubleTapState *s) {
+    if(s) s->pending=0;
+}
+// Two short, still contacts on the look surface. The caller observes every
+// coalesced sample, so an out-and-back camera drag cannot become an ADS tap.
+// Returns a toggle request only; the editable aim action owns the actual output.
+static inline int BCDSulfurDoubleTapEnd(BCDSulfurDoubleTapState *s,double x,double y,
+                                       double began,double ended,double travel,int cancelled) {
+    if(!s) return 0;
+    if(cancelled || !isfinite(x) || !isfinite(y) || !isfinite(began) || !isfinite(ended) ||
+       !isfinite(travel) || travel<0 || ended<began || ended-began>0.250 || travel>8) {
+        BCDSulfurDoubleTapCancel(s); return 0;
+    }
+    if(s->pending && began<s->ended) {BCDSulfurDoubleTapCancel(s);return 0;}
+    int doubleTap=s->pending && began-s->ended<=0.300 && hypot(x-s->x,y-s->y)<=32;
+    s->pending=!doubleTap;s->ended=ended;s->x=x;s->y=y;
+    return doubleTap;
+}
 #endif

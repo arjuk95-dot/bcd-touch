@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import Foundation
 
-/// Bindings verified against shipped v1.01.03 DefaultInput.ini and custom DefaultBindings_DA; not inferred from genre.
+/// Reviewed default touch controls. Detailed provenance remains in private review records.
 enum BCDQueensDomainPack {
     static func matches(_ identity: BCDControlPack.Identity) -> Bool {
-        let executable = identity.executable.lowercased().replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "’", with: "").replacingOccurrences(of: "'", with: "")
+        // https://store.steampowered.com/app/1799840/Queens_Domain/
+        if identity.storeID.lowercased().hasPrefix("steam:") {return identity.storeID.lowercased() == "steam:1799840"}
+        let executable = identity.executable.lowercased().replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "'", with: "").replacingOccurrences(of: "’", with: "")
         return executable.contains("queensdomain")
     }
-    static func make(identity: BCDControlPack.Identity, bindings: [String:String] = [:]) -> BCDControlPack {
+    static func make(identity: BCDControlPack.Identity, bindings: [String:String] = [:], glyphs:Bool = true) -> BCDControlPack {
         let definitions: [(String,String,String,String,String)] = [
             ("move","Move","figure.walk","LS","hold"),
             ("attack","Attack / charge","bcd.sword","RT","hold"),
@@ -58,9 +60,119 @@ enum BCDQueensDomainPack {
                 c("pause","button",0.04,0.08,0.04)
             ],movementRect:.init(x:0,y:0.25,width:0.42,height:0.75))
         }
-        return .init(version:6,id:"queens-domain-v6",title:"Queen's Domain",identity:identity,inputMode:"controller",aim:.init(),actions:actions,phone:layout(),pad:layout(),gestures:gestures,radial:radial,contexts:["onFoot"],evidence:[
-            .init(id:"shipped-input",source:"Queen's Domain v1.01.03 shipped DefaultInput.ini",detail:"Verified locally against PAK entry SHA1 d4e7a3684b94a91d144903de3c1a6da3d0838197. Status=Back; Journal=J/controller None; no Map action. Primary RT, secondary LT, jump A, interact X, item B, ultra Y, dagger LB, wind dash RB. Movement left stick; camera mouse. Custom DefaultBindings_DA overrides Run to Gamepad_LeftThumbstick (L3); Journal remains None."),
+        let pack=BCDControlPack(version:6,id:"queens-domain-v6",title:"Queen's Domain",identity:identity,inputMode:"controller",aim:.init(),actions:actions,phone:layout(),pad:layout(),gestures:gestures,radial:radial,contexts:["onFoot"],evidence:[
+            .init(id:"shipped-input",source:"Reviewed default controls",detail:"Detailed binary-build provenance is omitted from this public source. User remaps are not inferred."),
             .init(id:"verified-remaps",source:"Caller-verified personal controller bindings",detail:"Optional remaps must come from actual game configuration; absent mappings retain shipped defaults. Journal is enabled only with a verified controller remap.")
         ],unresolved:unresolved,lookMode:"relativeMouse")
+        return glyphs ? BCDPackCatalog.glyphPresentation(pack,icons:["attack":"bcd.blade","interact":"bcd.use","pause":"bcd.pause","equipment":"bcd.pack","jump":"bcd.jump","throw-dagger":"bcd.blade"]):pack
+    }
+
+    /// The old researched raw-output pack used different action/control IDs.
+    /// Translate its saved delta, not its obsolete layout, onto the reviewed pack.
+    /// A missing or unrecognized baseline never authorizes guessing away edits.
+    static func migrateLegacyEdit(identity:BCDControlPack.Identity,bindings:[String:String] = [:],
+                                  personal:BCDControlPack,baseline:BCDControlPack?) -> BCDControlPack? {
+        guard matches(identity),let baseline,baseline.id == "queens-domain",baseline.version == 1,
+              personal.id == baseline.id,baseline.inputMode == "controller",personal.inputMode == "controller",
+              baseline.contexts == ["raw-controller"],baseline.gestures.isEmpty,
+              baseline.radial == ["menu","view"],baseline.lookMode == nil,
+              baseline.digitalMovement == nil,baseline.cursorControls == nil,
+              baseline.identity.executable.lowercased() == identity.executable.lowercased(),
+              personal.identity.executable.lowercased() == baseline.identity.executable.lowercased(),
+              (try? baseline.validate(placement:.personal)) != nil,
+              (try? personal.validate(placement:.personal)) != nil else {return nil}
+        let outputs=["ls":"LS","rs":"RS","rt":"RT","a":"A","b":"B","x":"X","y":"Y","menu":"Menu","view":"View"]
+        guard baseline.actions.count == outputs.count,
+              baseline.actions.allSatisfy({outputs[$0.id] == $0.output && $0.contexts == ["raw-controller"]}),
+              personal.actions.first(where:{$0.id == "rs"}) == baseline.actions.first(where:{$0.id == "rs"}),
+              !personal.phone.controls.contains(where:{$0.action == "rs"}),
+              !personal.pad.controls.contains(where:{$0.action == "rs"}) else {return nil}
+        let mapping=["ls":"move","rt":"attack","a":"jump","b":"use-item","x":"interact","y":"ultra","menu":"pause","view":"equipment"]
+        let approved=make(identity:identity,bindings:bindings)
+        var before=approved,edited=approved
+        func action(_ id:String) -> String {mapping[id] ?? id}
+        func contexts(_ values:[String]) -> [String] {values.map {$0 == "raw-controller" ? "onFoot":$0}}
+        func translatedAction(_ old:BCDControlPack.Action) -> BCDControlPack.Action {
+            var value=old;value.id=action(old.id);value.contexts=contexts(old.contexts);return value
+        }
+        for old in baseline.actions where old.id != "rs" {
+            let id=action(old.id)
+            guard let index=before.actions.firstIndex(where:{$0.id == id}) else {return nil}
+            before.actions[index]=translatedAction(old)
+            if let value=personal.actions.first(where:{$0.id == old.id}),let i=edited.actions.firstIndex(where:{$0.id == id}) {edited.actions[i]=translatedAction(value)}
+            else {edited.actions.removeAll{$0.id == id}}
+        }
+        for old in personal.actions where !baseline.actions.contains(where:{$0.id == old.id}) {
+            var value=translatedAction(old)
+            guard !edited.actions.contains(where:{$0.id == value.id}) else {return nil}
+            // The editor's raw LB/hand defaults are presentation, not a new binding.
+            // Keep an explicitly named/icon-selected action; otherwise use the verified glyph.
+            if let semantic=approved.actions.first(where:{$0.output == old.output}) {
+                if old.label == BCDPackCatalog.outputLabel(old.output) {value.label=semantic.label}
+                if old.icon == "hand.tap" {value.icon=semantic.icon}
+            }
+            edited.actions.append(value)
+        }
+        func target(_ old:BCDControlPack.Control) -> String? {
+            if old.action == "menu",old.role == "radial" {return "use-item"}
+            // Raw B/Y buttons have no direct counterpart in the new radial design.
+            if ["b","y"].contains(old.action) {return nil}
+            return mapping[old.action]
+        }
+        func control(_ old:BCDControlPack.Control,id:String? = nil) -> BCDControlPack.Control {
+            var value=old;value.id=id ?? old.id;value.action=action(old.action)
+            if old.action == "menu",old.role == "radial" {value.action="use-item"}
+            if let slide=old.slideToAction {value.slideToAction=action(slide)}
+            return value
+        }
+        for pad in [false,true] {
+            let old=pad ? baseline.pad:baseline.phone,personalLayout=pad ? personal.pad:personal.phone
+            var oldLayout=pad ? approved.pad:approved.phone,newLayout=oldLayout
+            oldLayout.aimRect=old.aimRect;newLayout.aimRect=personalLayout.aimRect
+            oldLayout.movementRect=old.movementRect;newLayout.movementRect=personalLayout.movementRect
+            var translatedIDs=[String:String]()
+            for original in old.controls {
+                let value=personalLayout.controls.first(where:{$0.id == original.id})
+                if let id=target(original),let index=oldLayout.controls.firstIndex(where:{$0.id == id}) {
+                    guard translatedIDs.values.allSatisfy({$0 != id}) else {return nil}
+                    translatedIDs[original.id]=id
+                    oldLayout.controls[index]=control(original,id:id)
+                    if let value,let index=newLayout.controls.firstIndex(where:{$0.id == id}) {
+                        newLayout.controls[index]=control(value,id:id)
+                    } else {newLayout.controls.removeAll{$0.id == id}}
+                } else if let value,value != original {
+                    // A real edit to a retired direct button remains an extra button.
+                    var extra=control(value);if extra.showLabel == nil {extra.showLabel=false}
+                    guard !newLayout.controls.contains(where:{$0.id == extra.id}) else {return nil}
+                    newLayout.controls.append(extra)
+                }
+            }
+            for value in personalLayout.controls where !old.controls.contains(where:{$0.id == value.id}) {
+                var extra=control(value);if extra.showLabel == nil {extra.showLabel=false}
+                guard !newLayout.controls.contains(where:{$0.id == extra.id}) else {return nil}
+                newLayout.controls.append(extra)
+            }
+            let retained=Set(personalLayout.controls.map(\.id)).intersection(old.controls.map(\.id))
+            if personalLayout.controls.filter({retained.contains($0.id)}).map(\.id) != old.controls.filter({retained.contains($0.id)}).map(\.id) {
+                let ids=personalLayout.controls.compactMap {translatedIDs[$0.id]}
+                let priority=ids.compactMap {id in newLayout.controls.first(where:{$0.id == id})}
+                newLayout.controls=priority+newLayout.controls.filter{!ids.contains($0.id)}
+            }
+            if pad {before.pad=oldLayout;edited.pad=newLayout} else {before.phone=oldLayout;edited.phone=newLayout}
+        }
+        before.contexts=contexts(baseline.contexts);edited.contexts=contexts(personal.contexts)
+        before.radial=baseline.radial.map(action);edited.radial=personal.radial.map(action)
+        before.aim=baseline.aim;edited.aim=personal.aim
+        before.lookMode=baseline.lookMode;edited.lookMode=personal.lookMode
+        before.digitalMovement=baseline.digitalMovement;edited.digitalMovement=personal.digitalMovement
+        before.cursorControls=baseline.cursorControls;edited.cursorControls=personal.cursorControls
+        func gestures(_ values:[BCDControlPack.Gesture]) -> [BCDControlPack.Gesture] {values.map {old in
+            var value=old;value.action=action(old.action)
+            if let when=old.whenToggled {value.whenToggled=action(when)}
+            return value
+        }}
+        before.gestures=gestures(baseline.gestures);edited.gestures=gestures(personal.gestures)
+        for evidence in personal.evidence where !baseline.evidence.contains(where:{$0.id == evidence.id}) && !edited.evidence.contains(where:{$0.id == evidence.id}) {edited.evidence.append(evidence)}
+        return try? BCDPackAuthoring.merge(base:approved,personal:edited,baseline:before)
     }
 }

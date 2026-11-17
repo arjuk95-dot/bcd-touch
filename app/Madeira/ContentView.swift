@@ -1651,6 +1651,9 @@ struct ContentView: View {
         // Link external drives before the server lists dosdevices (Madeira #464 does it in startWineserver; here it runs on the main
         // thread, where ExternalDrives and the Steam models it refreshes live, before the sequence below starts the server).
         ExternalDrives.shared.mountAll()
+        // WGI compatibility remains the existing explicit per-game choice.
+        // Do not infer an app-global environment default from the selected pack:
+        // Dock can start more programs inside this same Wine session.
         DispatchQueue.global(qos: .userInitiated).async {
             // A library entry's launch profile (executable, arguments, x87
             // precision, frame limit).
@@ -3023,7 +3026,7 @@ final class ControlsWindow: UIWindow {
             }
             // The pack assigns roles across the full surface at touch-down.
             // Stock-control geometry cannot decide which of its touches exist.
-            if BCDPackStore.shared.enabled, BCDPackStore.shared.hasSurface {
+            if BCDPackStore.shared.controllerFallback || (BCDPackStore.shared.enabled && BCDPackStore.shared.hasSurface) {
                 if HardwareInput.isPointerEvent(event) { return nil }
                 return super.hitTest(point, with: event)
             }
@@ -3090,19 +3093,18 @@ struct TouchControlsOverlay: View {
             let landscape = geo.size.width > geo.size.height || session
             ZStack(alignment: .top) {
                 if landscape && !library.desktopHome && (!BCDDuoFeatures.active || session) {
-                    if packStore.hasSurface && packStore.enabled && session {
+                    if packStore.controllerFallback && session {
+                        if !library.blocksGameplayTouch {BCDControllerFallbackLayer().frame(maxWidth:.infinity,maxHeight:.infinity,alignment:.trailing)}
+                    } else if packStore.hasSurface && packStore.enabled && session {
                         if !library.blocksGameplayTouch && !packFocus.blockedByPresentation {
                             if !packStore.tableSurface.isEmpty {
                                 BCDTableSurface(accepting:packFocus.gameFocused,rightClickCancelsDrag:packStore.tableSurface == "spire2",inspectOnly:packStore.tableInspectOnly,cancelSequence:packStore.tableCancelSequence)
-                                    .id(packStore.tableSurface+String(packStore.inscryptionExplore))
+                                    .id(packStore.tableSurface)
                                     .onAppear {BCDGyroLive.shared.refresh()}
                                     .onDisappear {BCDGyroLive.shared.refresh()}
-                                if packStore.tableSurface == "inscryption" && packStore.inscryptionExplore {
-                                    BCDInscryptionExploreControls(accepting:packFocus.gameFocused && !library.blocksGameplayTouch)
-                                }
                                 BCDTableUtilityRail().frame(maxWidth:.infinity,maxHeight:.infinity,alignment:.trailing).padding(.trailing,geo.safeAreaInsets.trailing+12)
                             } else { BCDPackLayer() }
-                            if packStore.tableSurface.isEmpty && !packStore.editing && packStore.pack?.cursorControls == nil {
+                            if packStore.tableSurface.isEmpty && !packStore.editing {
                                 BCDPackTools().padding(.top, 8).padding(.leading, geo.safeAreaInsets.leading + 12).frame(maxWidth: .infinity, alignment: .leading)
                             }
                         }
@@ -3111,6 +3113,9 @@ struct TouchControlsOverlay: View {
                             controls(geo.size, session: session)
                                 .opacity(m.editing ? 1.0 : m.opacity)
                         }
+                    }
+                    if session && !m.editing && !packStore.controllerFallback && !(packStore.hasSurface && packStore.enabled) && !library.blocksGameplayTouch {
+                        BCDControllerFallbackToggle().padding(.top,8).padding(.leading,geo.safeAreaInsets.leading+12).frame(maxWidth:.infinity,alignment:.leading)
                     }
                     if session && !m.editing { BCDSessionLiveLayer() } else { topBar }   // BCD's in-game layer (BCDSessionLive.swift)
                     // BCD (2026-10-18): the selected control's panel is part of BCD's editor, in `topBar`.
@@ -3129,6 +3134,7 @@ struct TouchControlsOverlay: View {
             .onChange(of: m.editing) { _, _ in configureGamepad(landscape: landscape) }
             .onChange(of: packStore.pack) { _, _ in configureGamepad(landscape: landscape) }
             .onChange(of: packStore.enabled) { _, _ in configureGamepad(landscape: landscape) }
+            .onChange(of: packStore.controllerFallback) { _, _ in configureGamepad(landscape: landscape) }
             .onChange(of: library.current) { _, _ in configureGamepad(landscape: landscape) }
             .onChange(of: library.blocksGameplayTouch) { _, _ in configureGamepad(landscape: landscape) }
             .onDisappear { GamepadInput.shared.configureTouch(controls: []); TouchMouseGate.padOverlay = false; packFocus.setMonitoring(false) }
@@ -3153,8 +3159,8 @@ struct TouchControlsOverlay: View {
     }
 
     private func configureGamepad(landscape: Bool) {
-        packFocus.setMonitoring(packStore.hasSurface && packStore.enabled && library.current != nil)
-        let ids = landscape && m.visible && !(packStore.hasSurface && packStore.enabled)
+        packFocus.setMonitoring((packStore.controllerFallback || (packStore.hasSurface && packStore.enabled)) && library.current != nil)
+        let ids = landscape && m.visible && !packStore.controllerFallback && !(packStore.hasSurface && packStore.enabled)
             ? m.controls.filter { $0.action.padName.map(TouchPadAction.supported) ?? false }.map(\.id) : []
         // Menus and the control editor keep the pad connected but take no input (#204);
         // a touch that misses the controls is no mouse only while they do (#150).

@@ -1,0 +1,63 @@
+--- a/app/Madeira/BCDInscryptionSwipePolicy.h
++++ b/app/Madeira/BCDInscryptionSwipePolicy.h
+@@ -49,11 +49,13 @@
+         direction = dy < 0 ? BCDInscryptionSwipeUp : BCDInscryptionSwipeDown;
+         progress = ay;
+     }
+-    /* Once outside the pointer slop, ambiguous/crossed paths fail closed.
+-     * Longitudinal reversal also fails closed; no directional input is safer
+-     * than guessing intent from a scrubbed or reversed stroke. */
++    /* Human strokes and coalesced delivery can briefly jitter before the
++     * direction settles. Do not permanently reject a swipe on the first
++     * diagonal sample just outside tap slop, or sub-8pt backtracking.
++     * A substantial crossed path or reversal still cancels without clicking. */
++    if (!s->direction && distance < 24.0) return BCDInscryptionSwipeNone;
+     if (!direction || (s->direction && direction != s->direction) ||
+-        progress < s->maxProgress) {
++        progress + 8.0 < s->maxProgress) {
+         s->rejected = 1; return BCDInscryptionSwipeNone;
+     }
+     s->direction = direction;
+--- a/app/Madeira/BCDTableSurface.swift
++++ b/app/Madeira/BCDTableSurface.swift
+@@ -169,7 +169,10 @@
+         guard canSend,p.x.isFinite,p.y.isFinite else{cancelInput();return}
+         if var swipe=swipeContact,swipe.identity == identity {
+             swipe.last=p;swipe.travel=max(swipe.travel,hypot(p.x-swipe.start.x,p.y-swipe.start.y))
+-            if directionalSwipeRegion?.contains(p) != true {swipe.invalid=true;BCDInscryptionSwipeCancel(&swipe.state)}
++            // Touch-down chooses the owner for the whole contact. A normal
++            // stroke may leave the small lower-left start zone; never turn it
++            // into a mouse drag, but do not silently discard its WASD action.
++            // Cancellation/focus loss/multitouch still invalidate the swipe.
+             BCDInscryptionSwipeMove(&swipe.state,Double(p.x),Double(p.y));swipeContact=swipe;return
+         }
+         if identity == second {
+--- a/tests/host/inscryption_swipe_policy_checks.c
++++ b/tests/host/inscryption_swipe_policy_checks.c
+@@ -47,7 +47,7 @@
+     assert(BCDInscryptionSwipeEnd(&s,40,0,.2,0)==0);
+     BCDInscryptionSwipeBegin(&s,0,0,0);
+     BCDInscryptionSwipeMove(&s,12,12);
+-    assert(BCDInscryptionSwipeEnd(&s,40,0,.2,0)==0);
++    assert(BCDInscryptionSwipeEnd(&s,40,0,.2,0)==BCDInscryptionSwipeRight); /* early diagonal settles */
+     BCDInscryptionSwipeBegin(&s,0,0,0);
+     BCDInscryptionSwipeMove(&s,NAN,0);
+     assert(BCDInscryptionSwipeEnd(&s,40,0,.2,0)==0);
+@@ -63,6 +63,17 @@
+     assert(BCDInscryptionSwipeBegin(NULL,0,0,0)==0);
+     assert(BCDInscryptionSwipeMove(NULL,0,0)==0);
+     assert(BCDInscryptionSwipeEnd(NULL,0,0,0,0)==0);
++    /* Delivered movement may contain tiny reversals or repeated/coalesced
++     * samples. These must not swallow an otherwise deliberate cardinal swipe. */
++    for (int dir=2; dir<=5; ++dir) {
++        double dx=dir==2 ? -1:dir==3 ? 1:0;
++        double dy=dir==4 ? -1:dir==5 ? 1:0;
++        BCDInscryptionSwipeBegin(&s,100,100,0);
++        BCDInscryptionSwipeMove(&s,100+dx*30,100+dy*30);
++        BCDInscryptionSwipeMove(&s,100+dx*29.75,100+dy*29.75);
++        BCDInscryptionSwipeMove(&s,100+dx*35,100+dy*35);
++        assert(BCDInscryptionSwipeEnd(&s,100+dx*34,100+dy*34,.3,0)==dir);
++    }
+     puts("Inscryption swipe policy checks passed");
+     return 0;
+ }
