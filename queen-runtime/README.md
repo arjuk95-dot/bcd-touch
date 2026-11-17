@@ -28,4 +28,4 @@ Use one existing save and fixed camera/action sequence, frame generation off, sa
 
 The new bundle cannot read the existing BCD container directly under iOS sandboxing. Game-folder import copies game files only. Existing saves and personal layouts require the copy-only transfer helper or a reviewed equivalent backup restore. Do not present game-folder import as save migration.
 
-The copy-only transfer helper has six synthetic integrity and overwrite-protection checks. It has not transferred a real phone save. Use export with --game-root Games/QueensDomain, keep the local backup private, and restore only into a fresh, still-closed separate runtime app. Existing destination files are always refused.
+The copy-only transfer helper has seven synthetic integrity and overwrite-protection checks. It has not transferred a real phone save. Use export with --game-root Games/QueensDomain, keep the local backup private, and restore only into a fresh, still-closed separate runtime app. Existing destination files are always refused.

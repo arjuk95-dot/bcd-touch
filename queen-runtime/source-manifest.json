@@ -3,12 +3,12 @@
   "isolated_source": "86f4bb2f60d1cdc1dbf46d25e4db5f1cdf3bc2e9",
   "files": {
     "app.patch": {
-      "bytes": 31726,
-      "sha256": "bb6aae8a7ced0b85f0ea9637a3868b99f75da00cbed928cff90b02de99052c8a"
+      "bytes": 32947,
+      "sha256": "8a1378c8be46bcd0fe00a5dc1a144a0933ce83239873bf8be511c8b3146e1a28"
     },
     "build-runtime.sh": {
-      "bytes": 3937,
-      "sha256": "6e79028d250c4e7ffa0876614661d39fabee70d8cc13fecaf20475cdba2edd7e"
+      "bytes": 4539,
+      "sha256": "1be63d0796a0a4b7c364aa040d5795fcbee58d635339f714ef835a309bec676c"
     },
     "extract-native.py": {
       "bytes": 1151,
@@ -19,8 +19,8 @@
       "sha256": "6618992daddb04158ed26e9ad1e8e6fc0cd5adc84395216d6376edd6e5bb55e9"
     },
     "README.md": {
-      "bytes": 4603,
-      "sha256": "bffcb58ac378b738f5924f63017a0e86763bfc29b4268f3897122baec34da247"
+      "bytes": 4605,
+      "sha256": "7444bbf5b0f315f1b42a36a9cb98264926589ec7494f50fec62eb055e9ce2e73"
     },
     "test-transfer-queen.py": {
       "bytes": 6481,
@@ -33,7 +33,7 @@
   },
   "scope": "source-only; no game assets, saves, logs or credentials",
   "tests": {
-    "transfer_synthetic_cases": 6,
+    "transfer_synthetic_cases": 7,
     "ios_compile": false,
     "device_tested": false,
     "expected_mac_cases": 7,

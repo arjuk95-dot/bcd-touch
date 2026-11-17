@@ -166,22 +166,30 @@ index 417fbca2..7d1a19e9 100644
  </dict>
  </plist>
 diff --git a/app/Madeira/JITNetwork.swift b/app/Madeira/JITNetwork.swift
-index f0bf0b51..5f914f92 100644
 --- a/app/Madeira/JITNetwork.swift
 +++ b/app/Madeira/JITNetwork.swift
-@@ -295,9 +295,9 @@ enum JITShortcutFile {
+@@ -295,9 +295,9 @@
              URLQueryItem(name: "name", value: Self.name),
              URLQueryItem(name: "input", value: "text"),
              URLQueryItem(name: "text", value: input),
 -            URLQueryItem(name: "x-success", value: "bcdtouchlab://jit-network/success"),
--            URLQueryItem(name: "x-error", value: "bcdtouchlab://jit-network/error"),
--            URLQueryItem(name: "x-cancel", value: "bcdtouchlab://jit-network/cancel")
 +            URLQueryItem(name: "x-success", value: "queensdomainruntime://jit-network/success"),
+-            URLQueryItem(name: "x-error", value: "bcdtouchlab://jit-network/error"),
 +            URLQueryItem(name: "x-error", value: "queensdomainruntime://jit-network/error"),
+-            URLQueryItem(name: "x-cancel", value: "bcdtouchlab://jit-network/cancel")
 +            URLQueryItem(name: "x-cancel", value: "queensdomainruntime://jit-network/cancel")
          ]
          guard let url = c.url else { completion(.failed("the Shortcuts link could not be built")); return }
          LogStore.shared.log("[jit-shortcut] run input=\(input)")
+@@ -313,7 +313,7 @@
+     /// madeira://jit-network/{success|error|cancel}, from Shortcuts' x-callback-url.
+     @discardableResult
+     func handle(_ url: URL) -> Bool {
+-        guard url.scheme == "bcd" || url.scheme == "madeira", url.host == "jit-network" else { return false }
++        guard (QueenRuntime.enabled ? ["queensdomainruntime"] : ["bcd", "madeira"]).contains(url.scheme?.lowercased() ?? ""), url.host == "jit-network" else { return false }
+         let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+         let value = { (name: String) in query.first { $0.name == name }?.value ?? "" }
+         switch url.path {
 diff --git a/app/Madeira/JITSetup.swift b/app/Madeira/JITSetup.swift
 index 5627af05..6fc7d140 100644
 --- a/app/Madeira/JITSetup.swift
@@ -518,11 +526,14 @@ index ea4aef64..72fb9f5d 100644
 +    }
 +}
 diff --git a/app/Madeira/SavesAndShortcuts.swift b/app/Madeira/SavesAndShortcuts.swift
-index 844fd5be..dce6372f 100644
 --- a/app/Madeira/SavesAndShortcuts.swift
 +++ b/app/Madeira/SavesAndShortcuts.swift
-@@ -33,7 +33,7 @@ final class ShortcutRouter: ObservableObject {
-         c.scheme = "bcd"
+@@ -30,14 +30,14 @@
+ 
+     static func link(for windowsPath: String) -> String {
+         var c = URLComponents()
+-        c.scheme = "bcd"
++        c.scheme = QueenRuntime.enabled ? "queensdomainruntime" : "bcd"
          c.host = "play"
          c.queryItems = [URLQueryItem(name: "exe", value: windowsPath)]
 -        return c.string ?? "bcdtouchlab://play"
@@ -530,6 +541,11 @@ index 844fd5be..dce6372f 100644
      }
  
      func handle(_ url: URL) {
+-        guard ["bcd", "madeira"].contains(url.scheme?.lowercased() ?? ""), url.host?.lowercased() == "play",
++        guard (QueenRuntime.enabled ? ["queensdomainruntime"] : ["bcd", "madeira"]).contains(url.scheme?.lowercased() ?? ""), url.host?.lowercased() == "play",
+               let exe = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+                 .queryItems?.first(where: { $0.name == "exe" })?.value, !exe.isEmpty else { return }
+         LogStore.shared.log("[shortcut] asked to start \(exe)")
 diff --git a/app/Madeira/WineProcessBridge.m b/app/Madeira/WineProcessBridge.m
 index cd22a97b..281f06e3 100644
 --- a/app/Madeira/WineProcessBridge.m

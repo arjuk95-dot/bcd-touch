@@ -46,5 +46,17 @@ p=Path('app/Madeira/Info.plist');d=plistlib.loads(p.read_bytes())
 d.update(MadeiraCommit=os.environ['GITHUB_SHA'],MadeiraRepo=os.environ['GITHUB_REPOSITORY'],MadeiraBuilt=datetime.datetime.now(datetime.timezone.utc).isoformat())
 p.write_bytes(plistlib.dumps(d,sort_keys=False))
 PY
-xcodebuild -project app/Madeira.xcodeproj -scheme Madeira -sdk iphoneos -configuration Release SWIFT_OPTIMIZATION_LEVEL=-O GCC_OPTIMIZATION_LEVEL=3 CODE_SIGNING_ALLOWED=NO archive -archivePath build-out/QueenRuntime.xcarchive > build-out/archive.log 2>&1 || { tail -160 build-out/archive.log; exit 1; }
+xcodebuild -project app/Madeira.xcodeproj -scheme Madeira -sdk iphoneos -configuration Release SWIFT_OPTIMIZATION_LEVEL=-O GCC_OPTIMIZATION_LEVEL=3 CODE_SIGNING_ALLOWED=NO archive -archivePath build-out/QueenRuntime.xcarchive > build-out/archive.log 2>&1 &
+archive_pid=$!
+# Report bounded compiler activity without changing archive flags or outputs.
+while kill -0 "$archive_pid" 2>/dev/null; do
+  sleep 45
+  if kill -0 "$archive_pid" 2>/dev/null; then
+    echo 'Archive progress (pid, parent, elapsed, CPU percent, resident KB, executable):'
+    ps -axo pid=,ppid=,etime=,pcpu=,rss=,comm= | awk -v pid="$archive_pid" '$1 == pid || $NF ~ /(^|\/)(swift-frontend|clang|clang\+\+|ld|metal|actool|ibtool|XCBBuildService)$/ {print}' | head -20 || true
+    wc -c build-out/archive.log
+    tail -3 build-out/archive.log | cut -c 1-220
+  fi
+done
+wait "$archive_pid" || { tail -160 build-out/archive.log; exit 1; }
 python3 "$ORCH/package-runtime.py" "$PWD"
