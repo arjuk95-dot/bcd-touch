@@ -48,7 +48,7 @@
     "tools/touch-packs/check-pipeline.py": "4e2204efc31085eabc66daae44f456a968e3fcbdb51fd59fa459e7a4d37cb4cd",
     "tools/touch-packs/check-swift.py": "13c7718a0f1adb5802a8352a1bcb8a51232ab7070ef9d902e636a69100b4c727",
     "tools/touch-packs/preview-action-glyphs.py": "d5d5697583d32d75f51a7be1c96bf77fa09bbb8abdc05ef0959fb4c652342a2a",
-    "tools/touch-packs/reuse-v653-donor.py": "a426188ead62e4570ff0aec221db217a9d490d940214d13e5e701c50f311fdb6",
+    "tools/touch-packs/reuse-v653-donor.py": "1b36a8a4b928d71462eec0ce9be1b8cf1a675fdf1b72271dd81fc0760fed8d97",
     "tools/touch-packs/simulator-preview.py": "4791af72d2965ea9cdcaac6b9bd4977cbc4563771679a6d65a796e86c3200389"
   },
   "excluded_private_records": [

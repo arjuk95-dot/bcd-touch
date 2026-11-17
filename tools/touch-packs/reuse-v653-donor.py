@@ -303,8 +303,15 @@ def assemble(prepared, compiled, output, source, app_repository=None):
         if key not in METADATA_KEYS and old.get(key) != new.get(key):
             raise ValueError('Unexpected app metadata change: ' + key)
     deps = macho_dependencies(compiled / 'Madeira')
-    if deps != macho_dependencies(donor / 'Madeira'):
-        raise ValueError('App dynamic dependency set changed; review required')
+    donor_deps = macho_dependencies(donor / 'Madeira')
+    added_deps = sorted(set(deps) - set(donor_deps))
+    removed_deps = sorted(set(donor_deps) - set(deps))
+    print(json.dumps({'compiled_dependencies': deps, 'added_dependencies': added_deps,
+                      'removed_dependencies': removed_deps}, sort_keys=True))
+    # Release dead stripping may remove unused Debug-donor imports. The copied
+    # donor still contains every original framework; never allow new imports.
+    if added_deps:
+        raise ValueError('App added dynamic dependencies; review required: ' + repr(added_deps))
     output = fresh(output)
     app = output / 'Payload/Madeira.app'
     shutil.copytree(donor, app)
