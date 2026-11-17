@@ -1,7 +1,17 @@
 #!/bin/bash
-set -euo pipefail
+set -Eeuo pipefail
 # Exact retained workflow excerpts; do not compile unrelated runtimes.
 ROOT="$PWD"
+# Host-tool failures must show their build/configure error, never silently exit.
+report_header_failure() {
+  rc=$?
+  for name in wine-native-configure.log wine-native-make.log wine-configure.log; do
+    if [ -f "$ROOT/$name" ]; then echo "=== $name (last 60 lines) ==="; tail -60 "$ROOT/$name"; fi
+  done
+  exit "$rc"
+}
+trap report_header_failure ERR
+export PATH="$(brew --prefix bison)/bin:$(brew --prefix flex)/bin:$PATH"
 test "$(git -C wine rev-parse HEAD)" = 52a6004e68e818c5b09918215e973726e282425f
 export GITHUB_WORKSPACE="$ROOT"
 

@@ -25,7 +25,7 @@ jobs:
       - name: Targeted runtime, paired shader compiler and app relink
         shell: bash
         run: |
-          brew install llvm lld
+          brew install llvm lld bison flex pkg-config
           python3 queen-system-candidate/tests/check-fingerprint-hash.py
           bash queen-system-candidate/run-build.sh
       - uses: actions/upload-artifact@v4
