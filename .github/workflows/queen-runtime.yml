@@ -1,0 +1,46 @@
+name: Queen Domain separate runtime
+on:
+  push:
+    branches: [queen-runtime-ios]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: queen-runtime-ios
+  cancel-in-progress: false
+jobs:
+  build:
+    if: github.repository == 'arjuk95-dot/bcd-touch' && contains(github.event.head_commit.message, '[queen-runtime-build]')
+    runs-on: macos-15-intel
+    timeout-minutes: 40
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PYTHONUNBUFFERED: '1'
+      HOMEBREW_NO_AUTO_UPDATE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: arjuk95-dot/bcd-touch
+          ref: e5b9da7de835b02c0ecd229ef3b921a061545e51
+          path: source
+          persist-credentials: false
+      - name: Check copy-only transfer safety
+        run: python3 queen-runtime/test-transfer-queen.py
+      - name: Compile and package separate runtime
+        run: bash queen-runtime/build-runtime.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Queen-Domain-Runtime-1
+          path: |
+            source/build-out/Queen-Domain-Runtime-1.ipa
+            source/build-out/runtime-receipt.json
+            source/build-out/ipa.sha256
+            source/build-out/archive.log
+            source/build-out/native667-reuse.json
+            source/build-out/queen-native/queen-native-receipt.json
+          if-no-files-found: ignore
+          retention-days: 7

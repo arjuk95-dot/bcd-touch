@@ -1,0 +1,595 @@
+diff --git a/app/Madeira.xcodeproj/project.pbxproj b/app/Madeira.xcodeproj/project.pbxproj
+index 56d3e83f..c87e3020 100644
+--- a/app/Madeira.xcodeproj/project.pbxproj
++++ b/app/Madeira.xcodeproj/project.pbxproj
+@@ -2108,7 +2108,7 @@
+ 					"@executable_path/Frameworks",
+ 					"@executable_path/../../Frameworks",
+ 				);
+-				PRODUCT_BUNDLE_IDENTIFIER = com.arjunkl.bcdtouch.MemoryHost;
++				PRODUCT_BUNDLE_IDENTIFIER = com.arjunkl.queensdomain.runtime.MemoryHost;
+ 				PRODUCT_NAME = "$(TARGET_NAME)";
+ 				SDKROOT = iphoneos;
+ 				SKIP_INSTALL = YES;
+@@ -2141,7 +2141,7 @@
+ 				GCC_WARN_UNUSED_FUNCTION = YES;
+ 				GCC_WARN_UNUSED_VARIABLE = YES;
+ 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+-				MADEIRA_BUNDLE_IDENTIFIER = com.arjunkl.bcdtouch;
++				MADEIRA_BUNDLE_IDENTIFIER = com.arjunkl.queensdomain.runtime;
+ 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+ 				MTL_FAST_MATH = YES;
+ 				ONLY_ACTIVE_ARCH = YES;
+@@ -2171,7 +2171,7 @@
+ 				GCC_WARN_UNUSED_FUNCTION = YES;
+ 				GCC_WARN_UNUSED_VARIABLE = YES;
+ 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+-				MADEIRA_BUNDLE_IDENTIFIER = com.arjunkl.bcdtouch;
++				MADEIRA_BUNDLE_IDENTIFIER = com.arjunkl.queensdomain.runtime;
+ 				MTL_ENABLE_DEBUG_INFO = NO;
+ 				MTL_FAST_MATH = YES;
+ 				SDKROOT = iphoneos;
+@@ -2303,7 +2303,7 @@
+ 					"@executable_path/Frameworks",
+ 					"@executable_path/../../Frameworks",
+ 				);
+-				PRODUCT_BUNDLE_IDENTIFIER = com.arjunkl.bcdtouch.MemoryHost;
++				PRODUCT_BUNDLE_IDENTIFIER = com.arjunkl.queensdomain.runtime.MemoryHost;
+ 				PRODUCT_NAME = "$(TARGET_NAME)";
+ 				SDKROOT = iphoneos;
+ 				SKIP_INSTALL = YES;
+diff --git a/app/Madeira/BCDSessionRecorderLive.swift b/app/Madeira/BCDSessionRecorderLive.swift
+index 9772e2e3..a552f05f 100644
+--- a/app/Madeira/BCDSessionRecorderLive.swift
++++ b/app/Madeira/BCDSessionRecorderLive.swift
+@@ -19,8 +19,8 @@ import os
+ 
+ /// The calls LibraryModel makes: from the main thread; anything else is put on it.
+ enum BCDSessionRecorder {
+-    static func sessionBegan(_ entry: LibraryEntry) { onMain { BCDSessionRecorderLive.shared.began(entry) } }
+-    static func sessionEnded() { onMain { BCDSessionRecorderLive.shared.ended() } }
++    static func sessionBegan(_ entry: LibraryEntry) { onMain { BCDSessionRecorderLive.shared.began(entry); QueenRuntimeCapture.shared.begin(entry) } }
++    static func sessionEnded() { onMain { QueenRuntimeCapture.shared.stop(reason: "session-ended"); BCDSessionRecorderLive.shared.ended() } }
+     /// BCD is about to close on purpose (exit(0) after an upload): the open session is no crash.
+     static func closingOnPurpose() { onMain { BCDSessionRecorderLive.shared.removeMarker() } }
+     /// LibraryModel.init: a marker from the run before says that session never came back; Send Log's comment box learns to offer a screenshot.
+diff --git a/app/Madeira/ContentView.swift b/app/Madeira/ContentView.swift
+index bee5eb23..93d48f7e 100644
+--- a/app/Madeira/ContentView.swift
++++ b/app/Madeira/ContentView.swift
+@@ -1142,8 +1142,12 @@ struct ContentView: View {
+             } else {
+                 // BCD's own interface (BCDLiveFrontEnd.swift), with Play, Enable JIT and the
+                 // Dock start (BCD, 2026-10-18; the only interface since wave 3, 2026-10-19).
+-                BCDLiveFrontEnd(play: launchLibraryEntry, enableJIT: enableJIT,
+-                                startDock: { startDock($0, compactPool: $1) }, waitForCloud: cloudWait)
++                if QueenRuntime.enabled {
++                    QueenRuntimeHome(play: launchLibraryEntry, enableJIT: enableJIT)
++                } else {
++                    BCDLiveFrontEnd(play: launchLibraryEntry, enableJIT: enableJIT,
++                                    startDock: { startDock($0, compactPool: $1) }, waitForCloud: cloudWait)
++                }
+             }
+         }
+         .modifier(BCDFoldableWatch())   // madeira-bcd foldable (experimental, BCDFoldableUI.swift): on the foldable iPhone, a window under 700 pt reads as compact, independently of the experimental game-support switch
+@@ -1413,6 +1417,11 @@ struct ContentView: View {
+     /// applies the entry's launch profile and runs the same full sequence as the
+     /// developer interface's buttons.
+     private func launchLibraryEntry(_ entry: LibraryEntry) {
++        if QueenRuntime.enabled && !QueenRuntime.accepts(entry) {
++            library.error = "This runtime starts QueensDomain-Win64-Shipping.exe only."
++            return
++        }
++        if QueenRuntime.enabled { QueenRuntime.started = true }
+         // A game on an external drive (Settings › Storage › External drives): when the drive is not open, its saved folder is
+         // opened again without the picker; if the program is still out of reach, say so. Nothing here for any other game.
+         if let drive = ExternalDrives.driveName(library: entry.relativePath) {
+diff --git a/app/Madeira/Info.plist b/app/Madeira/Info.plist
+index 417fbca2..7d1a19e9 100644
+--- a/app/Madeira/Info.plist
++++ b/app/Madeira/Info.plist
+@@ -1,6 +1,5 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+-<!-- Modified for WO-BCD-TOUCH-001 (2026-11-01): separate app identity and local worker access. -->
+ <plist version="1.0">
+ <dict>
+ 	<key>BGTaskSchedulerPermittedIdentifiers</key>
+@@ -17,7 +16,7 @@
+ 	<key>CFBundleDevelopmentRegion</key>
+ 	<string>en</string>
+ 	<key>CFBundleDisplayName</key>
+-	<string>BCD Touch Lab</string>
++	<string>Queen’s Domain</string>
+ 	<key>CFBundleExecutable</key>
+ 	<string>$(EXECUTABLE_NAME)</string>
+ 	<key>CFBundleIdentifier</key>
+@@ -25,24 +24,24 @@
+ 	<key>CFBundleInfoDictionaryVersion</key>
+ 	<string>6.0</string>
+ 	<key>CFBundleName</key>
+-	<string>BCD Touch Lab</string>
++	<string>Queen Runtime</string>
+ 	<key>CFBundlePackageType</key>
+ 	<string>APPL</string>
+ 	<key>CFBundleShortVersionString</key>
+-	<string>$(MARKETING_VERSION)</string>
++	<string>0.1.0</string>
+ 	<key>CFBundleURLTypes</key>
+ 	<array>
+ 		<dict>
+ 			<key>CFBundleURLName</key>
+-			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
++			<string>com.arjunkl.queensdomain.runtime</string>
+ 			<key>CFBundleURLSchemes</key>
+ 			<array>
+-				<string>bcdtouchlab</string>
++				<string>queensdomainruntime</string>
+ 			</array>
+ 		</dict>
+ 	</array>
+ 	<key>CFBundleVersion</key>
+-	<string>$(CURRENT_PROJECT_VERSION)</string>
++	<string>1</string>
+ 	<key>GCSupportsGameMode</key>
+ 	<true/>
+ 	<key>LSApplicationCategoryType</key>
+@@ -59,10 +58,6 @@
+ 	<true/>
+ 	<key>LSSupportsOpeningDocumentsInPlace</key>
+ 	<true/>
+-	<!-- BCD (2026-10-22): content servers Valve's directory marks https_support "unavailable" (no TLS listener), listed
+-	     from vancez's region (bcd-games pull request #11). Only these hosts may be fetched over plain HTTP, and only
+-	     by the Steam downloader's fallback, when the directory gives no usable HTTPS server on Valve's domains; their
+-	     chunks are always checked against the manifest's SHA-1. Every other request keeps App Transport Security. -->
+ 	<key>NSAppTransportSecurity</key>
+ 	<dict>
+ 		<key>NSAllowsLocalNetworking</key>
+@@ -101,7 +96,6 @@
+ 	<true/>
+ 	<key>UIFileSharingEnabled</key>
+ 	<true/>
+-	<!-- BCD (2026-10-25): the in-game menu's screenshot is also saved to Photos when the player allows it (add-only access: BCD never reads the library). -->
+ 	<key>NSPhotoLibraryAddUsageDescription</key>
+ 	<string>BCD saves the screenshots you take in a game to your photo library. It never reads your photos.</string>
+ 	<key>UILaunchScreen</key>
+@@ -116,5 +110,11 @@
+ 		<string>UIInterfaceOrientationLandscapeLeft</string>
+ 		<string>UIInterfaceOrientationLandscapeRight</string>
+ 	</array>
++	<key>QueenRuntimeOnly</key>
++	<true/>
++	<key>BCDDeviceValidationStatus</key>
++	<string>NOT_RUN</string>
++	<key>QueenRuntimeFoundation</key>
++	<string>stock653-659-dynamic</string>
+ </dict>
+ </plist>
+diff --git a/app/Madeira/JITNetwork.swift b/app/Madeira/JITNetwork.swift
+index f0bf0b51..5f914f92 100644
+--- a/app/Madeira/JITNetwork.swift
++++ b/app/Madeira/JITNetwork.swift
+@@ -295,9 +295,9 @@ enum JITShortcutFile {
+             URLQueryItem(name: "name", value: Self.name),
+             URLQueryItem(name: "input", value: "text"),
+             URLQueryItem(name: "text", value: input),
+-            URLQueryItem(name: "x-success", value: "bcdtouchlab://jit-network/success"),
+-            URLQueryItem(name: "x-error", value: "bcdtouchlab://jit-network/error"),
+-            URLQueryItem(name: "x-cancel", value: "bcdtouchlab://jit-network/cancel")
++            URLQueryItem(name: "x-success", value: "queensdomainruntime://jit-network/success"),
++            URLQueryItem(name: "x-error", value: "queensdomainruntime://jit-network/error"),
++            URLQueryItem(name: "x-cancel", value: "queensdomainruntime://jit-network/cancel")
+         ]
+         guard let url = c.url else { completion(.failed("the Shortcuts link could not be built")); return }
+         LogStore.shared.log("[jit-shortcut] run input=\(input)")
+diff --git a/app/Madeira/JITSetup.swift b/app/Madeira/JITSetup.swift
+index 5627af05..6fc7d140 100644
+--- a/app/Madeira/JITSetup.swift
++++ b/app/Madeira/JITSetup.swift
+@@ -494,7 +494,7 @@ enum LocalDevVPN {
+     static let appStore = URL(string: "https://apps.apple.com/us/app/localdevvpn/id6755608044")!
+     /// `enable` connects the VPN; `scheme` has LocalDevVPN return to Madeira a second later.
+     // The raw touch app and the existing-slot package both register this callback.
+-    static let connect = URL(string: "localdevvpn://enable?scheme=bcdtouchlab")!
++    static let connect = URL(string: "localdevvpn://enable?scheme=queensdomainruntime")!
+ 
+     static var isInstalled: Bool { UIApplication.shared.canOpenURL(URL(string: "localdevvpn://")!) }
+     static var actionTitle: String { isInstalled ? "Connect LocalDevVPN" : "Get LocalDevVPN" }
+diff --git a/app/Madeira/Library.swift b/app/Madeira/Library.swift
+index 570d0b1c..356fa721 100644
+--- a/app/Madeira/Library.swift
++++ b/app/Madeira/Library.swift
+@@ -709,6 +709,7 @@ struct LibraryEntry: Codable, Identifiable {
+         // madeira-bcd (round 602): DXMT's Direct3D 9 is a 64-bit Direct3D 9 game's default when its folder shows nothing of Direct3D 11, DXGI or
+         // Direct3D 12 (BCDGraphicsDefaults.swift); the game's own env.MADEIRA_D3D9_X64 line, read just above, always wins.
+         BCDGraphicsDefaults.applyD3D9X64(for: self)
++        QueenRuntime.configure(self)
+         BCDGameSetup.prepare(self)   // madeira-bcd (round 604): the game's Windows version, Wine desktop settings and fixes, before the wineserver exists (BCDGameSetup/BCDGameSetupLaunch.swift)
+         fputs("[frontend] launch profile applied\n", stderr)
+         if usesLaunchOptions {
+diff --git a/app/Madeira/MadeiraApp.swift b/app/Madeira/MadeiraApp.swift
+index ea4aef64..72fb9f5d 100644
+--- a/app/Madeira/MadeiraApp.swift
++++ b/app/Madeira/MadeiraApp.swift
+@@ -4,6 +4,7 @@
+ import Foundation
+ import SwiftUI
+ import UIKit
++import UniformTypeIdentifiers
+ 
+ @main
+ struct MadeiraApp: App {
+@@ -56,3 +57,297 @@ struct MadeiraApp: App {
+         }
+     }
+ }
++
++// Queen-only host integration; existing in-game controls and session engine are retained.
++import Foundation
++import SwiftUI
++import UniformTypeIdentifiers
++
++enum QueenRuntime {
++    static let enabled = Bundle.main.object(forInfoDictionaryKey: "QueenRuntimeOnly") as? Bool == true
++    static let executable = "queensdomain-win64-shipping.exe"
++    static var started = false
++    static var nativeAvailable: Bool {
++        Bundle.main.path(forResource: "xtajit64-queen-nav", ofType: "dll", inDirectory: "arm64ec-windows") != nil
++    }
++    static func accepts(_ entry: LibraryEntry) -> Bool {
++        (entry.launchRelativePath.replacingOccurrences(of: "\\", with: "/") as NSString)
++            .lastPathComponent.lowercased() == executable && entry.desktop != true
++    }
++    static func configure(_ entry: LibraryEntry) {
++        guard enabled, accepts(entry) else { return }
++        let native = nativeAvailable && UserDefaults.standard.bool(forKey: "queen.runtime.nativeRender")
++        let settings = [
++            "QUEEN_RUNTIME_ONLY":"1", "BCD_QUEEN_NATIVE_RHI":native ? "1" : "0",
++            "BCD_QUEEN_NATIVE_GRAPHICS":native ? "1" : "0", "BCD_QUEEN_NATIVE_NAV":"0",
++            "BCD_QUEEN_RENDER_BATCH":"0", "BCD_QUEEN_RENDER_V2":"0", "BCD_QUEEN_GS_PAYLOAD":"0",
++            "MADEIRA_NTDLL_SYNC":"0", "MADEIRA_NTDLL_XSEC":"0", "MADEIRA_FRAMEGEN":"0",
++            "MADEIRA_PROBES":"light", "MADEIRA_LEAN_DIAG":"1", "MADEIRA_QUIET":"1",
++            "MADEIRA_LUM_PROBE":"0", "MADEIRA_FEX_CB_SAMPLE":"0", "BCD_QUEEN_DIAGNOSTICS":"0"
++        ]
++        for (key, value) in settings { setenv(key, value, 1) }
++        LogStore.shared.log("[queen-runtime] lane=\(native ? "native-render" : "reference-659") real-frames=1 batch=0 gs-payload=0 nav=0 sync=stock resolution=\(entry.resolution)")
++    }
++}
++
++struct QueenRuntimeHome: View {
++    let play: (LibraryEntry) -> Void
++    let enableJIT: () -> Void
++    @ObservedObject private var library = LibraryModel.shared
++    @AppStorage("queen.runtime.nativeRender") private var native = false
++    @State private var resolution = "1440x800"
++    @State private var importing = false
++    @State private var setup = false
++    @State private var busy = false
++    @State private var message: String?
++    @State private var hasLaunched = false
++    private var entry: LibraryEntry? { library.entries.first(where: QueenRuntime.accepts) }
++
++    var body: some View {
++        Form {
++            Section {
++                Text("Queen’s Domain").font(.largeTitle.bold())
++                Text("A separate runtime for your own copy of the game.").foregroundStyle(.secondary)
++                Text("Runtime 1 · \(BuildStamp.text)").font(.caption.monospaced())
++            }
++            Section("Play") {
++                if let entry {
++                    Text(entry.title)
++                    Picker("Resolution", selection: $resolution) {
++                        Text("1440 × 800").tag("1440x800")
++                        Text("1168 × 536").tag("1168x536")
++                        Text("960 × 540").tag("960x540")
++                    }
++                    Button("Play Queen’s Domain", systemImage: "play.fill") {
++                        var launch = entry
++                        launch.resolution = resolution
++                        launch.frameGeneration = false
++                        launch.fpsMode = 2
++                        hasLaunched = true
++                        play(launch)
++                    }.disabled(busy)
++                } else {
++                    Text("Copy your Queen game, saves and controls with the transfer tool, or import a game folder.")
++                    Button("Import game folder", systemImage: "folder") { importing = true }.disabled(busy)
++                    Button("Find copied game", systemImage: "arrow.clockwise") { discover() }.disabled(busy)
++                }
++                Button("Setup and controls", systemImage: "gear") { setup = true }
++                if busy { ProgressView("Copying game…") }
++            }
++            Section("Runtime") {
++                Toggle("Native render workload", isOn: $native).disabled(hasLaunched || !QueenRuntime.nativeAvailable)
++                Text("Reference is the default. Native render replaces verified shader-state and resource-commit workloads. Close and reopen the app before changing runtime after playing. Its performance benefit needs a matched device comparison.")
++                    .font(.footnote).foregroundStyle(.secondary)
++            }
++            Section("Measure a scene") {
++                Text("Frame generation is off. A 30-second capture follows 60 seconds of warm-up after the first frame. Repeat the same save, camera and actions at both resolutions.")
++                    .font(.footnote)
++                Text("Measurements stay in Documents/logs/queen-runtime. Nothing uploads automatically.")
++                    .font(.footnote).foregroundStyle(.secondary)
++            }
++            if let error = library.error ?? message { Section { Text(error).foregroundStyle(.secondary) } }
++        }
++        .onAppear { hasLaunched = QueenRuntime.started; discover() }
++        .sheet(isPresented: $setup) {
++            NavigationStack {
++                BCDLiveFrontEnd(play: { game in
++                    guard QueenRuntime.accepts(game) else {
++                        library.error = "This runtime starts Queen’s Domain only."
++                        return
++                    }
++                    setup = false
++                    hasLaunched = true
++                    var launch = game
++                    launch.frameGeneration = false
++                    play(launch)
++                }, enableJIT: enableJIT, startDock: { _, _ in
++                    library.error = "Use the Queen’s Domain Play button in this runtime."
++                })
++                .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { setup = false } } }
++            }
++        }
++        .fileImporter(isPresented: $importing, allowedContentTypes: [.folder]) { result in
++            switch result {
++            case .success(let url): importFolder(url)
++            case .failure(let error): message = error.localizedDescription
++            }
++        }
++    }
++
++    private func discover() {
++        guard entry == nil, let drive = GameLibrary.driveC else { return }
++        guard let found = GameLibrary.scan().first(where: { $0.fileName.lowercased() == QueenRuntime.executable }) else { return }
++        do {
++            guard found.url.path.hasPrefix(drive.path + "/") else { return }
++            var game = try LibraryEntry.inspect(found.url)
++            game.title = "Queen’s Domain"
++            game.resolution = "1440x800"
++            game.touchControls = true
++            game.frameGeneration = false
++            game.fpsMode = 2
++            library.save(game)
++        } catch { message = error.localizedDescription }
++    }
++
++    private func importFolder(_ source: URL) {
++        guard !busy, let drive = GameLibrary.driveC else { return }
++        busy = true
++        DispatchQueue.global(qos: .userInitiated).async {
++            let access = source.startAccessingSecurityScopedResource()
++            defer { if access { source.stopAccessingSecurityScopedResource() } }
++            let fm = FileManager.default
++            let destination = drive.appendingPathComponent("QueenImported", isDirectory: true)
++            let staging = drive.appendingPathComponent(".queen-import-" + UUID().uuidString, isDirectory: true)
++            var failure: String?
++            do {
++                guard !fm.fileExists(atPath: destination.path) else {
++                    throw LibraryError.message("QueenImported already exists. Keep its saves before replacing it in Files.")
++                }
++                try fm.createDirectory(at: drive, withIntermediateDirectories: true)
++                try fm.copyItem(at: source, to: staging)
++                guard let files = fm.enumerator(at: staging, includingPropertiesForKeys: [.isSymbolicLinkKey]) else {
++                    throw LibraryError.message("The copied folder cannot be read.")
++                }
++                var found = false
++                for case let file as URL in files {
++                    if (try file.resourceValues(forKeys: [.isSymbolicLinkKey])).isSymbolicLink == true {
++                        throw LibraryError.message("Import ordinary game files without symbolic links.")
++                    }
++                    if file.lastPathComponent.lowercased() == QueenRuntime.executable { found = true }
++                }
++                guard found else { throw LibraryError.message("The folder does not contain QueensDomain-Win64-Shipping.exe.") }
++                try fm.moveItem(at: staging, to: destination)
++            } catch {
++                failure = error.localizedDescription
++                try? fm.removeItem(at: staging)
++            }
++            DispatchQueue.main.async {
++                busy = false
++                message = failure
++                if failure == nil { discover() }
++            }
++        }
++    }
++}
++
++// Uses the existing native Present ring: no new work on the per-frame path.
++// This measures frame intervals and CPU/thermal context, not per-function or GPU self-time.
++@MainActor final class QueenRuntimeCapture {
++    static let shared = QueenRuntimeCapture()
++    private var timer: Timer?
++    private var reader = bcd_frame_reader()
++    private var buffer = [UInt64](repeating: 0, count: 512)
++    private var lastFrame: Double?
++    private var firstPresentAt: Double?
++    private var captureAt: Double?
++    private var cpu: CPUMeter?
++    private var gaps: [Double] = []
++    private var rows: [String] = []
++    private var lost: UInt64 = 0
++    private var entry: LibraryEntry?
++    private var initialCount: UInt64 = 0
++    private var foregroundObserver: NSObjectProtocol?
++    private var invalidated = false
++    private var captureCount: UInt64 = 0
++
++    func begin(_ game: LibraryEntry) {
++        stop(reason: "new-session")
++        guard QueenRuntime.enabled, QueenRuntime.accepts(game) else { return }
++        entry = game
++        initialCount = bcd_frame_ring_count()
++        lastFrame = nil; firstPresentAt = nil; captureAt = nil
++        gaps = []; rows = []; lost = 0; invalidated = false
++        foregroundObserver = NotificationCenter.default.addObserver(
++            forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
++                MainActor.assumeIsolated {
++                    guard let self else { return }
++                    if self.captureAt != nil { self.invalidated = true }
++                    else { self.firstPresentAt = nil; self.initialCount = bcd_frame_ring_count() }
++                }
++            }
++        let value = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
++            MainActor.assumeIsolated { self?.sample() }
++        }
++        value.tolerance = 0.1
++        RunLoop.main.add(value, forMode: .common)
++        timer = value
++    }
++
++    private func sample() {
++        guard UIApplication.shared.applicationState == .active else { return }
++        let now = bcd_frame_ticks_to_seconds(bcd_frame_now_ticks())
++        if firstPresentAt == nil {
++            guard bcd_frame_ring_count() > initialCount else { return }
++            firstPresentAt = now
++        }
++        guard let firstPresentAt, now - firstPresentAt >= 60 else { return }
++        if captureAt == nil {
++            captureAt = now
++            captureCount = bcd_frame_ring_count()
++            reader = bcd_frame_reader_start()
++            cpu = CPUMeter()
++            _ = cpu?.sample()
++            LogStore.shared.log("[queen-capture] 30-second whole-frame window began after warm-up")
++            return
++        }
++        var newLost: UInt64 = 0
++        repeat {
++            let count = Int(bcd_frame_ring_drain(&reader, &buffer, UInt32(buffer.count), &newLost))
++            lost += newLost
++            for index in 0..<count {
++                let frame = bcd_frame_ticks_to_seconds(buffer[index])
++                if let previous = lastFrame, frame >= previous { gaps.append((frame - previous) * 1000) }
++                lastFrame = frame
++            }
++            if count < buffer.count { break }
++        } while true
++        let reading = cpu?.sample()
++        let process = ProcessInfo.processInfo
++        let elapsed = now - (captureAt ?? now)
++        rows.append(String(format: "%.3f,%.2f,%.2f,%d,%d",
++            elapsed, reading?.total ?? -1, reading?.top ?? -1,
++            BCDHUDLive.thermalLevel(process.thermalState), process.isLowPowerModeEnabled ? 1 : 0))
++        if elapsed >= 30 { stop(reason: "complete") }
++    }
++
++    func stop(reason: String) {
++        timer?.invalidate(); timer = nil
++        if let observer = foregroundObserver { NotificationCenter.default.removeObserver(observer) }
++        foregroundObserver = nil
++        defer { entry = nil; captureAt = nil; cpu = nil }
++        guard let game = entry, let start = captureAt, let documents = MadeiraConfig.documents else { return }
++        let sorted = gaps.sorted()
++        func percentile(_ p: Double) -> Double? {
++            guard !sorted.isEmpty else { return nil }
++            return sorted[min(sorted.count - 1, max(0, Int(ceil(p * Double(sorted.count))) - 1))]
++        }
++        let directory = documents.appendingPathComponent("logs/queen-runtime", isDirectory: true)
++        let stamp = UUID().uuidString
++        let elapsed = bcd_frame_ticks_to_seconds(bcd_frame_now_ticks()) - start
++        var report: [String: Any] = [
++            "schema":1, "reason":reason, "seconds":elapsed, "frame_intervals":gaps.count,
++            "lost_ring_entries":lost, "resolution":game.resolution, "fps_mode":game.fpsMode, "frame_generation":false,
++            "foreground_interrupted":invalidated, "build":BuildStamp.text,
++            "lane":UserDefaults.standard.bool(forKey:"queen.runtime.nativeRender") ? "native-render" : "reference-659",
++            "valid_complete_window":reason == "complete" && !invalidated && lost == 0 && !gaps.isEmpty,
++            "metric":"native Present intervals; GPU command-buffer wall time is dependency-inclusive"
++        ]
++        if let median = percentile(0.5) { report["median_ms"] = median }
++        if let p95 = percentile(0.95) { report["p95_ms"] = p95 }
++        if let maximum = sorted.last { report["max_ms"] = maximum }
++        report["real_fps"] = Double(bcd_frame_ring_count() &- captureCount) / max(elapsed, 0.001)
++        if let lastFrame { report["trailing_silence_ms"] = max(0, bcd_frame_ticks_to_seconds(bcd_frame_now_ticks()) - lastFrame) * 1000 }
++        do {
++            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
++            let data = try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
++            try data.write(to: directory.appendingPathComponent(stamp + ".json"), options: .atomic)
++            let context = "seconds,cpu_percent_all_cores,top_thread_percent,thermal,low_power\n" + rows.joined(separator:"\n") + "\n"
++            try Data(context.utf8).write(to: directory.appendingPathComponent(stamp + ".csv"), options: .atomic)
++            let raw = "frame_ms\n" + gaps.map { String(format:"%.5f", $0) }.joined(separator:"\n") + "\n"
++            try Data(raw.utf8).write(to: directory.appendingPathComponent(stamp + ".frames.csv"), options: .atomic)
++            LogStore.shared.log("[queen-capture] saved \(gaps.count) frame intervals, lost=\(lost), reason=\(reason), background=\(invalidated)")
++        } catch {
++            LogStore.shared.log("[queen-capture] write failed: \(error.localizedDescription)")
++        }
++    }
++}
+diff --git a/app/Madeira/SavesAndShortcuts.swift b/app/Madeira/SavesAndShortcuts.swift
+index 844fd5be..dce6372f 100644
+--- a/app/Madeira/SavesAndShortcuts.swift
++++ b/app/Madeira/SavesAndShortcuts.swift
+@@ -33,7 +33,7 @@ final class ShortcutRouter: ObservableObject {
+         c.scheme = "bcd"
+         c.host = "play"
+         c.queryItems = [URLQueryItem(name: "exe", value: windowsPath)]
+-        return c.string ?? "bcdtouchlab://play"
++        return c.string ?? "queensdomainruntime://play"
+     }
+ 
+     func handle(_ url: URL) {
+diff --git a/app/Madeira/WineProcessBridge.m b/app/Madeira/WineProcessBridge.m
+index cd22a97b..281f06e3 100644
+--- a/app/Madeira/WineProcessBridge.m
++++ b/app/Madeira/WineProcessBridge.m
+@@ -2612,6 +2612,26 @@ static void *wine_process_thread(void *arg) {
+                         toolsLinked, sizeof(x86Tools) / sizeof(x86Tools[0]), toolsKept, toolsRemoved, toolsOn ? "on" : "0");
+             }
+ 
++            if ([[NSBundle mainBundle] objectForInfoDictionaryKey:@"QueenRuntimeOnly"] != nil) {
++                BOOL nativeRender = [[NSUserDefaults standardUserDefaults] boolForKey:@"queen.runtime.nativeRender"] && [fm fileExistsAtPath:[[bundlePath stringByAppendingPathComponent:@"arm64ec-windows"] stringByAppendingPathComponent:@"xtajit64-queen-nav.dll"]];
++                setenv("BCD_QUEEN_NATIVE_RHI", nativeRender ? "1" : "0", 1);
++                setenv("BCD_QUEEN_NATIVE_GRAPHICS", nativeRender ? "1" : "0", 1);
++                setenv("BCD_QUEEN_NATIVE_NAV", "0", 1);
++                setenv("BCD_QUEEN_RENDER_BATCH", "0", 1);
++                setenv("BCD_QUEEN_RENDER_V2", "0", 1);
++                setenv("BCD_QUEEN_GS_PAYLOAD", "0", 1);
++                setenv("MADEIRA_NTDLL_SYNC", "0", 1);
++                setenv("MADEIRA_NTDLL_XSEC", "0", 1);
++                setenv("MADEIRA_FRAMEGEN", "0", 1);
++                setenv("MADEIRA_FEX_AVX", "0", 1);
++                setenv("MADEIRA_PROBES", "light", 1);
++                setenv("MADEIRA_LEAN_DIAG", "1", 1);
++                setenv("MADEIRA_QUIET", "1", 1);
++                setenv("MADEIRA_LUM_PROBE", "0", 1);
++                setenv("MADEIRA_FEX_CB_SAMPLE", "0", 1);
++                setenv("BCD_QUEEN_DIAGNOSTICS", "0", 1);
++            }
++
+             /* madeira-bcd: the AVX opt-in lives in a separately built FEX module
+              * (tools/build-xtajit64.sh ships it as xtajit64-avx.dll). Only a
+              * game whose settings ask for AVX gets it; everything else keeps
+@@ -2639,6 +2659,31 @@ static void *wine_process_thread(void *arg) {
+                 }
+             }
+ 
++            /* Queen runtime native render lane. Both prefix links commit
++             * atomically one at a time; a link error aborts startup rather than
++             * claiming activation with a partly selected module. */
++            if ([[NSBundle mainBundle] objectForInfoDictionaryKey:@"QueenRuntimeOnly"] != nil &&
++                getenv("BCD_QUEEN_NATIVE_RHI") && !strcmp(getenv("BCD_QUEEN_NATIVE_RHI"), "1")) {
++                NSString *candidate = [[bundlePath stringByAppendingPathComponent:@"arm64ec-windows"]
++                    stringByAppendingPathComponent:@"xtajit64-queen-nav.dll"];
++                if (!use_arm64ec || ![fm fileExistsAtPath:candidate]) {
++                    dprintf(STDERR_FILENO, "[queen-runtime] native lane unavailable; startup stopped\n");
++                    return NULL;
++                }
++                for (NSString *dir in @[sys32Dir, [prefix stringByAppendingPathComponent:@"drive_c/windows/sysx64"]]) {
++                    NSString *dst = [dir stringByAppendingPathComponent:@"xtajit64.dll"];
++                    NSString *temp = [dst stringByAppendingString:@".queen-new"];
++                    unlink(temp.fileSystemRepresentation);
++                    if (symlink(candidate.fileSystemRepresentation, temp.fileSystemRepresentation) != 0 ||
++                        rename(temp.fileSystemRepresentation, dst.fileSystemRepresentation) != 0) {
++                        dprintf(STDERR_FILENO, "[queen-runtime] module link failed errno=%d; startup stopped\n", errno);
++                        unlink(temp.fileSystemRepresentation);
++                        return NULL;
++                    }
++                }
++                dprintf(STDERR_FILENO, "[queen-runtime] compiled native-render lane selected; function-entry logs confirm activation\n");
++            }
++
+             /* madeira-bcd: env.MADEIRA_DXGI_SRC = 1 (the game's own file) runs the
+              * 64-bit dxgi.dll built from the dxmt submodule source
+              * (tools/build-dxgi-dll.sh ships it as dxgi-src.dll): upstream's committed
