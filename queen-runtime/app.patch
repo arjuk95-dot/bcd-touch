@@ -345,7 +345,7 @@ index ea4aef64..72fb9f5d 100644
 +        guard let found = GameLibrary.scan().first(where: { $0.fileName.lowercased() == QueenRuntime.executable }) else { return }
 +        do {
 +            guard found.url.path.hasPrefix(drive.path + "/") else { return }
-+            var game = try LibraryEntry.inspect(found.url)
++            var game = try LibraryModel.inspect(found.url)
 +            game.title = "Queen’s Domain"
 +            game.resolution = "1440x800"
 +            game.touchControls = true
