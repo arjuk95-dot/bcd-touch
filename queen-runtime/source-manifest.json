@@ -23,18 +23,19 @@
       "sha256": "bffcb58ac378b738f5924f63017a0e86763bfc29b4268f3897122baec34da247"
     },
     "test-transfer-queen.py": {
-      "bytes": 5972,
-      "sha256": "e98113f1f1e957bec5c7a707be323e93ec39eef1ce0aa39a4441712c695c99bd"
+      "bytes": 6481,
+      "sha256": "5582bfea84ea189eef984a854d4d8406647a5cb85132544c372938a01547518b"
     },
     "transfer-queen.py": {
-      "bytes": 11308,
-      "sha256": "247a75997f3d807811c4698cdc40d2764a9c83dba923bc572d3e3f495db30c24"
+      "bytes": 11539,
+      "sha256": "1554caf62be9a111ea48ce538cf64d3dd1a1d62f684a0f2148eb3def72b3ea1d"
     }
   },
   "scope": "source-only; no game assets, saves, logs or credentials",
   "tests": {
     "transfer_synthetic_cases": 6,
     "ios_compile": false,
-    "device_tested": false
+    "device_tested": false,
+    "expected_mac_cases": 7
   }
 }

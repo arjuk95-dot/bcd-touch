@@ -143,8 +143,13 @@ def validate_backup(folder):
             raise ValueError('Invalid or case-colliding backup path')
         folded.add(relative.casefold())
         file=folder/safe(relative)
-        if file.is_symlink() or any(p.is_symlink() for p in file.parents if p != folder.parent):
-            raise ValueError('Backup links are not supported')
+        if not file.resolve(strict=True).is_relative_to(folder.resolve(strict=True)):
+            raise ValueError('Backup path escapes selected root')
+        cursor=file
+        while cursor != folder:
+            if cursor.is_symlink() or getattr(cursor, 'is_junction', lambda: False)():
+                raise ValueError('Backup links are not supported')
+            cursor=cursor.parent
         with file.open('rb') as stream:
             digest=hashlib.file_digest(stream,'sha256').hexdigest()
         if file.stat().st_size!=spec['bytes'] or digest!=spec['sha256']:

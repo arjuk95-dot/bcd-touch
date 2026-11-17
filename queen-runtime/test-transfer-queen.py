@@ -84,6 +84,15 @@ class TransferTests(unittest.IsolatedAsyncioTestCase):
         dest=AFC()
         with self.assertRaises(ValueError):await transfer.restore(dest,transfer.IDENTITY,self.folder)
         self.assertEqual(dest.writes,[])
+    async def test_internal_backup_link_refused_before_write(self):
+        original=self.folder/'Documents/bcd-controls.json'
+        real=self.folder/'Documents/controls-real.json'
+        original.rename(real)
+        try:original.symlink_to(real.name)
+        except (OSError,NotImplementedError):self.skipTest('Local file links unavailable')
+        dest=AFC()
+        with self.assertRaises(ValueError):await transfer.restore(dest,transfer.IDENTITY,self.folder)
+        self.assertEqual(dest.writes,[])
     async def test_corrupt_remote_copy_not_committed(self):
         dest=AFC();dest.corrupt=True
         with self.assertRaises(IOError):await transfer.restore(dest,transfer.IDENTITY,self.folder)
